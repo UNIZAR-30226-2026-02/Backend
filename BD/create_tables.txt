@@ -6,12 +6,12 @@
 -- JUGADOR
 -- ----------------------------------------------------------------
 CREATE TABLE jugador (
-    id_google            VARCHAR(128)  PRIMARY KEY,
-    tag                  VARCHAR(64)   NOT NULL UNIQUE,
+    id_google            VARCHAR(2048)  PRIMARY KEY,
+    tag                  VARCHAR(100)   NOT NULL UNIQUE,
     foto_perfil          TEXT,
     balas                INT           NOT NULL DEFAULT 0,
     fecha_registro       TIMESTAMP     NOT NULL DEFAULT NOW(),
-    -- Estadísticas globales (actualizadas por triggers)
+    -- Estadísticas globales 
     partidas_jugadas     INT           NOT NULL DEFAULT 0,
     victorias            INT           NOT NULL DEFAULT 0,
     num_aciertos         INT           NOT NULL DEFAULT 0,
@@ -27,8 +27,8 @@ CREATE TABLE logro (
     descripcion          TEXT,
     tipo                 VARCHAR(64),          -- ej. 'medalla', 'logro'
     estadistica_clave    VARCHAR(64),          -- ej. 'victorias', 'num_aciertos'
-    valor_objetivo       INT           NOT NULL DEFAULT 1,
-    balas_recompensa     INT           NOT NULL DEFAULT 0
+    valor_objetivo       INT           NOT NULL DEFAULT 1, --?????
+    balas_recompensa     INT           NOT NULL DEFAULT 50
 );
 
 -- ----------------------------------------------------------------
