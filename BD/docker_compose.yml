@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+
+  # ──────────────────────────────────────────────
+  #  PostgreSQL
+  # ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: codenames_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       codenames
+      POSTGRES_USER:     codenames_user
+      POSTGRES_PASSWORD: codenames_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data          # persistencia
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # crea tablas al arrancar
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codenames_user -d codenames"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  #  Spring Boot  (descomenta cuando tengas el JAR)
+  # ──────────────────────────────────────────────
+  # app:
+  #   build: .                         # o image: tu-imagen:latest
+  #   container_name: codenames_app
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/codenames
+  #     SPRING_DATASOURCE_USERNAME: codenames_user
+  #     SPRING_DATASOURCE_PASSWORD: codenames_pass
+  #     SPRING_JPA_HIBERNATE_DDL_AUTO: validate   # 'none' en producción
+  #   ports:
+  #     - "8080:8080"
+
+volumes:
+  postgres_data:

@@ -1,11 +1,181 @@
-CREATE TABLE Jugador (
-    id_google   VARCHAR(2048) PRIMARY KEY,
-    tag VARCHAR(100) UNIQUE,
-    fotoPerfil VARCHAR(1000),
-    balas INTEGER,
-    fechaRegistro DATE,
-    partidas_jugadas INTEGER,
-    victorias INTEGER,
-    
+-- ============================================================
+--  BASE DE DATOS - Esquema completo PostgreSQL
+-- ============================================================
 
-)
+-- ----------------------------------------------------------------
+-- JUGADOR
+-- ----------------------------------------------------------------
+CREATE TABLE jugador (
+    id_google            VARCHAR(128)  PRIMARY KEY,
+    tag                  VARCHAR(64)   NOT NULL UNIQUE,
+    foto_perfil          TEXT,
+    balas                INT           NOT NULL DEFAULT 0,
+    fecha_registro       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    -- Estadísticas globales (actualizadas por triggers)
+    partidas_jugadas     INT           NOT NULL DEFAULT 0,
+    victorias            INT           NOT NULL DEFAULT 0,
+    num_aciertos         INT           NOT NULL DEFAULT 0,
+    num_fallos           INT           NOT NULL DEFAULT 0
+);
+
+-- ----------------------------------------------------------------
+-- LOGRO
+-- ----------------------------------------------------------------
+CREATE TABLE logro (
+    id_logro             SERIAL        PRIMARY KEY,
+    nombre               VARCHAR(128)  NOT NULL UNIQUE,
+    descripcion          TEXT,
+    tipo                 VARCHAR(64),          -- ej. 'medalla', 'logro'
+    estadistica_clave    VARCHAR(64),          -- ej. 'victorias', 'num_aciertos'
+    valor_objetivo       INT           NOT NULL DEFAULT 1,
+    balas_recompensa     INT           NOT NULL DEFAULT 0
+);
+
+-- ----------------------------------------------------------------
+-- AMISTAD
+-- ----------------------------------------------------------------
+CREATE TABLE amistad (
+    id_solicitante       VARCHAR(128)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_receptor          VARCHAR(128)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    estado               VARCHAR(32)   NOT NULL DEFAULT 'pendiente'
+                                       CHECK (estado IN ('pendiente', 'aceptada')),
+    fecha_solicitud      TIMESTAMP     NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (id_solicitante, id_receptor),
+    -- Evitar duplicados invertidos
+    CHECK (id_solicitante <> id_receptor)
+);
+
+-- ----------------------------------------------------------------
+-- JUGADOR_LOGRO
+-- ----------------------------------------------------------------
+CREATE TABLE jugador_logro (
+    id_jugador           VARCHAR(128)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_logro             INT           NOT NULL REFERENCES logro(id_logro)    ON DELETE CASCADE,
+    progreso_actual      INT           NOT NULL DEFAULT 0,
+    completado           BOOLEAN       NOT NULL DEFAULT FALSE,
+    fecha_desbloqueo     TIMESTAMP,
+    PRIMARY KEY (id_jugador, id_logro)
+);
+
+-- ----------------------------------------------------------------
+-- PERSONALIZACION
+-- ----------------------------------------------------------------
+CREATE TABLE personalizacion (
+    id_personalizacion   SERIAL        PRIMARY KEY,
+    nombre               VARCHAR(128)  NOT NULL UNIQUE,
+    descripcion          TEXT,
+    precio_bala          INT           NOT NULL DEFAULT 0,
+    tipo                 VARCHAR(64),          -- ej. 'skin', 'bala'
+    valor_visual         TEXT                  -- URL, color, nombre asset…
+);
+
+-- ----------------------------------------------------------------
+-- INVENTARIO_PERSONALIZACION
+-- ----------------------------------------------------------------
+CREATE TABLE inventario_personalizacion (
+    id_jugador           VARCHAR(128)  NOT NULL REFERENCES jugador(id_google)             ON DELETE CASCADE,
+    id_personalizacion   INT           NOT NULL REFERENCES personalizacion(id_personalizacion) ON DELETE CASCADE,
+    equipado             BOOLEAN       NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (id_jugador, id_personalizacion)
+);
+
+-- ----------------------------------------------------------------
+-- TEMA
+-- ----------------------------------------------------------------
+CREATE TABLE tema (
+    id_tema              SERIAL        PRIMARY KEY,
+    nombre               VARCHAR(128)  NOT NULL UNIQUE,
+    descripcion          TEXT,
+    precio_balas         INT           NOT NULL DEFAULT 0
+);
+
+-- ----------------------------------------------------------------
+-- PALABRA_TEMA
+-- ----------------------------------------------------------------
+CREATE TABLE palabra_tema (
+    id_palabra           SERIAL        PRIMARY KEY,
+    id_tema              INT           NOT NULL REFERENCES tema(id_tema) ON DELETE CASCADE,
+    valor                VARCHAR(256)  NOT NULL
+);
+
+-- ----------------------------------------------------------------
+-- PARTIDA
+-- ----------------------------------------------------------------
+CREATE TABLE partida (
+    id_partida           SERIAL        PRIMARY KEY,
+    codigo_partida       VARCHAR(32)   NOT NULL UNIQUE,  -- Código de invitación
+    id_tema              INT           NOT NULL REFERENCES tema(id_tema),
+    id_creador           VARCHAR(128)  NOT NULL REFERENCES jugador(id_google),
+    tiempo_espera        INT           NOT NULL DEFAULT 60,   -- segundos
+    max_jugadores        INT           NOT NULL DEFAULT 8,
+    es_publica           BOOLEAN       NOT NULL DEFAULT TRUE,
+    fecha_creacion       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    fecha_fin            TIMESTAMP,
+    estado               VARCHAR(32)   NOT NULL DEFAULT 'esperando'
+                                       CHECK (estado IN ('esperando', 'en_curso', 'finalizada')),
+    rojo_gana            BOOLEAN
+);
+
+-- ----------------------------------------------------------------
+-- JUGADOR_PARTIDA
+-- ----------------------------------------------------------------
+CREATE TABLE jugador_partida (
+    id_jugador_partida   SERIAL        PRIMARY KEY,
+    id_jugador           VARCHAR(128)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_partida           INT           NOT NULL REFERENCES partida(id_partida) ON DELETE CASCADE,
+    equipo               VARCHAR(16)   NOT NULL CHECK (equipo IN ('rojo', 'azul')),
+    rol                  VARCHAR(32)   NOT NULL CHECK (rol IN ('spymaster', 'operativo')),
+    num_fallos           INT           NOT NULL DEFAULT 0,
+    num_aciertos         INT           NOT NULL DEFAULT 0,
+    UNIQUE (id_jugador, id_partida)
+);
+
+-- ----------------------------------------------------------------
+-- TABLERO_CARTA
+-- ----------------------------------------------------------------
+CREATE TABLE tablero_carta (
+    id_carta_tablero     SERIAL        PRIMARY KEY,
+    id_partida           INT           NOT NULL REFERENCES partida(id_partida)  ON DELETE CASCADE,
+    id_palabra           INT           NOT NULL REFERENCES palabra_tema(id_palabra),
+    fila                 INT           NOT NULL,
+    columna              INT           NOT NULL,
+    estado               VARCHAR(32)   NOT NULL DEFAULT 'oculta'
+                                       CHECK (estado IN ('oculta', 'revelada')),
+    UNIQUE (id_partida, fila, columna)
+);
+
+-- ----------------------------------------------------------------
+-- TURNO
+-- ----------------------------------------------------------------
+CREATE TABLE turno (
+    id_turno             SERIAL        PRIMARY KEY,
+    id_partida           INT           NOT NULL REFERENCES partida(id_partida)     ON DELETE CASCADE, -- Desnormalizado para rendimiento
+    id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida),
+    num_turno            INT           NOT NULL,
+    palabra_pista        VARCHAR(256),
+    pista_numero         INT,
+    UNIQUE (id_partida, num_turno)
+);
+
+-- ----------------------------------------------------------------
+-- VOTO_CARTA
+-- ----------------------------------------------------------------
+CREATE TABLE voto_carta (
+    id_voto              SERIAL        PRIMARY KEY,
+    id_turno             INT           NOT NULL REFERENCES turno(id_turno)                    ON DELETE CASCADE,
+    id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida) ON DELETE CASCADE,
+    id_carta_tablero     INT           NOT NULL REFERENCES tablero_carta(id_carta_tablero)     ON DELETE CASCADE,
+    UNIQUE (id_turno, id_jugador_partida)
+);
+
+-- ----------------------------------------------------------------
+-- CHAT
+-- ----------------------------------------------------------------
+CREATE TABLE chat (
+    id_mensaje           SERIAL        PRIMARY KEY,
+    id_partida           INT           NOT NULL REFERENCES partida(id_partida)     ON DELETE CASCADE, -- Desnormalizado para rendimiento
+    id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida) ON DELETE CASCADE,
+    mensaje              TEXT          NOT NULL,
+    fecha                TIMESTAMP     NOT NULL DEFAULT NOW()
+);
+
