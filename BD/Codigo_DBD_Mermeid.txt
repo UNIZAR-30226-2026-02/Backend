@@ -1,0 +1,150 @@
+---
+config:
+  theme: redux-dark-color
+  look: handDrawn
+---
+erDiagram
+    JUGADOR ||--o{ AMISTAD : "envia_solicitud"
+    JUGADOR ||--o{ AMISTAD : "recibe_solicitud"
+    
+    JUGADOR ||--o{ JUGADOR_LOGRO : "obtiene_progreso_en"
+    LOGRO ||--o{ JUGADOR_LOGRO : "es_rastreado_por"
+    
+    JUGADOR ||--o{ INVENTARIO_PERSONALIZACION : "posee"
+    PERSONALIZACION ||--o{ INVENTARIO_PERSONALIZACION : "desbloquea"
+    TEMA ||--o{ PALABRA_TEMA : "contiene"
+    TEMA ||..o{ PARTIDA : "configura"
+    JUGADOR ||..o{ PARTIDA : "crea"
+    PARTIDA ||..|{ JUGADOR_PARTIDA : "incluye"
+    JUGADOR ||..o{ JUGADOR_PARTIDA : "participa"
+    PARTIDA ||..o{ CHAT : "alberga (optimización)"
+    JUGADOR_PARTIDA ||..o{ CHAT : "escribe"
+    PARTIDA ||..|{ TABLERO_CARTA : "genera"
+    PALABRA_TEMA }o..o{ TABLERO_CARTA : "usa (N:M lógico)"
+    PARTIDA ||..o{ TURNO : "se_divide_en (optimización)"
+    JUGADOR_PARTIDA ||..o{ TURNO : "inicia"
+    TURNO ||..o{ VOTO_CARTA : "registra"
+    TABLERO_CARTA ||..o{ VOTO_CARTA : "recibe"
+    JUGADOR_PARTIDA ||..o{ VOTO_CARTA : "realiza"
+
+    JUGADOR {
+        string id_google PK
+        string tag UK
+        string fotoPerfil
+        int balas
+        datetime fechaRegistro
+        int partidas_jugadas "Estadística global (Trigger)"
+        int victorias "Estadística global (Trigger)"
+        int numAciertos "Estadística global (Trigger)"
+        int numFallos "Estadística global (Trigger)"
+    }
+
+    AMISTAD {
+        string id_solicitante PK, FK
+        string id_receptor PK, FK
+        string estado "pendiente, aceptada"
+        datetime fecha_solicitud
+    }
+
+    LOGRO {
+        int id_logro PK
+        string nombre UK
+        string descripcion
+        string tipo "medalla, logro"
+        string estadistica_clave
+        int valor_objetivo
+        int balasRecompensa
+    }
+
+    JUGADOR_LOGRO {
+        string id_jugador PK, FK
+        int id_logro PK, FK
+        int progreso_actual
+        boolean completado
+        datetime fecha_desbloqueo
+    }
+
+    PERSONALIZACION {
+        int id_personalizacion PK
+        string nombre UK
+        string descripcion
+        int precioBala
+        string tipo
+        string valor_visual
+    }
+
+    INVENTARIO_PERSONALIZACION {
+        string id_jugador PK, FK
+        int id_personalizacion PK, FK
+        boolean equipado
+    }
+
+    TEMA {
+        int id_tema PK
+        string nombre UK
+        string descripcion
+        int precioBalas
+    }
+
+    PALABRA_TEMA {
+        int id_palabra PK
+        int id_tema FK
+        string valor
+    }
+
+    PARTIDA {
+        int id_partida PK
+        string codigo_partida UK "Código invitación"
+        int id_tema FK
+        string id_creador FK
+        int tiempoEspera
+        int maxJugadores
+        boolean esPublica
+        datetime fechaCreacion
+        datetime fechaFin
+        string estado
+        boolean rojoGana
+    }
+
+    JUGADOR_PARTIDA {
+        int id_jugador_partida PK
+        string id_jugador FK
+        int id_partida FK
+        string equipo
+        string rol
+        int numFallos
+        int numAciertos
+    }
+
+    CHAT {
+        int id_mensaje PK
+        int id_partida FK "Desnormalizado por rendimiento"
+        int id_jugador_partida FK
+        string mensaje
+        datetime fecha
+    }
+
+    TABLERO_CARTA {
+        int id_carta_tablero PK
+        int id_partida FK
+        int id_palabra FK
+        int fila
+        int columna
+        string estado
+    }
+
+    TURNO {
+        int id_turno PK
+        int id_partida FK "Desnormalizado por rendimiento"
+        int id_jugador_partida FK
+        int numTurno
+        string palabraPista
+        int pistaNumero
+    }
+
+    VOTO_CARTA {
+        int id_voto PK
+        int id_turno FK
+        int id_jugador_partida FK
+        int id_carta_tablero FK
+    }
