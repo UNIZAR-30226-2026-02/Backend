@@ -1,0 +1,11 @@
+CREATE TABLE Jugador (
+    id_google   VARCHAR(2048) PRIMARY KEY,
+    tag VARCHAR(100) UNIQUE,
+    fotoPerfil VARCHAR(1000),
+    balas INTEGER,
+    fechaRegistro DATE,
+    partidas_jugadas INTEGER,
+    victorias INTEGER,
+    
+
+)
