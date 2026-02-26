@@ -131,6 +131,7 @@ erDiagram
         int fila
         int columna
         string estado
+        string tipo
     }
 
     TURNO {
