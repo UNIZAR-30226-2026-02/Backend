@@ -25,10 +25,11 @@ CREATE TABLE logro (
     id_logro             SERIAL        PRIMARY KEY,
     nombre               VARCHAR(128)  NOT NULL UNIQUE,
     descripcion          TEXT,
-    tipo                 VARCHAR(64),          -- ej. 'medalla', 'logro'
-    estadistica_clave    VARCHAR(64),          -- ej. 'victorias', 'num_aciertos'
-    valor_objetivo       INT,           
-    balas_recompensa     INT           NOT NULL DEFAULT 50
+    tipo                 VARCHAR(64)   NOT NULL CHECK( tipo IN( 'medalla', 'logro' )),          
+    estadistica_clave    VARCHAR(64)   NOT NULL CHECK( tipo IN( 'victorias', 'num_aciertos' )),     
+    valor_objetivo       INT           NOT NULL,           
+    balas_recompensa     INT           NOT NULL,
+    activo               BOOLEAN        NOT NULL DEFAULT TRUE
 );
 
 -- ----------------------------------------------------------------
@@ -51,7 +52,7 @@ CREATE TABLE amistad (
 CREATE TABLE jugador_logro (
     id_jugador           VARCHAR(2048)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
     id_logro             INT           NOT NULL REFERENCES logro(id_logro)    ON DELETE CASCADE,
-    progreso_actual      INT,
+    progreso_actual      INT            NOT NULL,
     completado           BOOLEAN       NOT NULL DEFAULT FALSE,
     fecha_desbloqueo     TIMESTAMP,
     PRIMARY KEY (id_jugador, id_logro)
@@ -65,8 +66,9 @@ CREATE TABLE personalizacion (
     nombre               VARCHAR(128)  NOT NULL UNIQUE,
     descripcion          TEXT,
     precio_bala          INT            NOT NULL,
-    tipo                 VARCHAR(64),          
-    valor_visual         TEXT                  -- URL
+    tipo                 VARCHAR(64)    NOT NULL CHECK(tipo IN('carta', 'tablero')),          
+    valor_visual         TEXT,                  -- URL
+    activo               BOOLEAN        NOT NULL DEFAULT TRUE
 );
 
 -- ----------------------------------------------------------------
@@ -86,7 +88,8 @@ CREATE TABLE tema (
     id_tema              SERIAL        PRIMARY KEY,
     nombre               VARCHAR(128)  NOT NULL UNIQUE,
     descripcion          TEXT,
-    precio_balas         INT           NOT NULL 
+    precio_balas         INT           NOT NULL ,
+    activo               BOOLEAN        NOT NULL DEFAULT TRUE
 );
 
 -- ----------------------------------------------------------------
@@ -95,7 +98,8 @@ CREATE TABLE tema (
 CREATE TABLE palabra_tema (
     id_palabra           SERIAL        PRIMARY KEY,
     id_tema              INT           NOT NULL REFERENCES tema(id_tema) ON DELETE CASCADE,
-    valor                TEXT  NOT NULL
+    valor                TEXT  NOT NULL,
+    activo               BOOLEAN        NOT NULL DEFAULT TRUE
 );
 
 -- ----------------------------------------------------------------
@@ -115,7 +119,8 @@ CREATE TABLE partida (
     fecha_fin            TIMESTAMP,
     estado               VARCHAR(32)   NOT NULL DEFAULT 'esperando'
                                        CHECK (estado IN ('esperando', 'en_curso', 'finalizada')),
-    rojo_gana            BOOLEAN
+    rojo_gana            BOOLEAN, 
+
 );
 
 -- ----------------------------------------------------------------
@@ -129,6 +134,7 @@ CREATE TABLE jugador_partida (
     rol                  VARCHAR(32)   NOT NULL CHECK (rol IN ('lider', 'agente')),
     num_fallos           INT           NOT NULL DEFAULT 0,
     num_aciertos         INT           NOT NULL DEFAULT 0,
+    abandono             BOOLEAN       NOT NULL DEFAULT FALSE,
     UNIQUE (id_jugador, id_partida)
 );
 
@@ -143,7 +149,7 @@ CREATE TABLE tablero_carta (
     columna              INT           NOT NULL CHECK( columna <= 4 AND columna >= 0 ),
     estado               VARCHAR(32)   NOT NULL DEFAULT 'oculta'
                                        CHECK (estado IN ('oculta', 'revelada')),
-    tipo                 VARCHAR(20)   NOT NULL CHECK( tipo IN('rojo', 'azul', 'civil','asesino')),
+    tipo                 VARCHAR(20)   NOT NULL CHECK( tipo IN('rojo', 'azul', 'civil', 'asesino')),
     UNIQUE (id_partida, fila, columna)
 );
 
@@ -155,8 +161,8 @@ CREATE TABLE turno (
     id_partida           INT           NOT NULL REFERENCES partida(id_partida)     ON DELETE CASCADE, -- Desnormalizado para rendimiento
     id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida),
     num_turno            INT           NOT NULL,
-    palabra_pista        VARCHAR(256),
-    pista_numero         INT,
+    palabra_pista        VARCHAR(256)   NOT NULL,
+    pista_numero         INT            NOT NULL,
     UNIQUE (id_partida, num_turno)
 );
 

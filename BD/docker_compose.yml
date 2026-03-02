@@ -10,9 +10,9 @@ services:
     container_name: codenames_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       codenames
-      POSTGRES_USER:     codenames_user
-      POSTGRES_PASSWORD: codenames_pass
+      POSTGRES_DB:       clasified_files
+      POSTGRES_USER:     red_panda_us
+      POSTGRES_PASSWORD: red_panda_passw
     ports:
       - "5432:5432"
     volumes:
