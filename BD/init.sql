@@ -26,7 +26,7 @@ CREATE TABLE logro (
     nombre               VARCHAR(128)  NOT NULL UNIQUE,
     descripcion          TEXT,
     tipo                 VARCHAR(64)   NOT NULL CHECK( tipo IN( 'medalla', 'logro' )),          
-    estadistica_clave    VARCHAR(64)   NOT NULL CHECK( tipo IN( 'victorias', 'num_aciertos' )),     
+    estadistica_clave    VARCHAR(64)   NOT NULL CHECK( estadistica_clave IN( 'victorias', 'num_aciertos' )),     
     valor_objetivo       INT           NOT NULL,           
     balas_recompensa     INT           NOT NULL,
     activo               BOOLEAN        NOT NULL DEFAULT TRUE
@@ -119,7 +119,7 @@ CREATE TABLE partida (
     fecha_fin            TIMESTAMP,
     estado               VARCHAR(32)   NOT NULL DEFAULT 'esperando'
                                        CHECK (estado IN ('esperando', 'en_curso', 'finalizada')),
-    rojo_gana            BOOLEAN, 
+    rojo_gana            BOOLEAN
 
 );
 
