@@ -64,7 +64,7 @@ CREATE TABLE personalizacion (
     id_personalizacion   SERIAL        PRIMARY KEY,
     nombre               VARCHAR(128)  NOT NULL UNIQUE,
     descripcion          TEXT,
-    precio_bala          INT           NOT NULL DEFAULT 100,
+    precio_bala          INT            NOT NULL,
     tipo                 VARCHAR(64),          
     valor_visual         TEXT                  -- URL
 );
@@ -86,7 +86,7 @@ CREATE TABLE tema (
     id_tema              SERIAL        PRIMARY KEY,
     nombre               VARCHAR(128)  NOT NULL UNIQUE,
     descripcion          TEXT,
-    precio_balas         INT           NOT NULL DEFAULT 100
+    precio_balas         INT           NOT NULL 
 );
 
 -- ----------------------------------------------------------------
