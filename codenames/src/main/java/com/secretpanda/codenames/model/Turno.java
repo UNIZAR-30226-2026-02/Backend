@@ -13,7 +13,6 @@ import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "turno", uniqueConstraints = {
-    // Evita que haya dos turnos con el mismo número en una misma partida
     @UniqueConstraint(columnNames = {"id_partida", "num_turno"})
 })
 public class Turno {
@@ -23,7 +22,6 @@ public class Turno {
     @Column(name = "id_turno")
     private Integer idTurno;
 
-    // Desnormalizado por rendimiento, como indica tu init.sql
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_partida", nullable = false)
     private Partida partida;
@@ -35,10 +33,12 @@ public class Turno {
     @Column(name = "num_turno", nullable = false)
     private Integer numTurno;
 
-    @Column(name = "palabra_pista", nullable = false, length = 256)
+    // CORRECCIÓN: Quitamos el nullable = false para permitir crear el turno antes de dar la pista
+    @Column(name = "palabra_pista", length = 256)
     private String palabraPista;
 
-    @Column(name = "pista_numero", nullable = false)
+    // CORRECCIÓN: Quitamos el nullable = false
+    @Column(name = "pista_numero")
     private Integer pistaNumero;
 
     public Turno() {}

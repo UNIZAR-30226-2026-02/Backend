@@ -18,8 +18,9 @@ import jakarta.persistence.Table;
 @Table(name = "partida")
 public class Partida {
 
+    // CORRECCIÓN: Añadido CANCELADA
     public enum EstadoPartida {
-        ESPERANDO, EN_CURSO, FINALIZADA
+        ESPERANDO, EN_CURSO, FINALIZADA, CANCELADA
     }
 
     @Id

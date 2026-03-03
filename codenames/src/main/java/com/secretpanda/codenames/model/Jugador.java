@@ -7,11 +7,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-@Entity // Indica que es una entidad de la base de datos
-@Table(name = "jugador") // Nombre exacto de la tabla en postgres
+@Entity 
+@Table(name = "jugador") 
 public class Jugador {
 
-    @Id // Clave primaria
+    @Id 
     @Column(name = "id_google", length = 2048)
     private String idGoogle;
 
@@ -39,10 +39,13 @@ public class Jugador {
     @Column(name = "num_fallos", nullable = false)
     private Integer numFallos = 0;
 
-    // Constructor vacío obligatorio para JPA
+    // CORRECCIÓN: Añadido el contador histórico de abandonos
+    @Column(nullable = false)
+    private Integer abandonos = 0;
+
     public Jugador() {}
 
-    // Getters y Setters (Necesarios para que Spring pueda leer/escribir los datos)
+    // Getters y Setters
     public String getIdGoogle() { return idGoogle; }
     public void setIdGoogle(String idGoogle) { this.idGoogle = idGoogle; }
     
@@ -69,4 +72,7 @@ public class Jugador {
 
     public Integer getNumFallos() { return numFallos; }
     public void setNumFallos(Integer numFallos) { this.numFallos = numFallos; }
+
+    public Integer getAbandonos() { return abandonos; }
+    public void setAbandonos(Integer abandonos) { this.abandonos = abandonos; }
 }

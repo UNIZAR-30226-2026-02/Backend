@@ -17,14 +17,14 @@ import jakarta.persistence.Table;
 @Table(name = "amistad")
 public class Amistad {
 
+    // CORRECCIÓN: Quitamos RECHAZADA para que coincida con el CHECK de PostgreSQL
     public enum EstadoAmistad {
-        PENDIENTE, ACEPTADA, RECHAZADA
+        PENDIENTE, ACEPTADA
     }
 
-    @EmbeddedId // Indica que la clave primaria es un objeto incrustado
+    @EmbeddedId 
     private AmistadId id;
 
-    // Relaciones con la tabla Jugador para obtener todos sus datos si es necesario
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idSolicitante")
     @JoinColumn(name = "id_solicitante")
