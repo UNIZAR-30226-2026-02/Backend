@@ -20,7 +20,7 @@ Deberías ver el contenedor `files` con estado `healthy`.
 **5. Conéctate para verificar que las tablas se crearon bien**
 
 ```bash
-docker exec -it files psql -U codenames_user -d codenames
+docker exec -it files psql -U red_panda_us -d clasified_files
 ```
 
 Una vez dentro puedes ejecutar:

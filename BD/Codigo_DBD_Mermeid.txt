@@ -54,6 +54,7 @@ erDiagram
         string estadistica_clave
         int valor_objetivo
         int balasRecompensa
+        boolean activo "Borrado lógico"
     }
 
     JUGADOR_LOGRO {
@@ -71,6 +72,7 @@ erDiagram
         int precioBala
         string tipo
         string valor_visual
+        boolean activo "Borrado lógico"
     }
 
     INVENTARIO_PERSONALIZACION {
@@ -84,12 +86,14 @@ erDiagram
         string nombre UK
         string descripcion
         int precioBalas
+        boolean activo "Borrado lógico"
     }
 
     PALABRA_TEMA {
         int id_palabra PK
         int id_tema FK
         string valor
+        boolean activo "Borrado lógico"
     }
 
     PARTIDA {
@@ -114,6 +118,7 @@ erDiagram
         string rol
         int numFallos
         int numAciertos
+        boolean abandono "Control de rage-quit"
     }
 
     CHAT {
