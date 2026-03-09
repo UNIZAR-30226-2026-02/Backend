@@ -9,10 +9,16 @@ import com.secretpanda.codenames.model.Amistad;
 import com.secretpanda.codenames.model.AmistadId;
 
 @Repository
-// Observa cómo el tipo de la clave primaria ahora es AmistadId en lugar de un Integer o String
 public interface AmistadRepository extends JpaRepository<Amistad, AmistadId> {
     
-    // Encuentra todas las solicitudes enviadas o recibidas por un jugador
+    // OBTENER TODAS
     List<Amistad> findById_IdSolicitante(String idSolicitante);
     List<Amistad> findById_IdReceptor(String idReceptor);
+
+    // OBTENER FILTRADAS POR ESTADOç
+    // Lista de amigos confirmados (Para mostrar en la sección de amigos)
+    List<Amistad> findById_IdSolicitanteAndEstado(String idSolicitante, Amistad.EstadoAmistad estado);
+    
+    // Lista de solicitudes pendientes que tengo que aceptar o rechazar
+    List<Amistad> findById_IdReceptorAndEstado(String idReceptor, Amistad.EstadoAmistad estado);
 }

@@ -16,8 +16,6 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "amistad")
 public class Amistad {
-
-    // CORRECCIÓN: Quitamos RECHAZADA para que coincida con el CHECK de PostgreSQL
     public enum EstadoAmistad {
         PENDIENTE, ACEPTADA
     }

@@ -16,4 +16,10 @@ public interface JugadorLogroRepository extends JpaRepository<JugadorLogro, Juga
     
     // Obtener solo los logros completados de un jugador
     List<JugadorLogro> findById_IdJugadorAndCompletadoTrue(String idJugador);
+
+    // Trae solo los que aún están a medias, para sumarles puntos.
+    List<JugadorLogro> findById_IdJugadorAndCompletadoFalse(String idJugador);
+
+    // Navega automáticamente a la tabla Logro y filtra por la columna 'tipo'
+    List<JugadorLogro> findById_IdJugadorAndLogro_Tipo(String idJugador, String tipo);
 }

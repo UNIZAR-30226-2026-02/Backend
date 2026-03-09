@@ -13,5 +13,12 @@ public interface LogroRepository extends JpaRepository<Logro, Integer> {
     // Método extra para obtener solo los logros que están activos
     List<Logro> findByActivoTrue();
     
+    // Método para validar que no haya dos logros con el mismo nombre
     boolean existsByNombre(String nombre);
+
+    // Devuelve el catálogo filtrando por tipo y que estén activos.
+    List<Logro> findByTipoAndActivoTrue(String tipo);
+
+    // Devuelve el catálogo filtrando por la estadística clave que suma puntos y que estén activos
+    List<Logro> findByEstadisticaClaveAndActivoTrue(String estadisticaClave);
 }

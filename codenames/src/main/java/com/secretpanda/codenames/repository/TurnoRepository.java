@@ -16,4 +16,11 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
     
     // Buscar un turno específico de una partida
     Optional<Turno> findByPartida_IdPartidaAndNumTurno(Integer idPartida, Integer numTurno);
+
+    // Busca el turno con el número más alto de una partida.
+    // Útil para saber cuál es el turno actual de la partida.
+    Optional<Turno> findFirstByPartida_IdPartidaOrderByNumTurnoDesc(Integer idPartida);
+
+    // Obtener el historial de turnos de un equipo concreto en una partida
+    List<Turno> findByPartida_IdPartidaAndEquipo(Integer idPartida, String equipo);
 }
