@@ -187,4 +187,3 @@ CREATE TABLE chat (
     mensaje              TEXT          NOT NULL,
     fecha                TIMESTAMP     NOT NULL DEFAULT NOW()
 );
-
