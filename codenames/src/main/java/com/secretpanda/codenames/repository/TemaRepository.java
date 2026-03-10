@@ -10,13 +10,12 @@ import com.secretpanda.codenames.model.Tema;
 @Repository
 public interface TemaRepository extends JpaRepository<Tema, Integer> {
     
-    // Para mostrar a los jugadores a la hora de crear partida (Catálogo completo activo)
+    // Catálogo de temas activos para creación de partidas
     List<Tema> findByActivoTrue();
     
-    // Validar que no haya duplicados
+    // Validar duplicados por nombre
     boolean existsByNombre(String nombre);
 
-    // Permite buscar temas que contengan una palabra
-    // El "Containing" genera un LIKE '%nombre%' en SQL automáticamente.
+    // Búsqueda de temas activos por coincidencia de nombre
     List<Tema> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre);
 }

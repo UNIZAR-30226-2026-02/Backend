@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.secretpanda.codenames.model.Logro;
+import com.secretpanda.codenames.model.Logro.TipoLogro;
 
 @Repository
 public interface LogroRepository extends JpaRepository<Logro, Integer> {
@@ -17,7 +18,7 @@ public interface LogroRepository extends JpaRepository<Logro, Integer> {
     boolean existsByNombre(String nombre);
 
     // Devuelve el catálogo filtrando por tipo y que estén activos.
-    List<Logro> findByTipoAndActivoTrue(String tipo);
+    List<Logro> findByTipoAndActivoTrue(TipoLogro tipo);
 
     // Devuelve el catálogo filtrando por la estadística clave que suma puntos y que estén activos
     List<Logro> findByEstadisticaClaveAndActivoTrue(String estadisticaClave);

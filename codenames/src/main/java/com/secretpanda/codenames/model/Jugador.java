@@ -39,84 +39,77 @@ public class Jugador {
     @Column(name = "num_fallos", nullable = false)
     private int numFallos = 0;
 
-    @Column(nullable = false)
-    private int abandonos = 0;
-
     public Jugador() {}
 
     public String getIdGoogle() { 
-        return idGoogle; 
+        return idGoogle;
     }
 
     public void setIdGoogle(String idGoogle) { 
-        this.idGoogle = idGoogle; 
+        this.idGoogle = idGoogle;
     }
     
     public String getTag() { 
-        return tag; 
+        return tag;
     }
 
     public void setTag(String tag) { 
-        this.tag = tag; 
+        this.tag = tag;
     }
 
     public String getFotoPerfil() { 
-        return fotoPerfil; 
+        return fotoPerfil;
     }
 
     public void setFotoPerfil(String fotoPerfil) { 
-        this.fotoPerfil = fotoPerfil; 
+        this.fotoPerfil = fotoPerfil;
     }
 
     public int getBalas() { 
-        return balas; 
+        return balas;
     }
 
     public void setBalas(int balas) { 
-        this.balas = balas; 
+        this.balas = balas;
     }
 
     public LocalDateTime getFechaRegistro() { 
-        return fechaRegistro; 
+        return fechaRegistro;
     }
 
     public void setFechaRegistro(LocalDateTime fechaRegistro) { 
-        this.fechaRegistro = fechaRegistro; 
+        this.fechaRegistro = fechaRegistro;
     }
 
     public int getPartidasJugadas() { 
-        return partidasJugadas; 
+        return partidasJugadas;
     }
 
     public void setPartidasJugadas(int partidasJugadas) { 
-        this.partidasJugadas = partidasJugadas; 
+        this.partidasJugadas = partidasJugadas;
     }
 
-    public int getVictorias() { return victorias; }
+    public int getVictorias() { 
+        return victorias;
+    }
 
     public void setVictorias(int victorias) { 
-        this.victorias = victorias; 
+        this.victorias = victorias;
     }
 
     public int getNumAciertos() { 
-        return numAciertos; 
+        return numAciertos;
     }
 
     public void setNumAciertos(int numAciertos) { 
-        this.numAciertos = numAciertos; 
+        this.numAciertos = numAciertos;
     }
 
-    public int getNumFallos() { return numFallos; }
+    public int getNumFallos() { 
+        return numFallos;
+    }
 
     public void setNumFallos(int numFallos) { 
-        this.numFallos = numFallos; 
-    }
-
-    public int getAbandonos() { 
-        return abandonos; 
-    }
-
-    public void setAbandonos(int abandonos) { 
-        this.abandonos = abandonos; 
+        this.numFallos = numFallos;
     }
 }

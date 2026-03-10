@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.secretpanda.codenames.model.JugadorLogro;
 import com.secretpanda.codenames.model.JugadorLogroId;
+import com.secretpanda.codenames.model.Logro;
 
 @Repository
 public interface JugadorLogroRepository extends JpaRepository<JugadorLogro, JugadorLogroId> {
@@ -21,5 +22,5 @@ public interface JugadorLogroRepository extends JpaRepository<JugadorLogro, Juga
     List<JugadorLogro> findById_IdJugadorAndCompletadoFalse(String idJugador);
 
     // Navega automáticamente a la tabla Logro y filtra por la columna 'tipo'
-    List<JugadorLogro> findById_IdJugadorAndLogro_Tipo(String idJugador, String tipo);
+    List<JugadorLogro> findById_IdJugadorAndLogro_Tipo(String idJugador, Logro.TipoLogro tipo);
 }

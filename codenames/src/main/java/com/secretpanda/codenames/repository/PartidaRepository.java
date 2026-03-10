@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.secretpanda.codenames.model.Partida;
@@ -12,21 +14,27 @@ import com.secretpanda.codenames.model.Partida;
 @Repository
 public interface PartidaRepository extends JpaRepository<Partida, Integer> {
     
-    // Buscar una partida por su código de invitación (Para unirse a partidas privadas)
+    // Buscar una partida por su código de invitación
     Optional<Partida> findByCodigoPartida(String codigoPartida);
     
-    // Comprobar si un código ya existe (Para el generador de códigos aleatorios)
+    // Comprobar si un código ya existe
     boolean existsByCodigoPartida(String codigoPartida);
 
-    // Mostrar salas públicas esperando jugadores, ordenadas de más nuevas a más antiguas
+    // Mostrar salas públicas esperando jugadores ordenadas por fecha
     List<Partida> findByEsPublicaTrueAndEstadoOrderByFechaCreacionDesc(Partida.EstadoPartida estado);
 
-    // Mostrar salas públicas esperando jugadores de una temática concreta, ordenadas de más nuevas a más antiguas
-    List<Partida> findByEsPublicaTrueAndEstado(Partida.EstadoPartida estado);
-
-    // Mostrar salas públicas esperando jugadores de una temática concreta, ordenadas de más nuevas a más antiguas
+    // Mostrar salas públicas esperando jugadores de una temática concreta
     List<Partida> findByEsPublicaTrueAndEstadoAndTema_IdTemaOrderByFechaCreacionDesc(Partida.EstadoPartida estado, Integer idTema);
 
-    // Buscar partidas antiguas que sigan en estado "ESPERANDO_JUGADORES" para cerrarlas automáticamente
+    // Buscar partidas públicas con huecos libres para matchmaking
+    @Query("SELECT p FROM Partida p WHERE p.esPublica = true AND p.estado = :estado " +
+           "AND (SELECT COUNT(jp) FROM JugadorPartida jp WHERE jp.partida = p) < p.maxJugadores " +
+           "ORDER BY p.fechaCreacion DESC")
+    List<Partida> findPartidasPublicasDisponibles(@Param("estado") Partida.EstadoPartida estado);
+
+    // Buscar partidas antiguas para cierre automático
     List<Partida> findByEstadoAndFechaCreacionBefore(Partida.EstadoPartida estado, LocalDateTime fechaLimite);
+    
+    // Listar partidas creadas por un jugador
+    List<Partida> findByCreador_IdGoogle(String idGoogle);
 }
