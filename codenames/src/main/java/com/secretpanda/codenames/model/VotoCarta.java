@@ -37,15 +37,35 @@ public class VotoCarta {
 
     public VotoCarta() {}
 
-    public Integer getIdVoto() { return idVoto; }
-    public void setIdVoto(Integer idVoto) { this.idVoto = idVoto; }
+    public Integer getIdVoto() { 
+        return idVoto; 
+    }
 
-    public Turno getTurno() { return turno; }
-    public void setTurno(Turno turno) { this.turno = turno; }
+    public void setIdVoto(Integer idVoto) { 
+        this.idVoto = idVoto; 
+    }
 
-    public JugadorPartida getJugadorPartida() { return jugadorPartida; }
-    public void setJugadorPartida(JugadorPartida jugadorPartida) { this.jugadorPartida = jugadorPartida; }
+    public Turno getTurno() { 
+        return turno; 
+    }
 
-    public TableroCarta getCartaTablero() { return cartaTablero; }
-    public void setCartaTablero(TableroCarta cartaTablero) { this.cartaTablero = cartaTablero; }
+    public void setTurno(Turno turno) { 
+        this.turno = turno; 
+    }
+
+    public JugadorPartida getJugadorPartida() { 
+        return jugadorPartida; 
+    }
+
+    public void setJugadorPartida(JugadorPartida jugadorPartida) { 
+        this.jugadorPartida = jugadorPartida; 
+    }
+
+    public TableroCarta getCartaTablero() { 
+        return cartaTablero; 
+    }
+
+    public void setCartaTablero(TableroCarta cartaTablero) { 
+        this.cartaTablero = cartaTablero; 
+    }
 }

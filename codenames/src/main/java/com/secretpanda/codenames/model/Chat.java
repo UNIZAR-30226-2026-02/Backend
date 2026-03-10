@@ -37,18 +37,43 @@ public class Chat {
 
     public Chat() {}
 
-    public Integer getIdMensaje() { return idMensaje; }
-    public void setIdMensaje(Integer idMensaje) { this.idMensaje = idMensaje; }
+    public Integer getIdMensaje() { 
+        return idMensaje; 
+    }
 
-    public Partida getPartida() { return partida; }
-    public void setPartida(Partida partida) { this.partida = partida; }
+    public void setIdMensaje(Integer idMensaje) { 
+        this.idMensaje = idMensaje; 
+    }
 
-    public JugadorPartida getJugadorPartida() { return jugadorPartida; }
-    public void setJugadorPartida(JugadorPartida jugadorPartida) { this.jugadorPartida = jugadorPartida; }
+    public Partida getPartida() { 
+        return partida; 
+    }
 
-    public String getMensaje() { return mensaje; }
-    public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+    public void setPartida(Partida partida) { 
+        this.partida = partida; 
+    }
 
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+    public JugadorPartida getJugadorPartida() { 
+        return jugadorPartida; 
+    }
+
+    public void setJugadorPartida(JugadorPartida jugadorPartida) { 
+        this.jugadorPartida = jugadorPartida; 
+    }
+
+    public String getMensaje() { 
+        return mensaje; 
+    }
+
+    public void setMensaje(String mensaje) { 
+        this.mensaje = mensaje; 
+    }
+
+    public LocalDateTime getFecha() { 
+        return fecha; 
+    }
+
+    public void setFecha(LocalDateTime fecha) { 
+        this.fecha = fecha; 
+    }
 }

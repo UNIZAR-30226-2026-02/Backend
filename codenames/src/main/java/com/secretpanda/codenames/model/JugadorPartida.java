@@ -2,6 +2,8 @@ package com.secretpanda.codenames.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +19,14 @@ import jakarta.persistence.UniqueConstraint;
 })
 public class JugadorPartida {
 
+    public enum Equipo {
+        rojo, azul
+    }
+
+    public enum Rol {
+        lider, agente
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_jugador_partida")
@@ -30,11 +40,13 @@ public class JugadorPartida {
     @JoinColumn(name = "id_partida", nullable = false)
     private Partida partida;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private String equipo; 
+    private Equipo equipo; 
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private String rol; 
+    private Rol rol; 
 
     @Column(name = "num_fallos", nullable = false)
     private int numFallos = 0;
@@ -47,28 +59,67 @@ public class JugadorPartida {
 
     public JugadorPartida() {}
 
-    // Getters y Setters
-    public Integer getIdJugadorPartida() { return idJugadorPartida; }
-    public void setIdJugadorPartida(Integer idJugadorPartida) { this.idJugadorPartida = idJugadorPartida; }
+    public Integer getIdJugadorPartida() { 
+        return idJugadorPartida; 
+    }
 
-    public Jugador getJugador() { return jugador; }
-    public void setJugador(Jugador jugador) { this.jugador = jugador; }
+    public void setIdJugadorPartida(Integer idJugadorPartida) { 
+        this.idJugadorPartida = idJugadorPartida; 
+    }
 
-    public Partida getPartida() { return partida; }
-    public void setPartida(Partida partida) { this.partida = partida; }
+    public Jugador getJugador() { 
+        return jugador; 
+    }
 
-    public String getEquipo() { return equipo; }
-    public void setEquipo(String equipo) { this.equipo = equipo; }
+    public void setJugador(Jugador jugador) { 
+        this.jugador = jugador; 
+    }
 
-    public String getRol() { return rol; }
-    public void setRol(String rol) { this.rol = rol; }
+    public Partida getPartida() { 
+        return partida; 
+    }
 
-    public int getNumFallos() { return numFallos; }
-    public void setNumFallos(int numFallos) { this.numFallos = numFallos; }
+    public void setPartida(Partida partida) { 
+        this.partida = partida; 
+    }
 
-    public int getNumAciertos() { return numAciertos; }
-    public void setNumAciertos(int numAciertos) { this.numAciertos = numAciertos; }
+    public Equipo getEquipo() { 
+        return equipo; 
+    }
 
-    public boolean isAbandono() { return abandono; }
-    public void setAbandono(boolean abandono) { this.abandono = abandono; }
+    public void setEquipo(Equipo equipo) { 
+        this.equipo = equipo; 
+    }
+
+    public Rol getRol() { 
+        return rol; 
+    }
+
+    public void setRol(Rol rol) { 
+        this.rol = rol; 
+    }
+
+    public int getNumFallos() { 
+        return numFallos; 
+    }
+
+    public void setNumFallos(int numFallos) { 
+        this.numFallos = numFallos; 
+    }
+
+    public int getNumAciertos() { 
+        return numAciertos; 
+    }
+
+    public void setNumAciertos(int numAciertos) { 
+        this.numAciertos = numAciertos; 
+    }
+
+    public boolean isAbandono() { 
+        return abandono; 
+    }
+
+    public void setAbandono(boolean abandono) { 
+        this.abandono = abandono; 
+    }
 }

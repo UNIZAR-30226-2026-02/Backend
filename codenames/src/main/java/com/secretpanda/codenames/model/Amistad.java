@@ -16,8 +16,10 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "amistad")
 public class Amistad {
+    
+    // Cambiado a minúsculas para no romper el CHECK de PostgreSQL
     public enum EstadoAmistad {
-        PENDIENTE, ACEPTADA
+        pendiente, aceptada
     }
 
     @EmbeddedId 
@@ -35,7 +37,7 @@ public class Amistad {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private EstadoAmistad estado = EstadoAmistad.PENDIENTE;
+    private EstadoAmistad estado = EstadoAmistad.pendiente;
 
     @Column(name = "fecha_solicitud", nullable = false, updatable = false)
     private LocalDateTime fechaSolicitud = LocalDateTime.now();
@@ -46,15 +48,35 @@ public class Amistad {
     public AmistadId getId() { return id; }
     public void setId(AmistadId id) { this.id = id; }
 
-    public Jugador getSolicitante() { return solicitante; }
-    public void setSolicitante(Jugador solicitante) { this.solicitante = solicitante; }
+    public Jugador getSolicitante() { 
+        return solicitante; 
+    }
 
-    public Jugador getReceptor() { return receptor; }
-    public void setReceptor(Jugador receptor) { this.receptor = receptor; }
+    public void setSolicitante(Jugador solicitante) { 
+        this.solicitante = solicitante; 
+    }
 
-    public EstadoAmistad getEstado() { return estado; }
-    public void setEstado(EstadoAmistad estado) { this.estado = estado; }
+    public Jugador getReceptor() { 
+        return receptor; 
+    }
 
-    public LocalDateTime getFechaSolicitud() { return fechaSolicitud; }
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
+    public void setReceptor(Jugador receptor) { 
+        this.receptor = receptor; 
+    }
+
+    public EstadoAmistad getEstado() { 
+        return estado; 
+    }
+
+    public void setEstado(EstadoAmistad estado) { 
+        this.estado = estado; 
+    }
+
+    public LocalDateTime getFechaSolicitud() { 
+        return fechaSolicitud; 
+    }
+
+    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { 
+        this.fechaSolicitud = fechaSolicitud; 
+    }
 }

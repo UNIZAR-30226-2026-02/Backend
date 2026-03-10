@@ -57,7 +57,7 @@ public class PersonalizacionService {
         existente.setPrecioBala(detalles.getPrecioBala());
         existente.setTipo(detalles.getTipo());
         existente.setValorVisual(detalles.getValorVisual());
-        existente.setActivo(detalles.isActivo());
+        existente.setActivo(detalles.getActivo());
         
         try {
             return personalizacionRepository.save(existente);

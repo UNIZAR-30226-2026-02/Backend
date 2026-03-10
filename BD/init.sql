@@ -6,7 +6,7 @@
 -- JUGADOR
 -- ----------------------------------------------------------------
 CREATE TABLE jugador (
-    id_google            VARCHAR(2048) PRIMARY KEY,
+    id_google            VARCHAR(255) PRIMARY KEY,
     tag                  VARCHAR(100)  NOT NULL UNIQUE,
     foto_perfil          TEXT,
     balas                INT           NOT NULL DEFAULT 0,
@@ -36,8 +36,8 @@ CREATE TABLE logro (
 -- AMISTAD
 -- ----------------------------------------------------------------
 CREATE TABLE amistad (
-    id_solicitante       VARCHAR(2048)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
-    id_receptor          VARCHAR(2048)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_solicitante       VARCHAR(255)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_receptor          VARCHAR(255)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
     estado               VARCHAR(16)    NOT NULL DEFAULT 'pendiente'
                                         CHECK (estado IN ('pendiente', 'aceptada')),
     fecha_solicitud      TIMESTAMP      NOT NULL DEFAULT NOW(),
@@ -50,7 +50,7 @@ CREATE TABLE amistad (
 -- JUGADOR_LOGRO
 -- ----------------------------------------------------------------
 CREATE TABLE jugador_logro (
-    id_jugador           VARCHAR(2048)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_jugador           VARCHAR(255)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
     id_logro             INT            NOT NULL REFERENCES logro(id_logro)    ON DELETE CASCADE,
     progreso_actual      INT            NOT NULL,
     completado           BOOLEAN        NOT NULL DEFAULT FALSE,
@@ -75,7 +75,7 @@ CREATE TABLE personalizacion (
 -- INVENTARIO_PERSONALIZACION
 -- ----------------------------------------------------------------
 CREATE TABLE inventario_personalizacion (
-    id_jugador           VARCHAR(2048)  NOT NULL REFERENCES jugador(id_google)  ON DELETE CASCADE,
+    id_jugador           VARCHAR(255)  NOT NULL REFERENCES jugador(id_google)  ON DELETE CASCADE,
     id_personalizacion   INT            NOT NULL REFERENCES personalizacion(id_personalizacion) ON DELETE CASCADE,
     equipado             BOOLEAN        NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_jugador, id_personalizacion)
@@ -109,7 +109,7 @@ CREATE TABLE partida (
     id_partida           SERIAL        PRIMARY KEY,
     codigo_partida       VARCHAR(32)   NOT NULL UNIQUE,  -- Código de invitación
     id_tema              INT           NOT NULL REFERENCES tema(id_tema),
-    id_creador           VARCHAR(2048) NOT NULL REFERENCES jugador(id_google),
+    id_creador           VARCHAR(255) NOT NULL REFERENCES jugador(id_google),
     tiempo_espera        INT           NOT NULL DEFAULT 60 CHECK(tiempo_espera = 30 OR 
                                         tiempo_espera = 60 OR tiempo_espera = 90 OR 
                                         tiempo_espera = 120),   -- segundos
@@ -128,7 +128,7 @@ CREATE TABLE partida (
 -- ----------------------------------------------------------------
 CREATE TABLE jugador_partida (
     id_jugador_partida   SERIAL        PRIMARY KEY,
-    id_jugador           VARCHAR(2048) NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_jugador           VARCHAR(255) NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
     id_partida           INT           NOT NULL REFERENCES partida(id_partida) ON DELETE CASCADE,
     equipo               VARCHAR(16)   NOT NULL CHECK (equipo IN ('rojo', 'azul')),
     rol                  VARCHAR(32)   NOT NULL CHECK (rol IN ('lider', 'agente')),

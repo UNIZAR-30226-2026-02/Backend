@@ -22,12 +22,21 @@ public class AmistadId implements Serializable {
         this.idReceptor = idReceptor;
     }
 
-    // Getters y Setters
-    public String getIdSolicitante() { return idSolicitante; }
-    public void setIdSolicitante(String idSolicitante) { this.idSolicitante = idSolicitante; }
+    public String getIdSolicitante() { 
+        return idSolicitante; 
+    }
 
-    public String getIdReceptor() { return idReceptor; }
-    public void setIdReceptor(String idReceptor) { this.idReceptor = idReceptor; }
+    public void setIdSolicitante(String idSolicitante) { 
+        this.idSolicitante = idSolicitante; 
+    }
+
+    public String getIdReceptor() { 
+        return idReceptor;
+    }
+
+    public void setIdReceptor(String idReceptor) { 
+        this.idReceptor = idReceptor; 
+    }
 
     // equals() y hashCode() son obligatorios en JPA para claves compuestas
     @Override

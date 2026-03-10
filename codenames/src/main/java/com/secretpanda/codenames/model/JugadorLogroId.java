@@ -9,7 +9,7 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class JugadorLogroId implements Serializable {
 
-    @Column(name = "id_jugador", length = 2048)
+    @Column(name = "id_jugador", length = 255)
     private String idJugador;
 
     @Column(name = "id_logro")
@@ -22,11 +22,20 @@ public class JugadorLogroId implements Serializable {
         this.idLogro = idLogro;
     }
 
-    public String getIdJugador() { return idJugador; }
-    public void setIdJugador(String idJugador) { this.idJugador = idJugador; }
+    public String getIdJugador() { 
+        return idJugador; 
+    }
 
-    public Integer getIdLogro() { return idLogro; }
-    public void setIdLogro(Integer idLogro) { this.idLogro = idLogro; }
+    public void setIdJugador(String idJugador) { 
+        this.idJugador = idJugador; 
+    }
+
+    public Integer getIdLogro() { 
+        return idLogro; 
+    }
+    public void setIdLogro(Integer idLogro) { 
+        this.idLogro = idLogro; 
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -23,7 +23,7 @@ public class Personalizacion {
     private String descripcion;
 
     @Column(name = "precio_bala", nullable = false)
-    private int precioBala = 0; // Primitivo para cálculos seguros
+    private int precioBala = 0;
 
     @Column(nullable = false, length = 64)
     private String tipo; 
@@ -32,29 +32,58 @@ public class Personalizacion {
     private String valorVisual; 
 
     @Column(nullable = false)
-    private boolean activo = true; // Primitivo para filtros booleanos rápidos
+    private boolean activo = true;
 
     public Personalizacion() {}
 
-    // Getters y Setters
     public Integer getIdPersonalizacion() { return idPersonalizacion; }
     public void setIdPersonalizacion(Integer idPersonalizacion) { this.idPersonalizacion = idPersonalizacion; }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getNombre() {
+        return nombre; 
+    }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public void setNombre(String nombre) { 
+        this.nombre = nombre; 
+    }
 
-    public int getPrecioBala() { return precioBala; }
-    public void setPrecioBala(int precioBala) { this.precioBala = precioBala; }
+    public String getDescripcion() { 
+        return descripcion; 
+    }
 
-    public String getTipo() { return tipo; }
-    public void setTipo(String tipo) { this.tipo = tipo; }
+    public void setDescripcion(String descripcion) { 
+        this.descripcion = descripcion; 
+    }
 
-    public String getValorVisual() { return valorVisual; }
-    public void setValorVisual(String valorVisual) { this.valorVisual = valorVisual; }
+    public int getPrecioBala() { 
+        return precioBala; 
+    }
 
-    public boolean isActivo() { return activo; }
-    public void setActivo(boolean activo) { this.activo = activo; }
+    public void setPrecioBala(int precioBala) { 
+        this.precioBala = precioBala; 
+    }
+
+    public String getTipo() { 
+        return tipo; 
+    }
+
+    public void setTipo(String tipo) { 
+        this.tipo = tipo; 
+    }
+
+    public String getValorVisual() { 
+        return valorVisual; 
+    }
+
+    public void setValorVisual(String valorVisual) { 
+        this.valorVisual = valorVisual; 
+    }
+
+    public boolean isActivo() { 
+        return activo; 
+    }
+
+    public void setActivo(boolean activo) { 
+        this.activo = activo; 
+    }
 }

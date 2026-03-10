@@ -23,27 +23,51 @@ public class Tema {
     private String descripcion;
 
     @Column(name = "precio_balas", nullable = false)
-    private int precioBalas = 0; // Primitivo para evitar NullPointerException en cálculos
+    private int precioBalas = 0;
 
     @Column(nullable = false)
-    private boolean activo = true; // Primitivo para filtros rápidos
+    private boolean activo = true;
 
     public Tema() {
     }
 
-    // Getters y Setters
-    public Integer getIdTema() { return idTema; }
-    public void setIdTema(Integer idTema) { this.idTema = idTema; }
+    public Integer getIdTema() { 
+        return idTema; 
+    }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setIdTema(Integer idTema) { 
+        this.idTema = idTema; 
+    }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public String getNombre() { 
+        return nombre; 
+    }
 
-    public int getPrecioBalas() { return precioBalas; }
-    public void setPrecioBalas(int precioBalas) { this.precioBalas = precioBalas; }
+    public void setNombre(String nombre) { 
+        this.nombre = nombre; 
+    }
 
-    public boolean isActivo() { return activo; }
-    public void setActivo(boolean activo) { this.activo = activo; }
+    public String getDescripcion() { 
+        return descripcion; 
+    }
+
+    public void setDescripcion(String descripcion) { 
+        this.descripcion = descripcion; 
+    }
+
+    public int getPrecioBalas() { 
+        return precioBalas; 
+    }
+
+    public void setPrecioBalas(int precioBalas) { 
+        this.precioBalas = precioBalas; 
+    }
+
+    public boolean isActivo() { 
+        return activo; 
+    }
+
+    public void setActivo(boolean activo) { 
+        this.activo = activo; 
+    }
 }

@@ -19,7 +19,7 @@ import jakarta.persistence.Table;
 public class Partida {
 
     public enum EstadoPartida {
-        ESPERANDO, EN_CURSO, FINALIZADA, CANCELADA
+        esperando, en_curso, finalizada
     }
 
     @Id
@@ -55,45 +55,98 @@ public class Partida {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private EstadoPartida estado = EstadoPartida.ESPERANDO;
+    private EstadoPartida estado = EstadoPartida.esperando;
 
-    // Se mantiene Boolean (Objeto) porque admite NULL mientras la partida no termina
     @Column(name = "rojo_gana")
     private Boolean rojoGana;
 
     public Partida() {}
 
-    // Getters y Setters
-    public Integer getIdPartida() { return idPartida; }
-    public void setIdPartida(Integer idPartida) { this.idPartida = idPartida; }
+    public Integer getIdPartida() { 
+        return idPartida; 
+    }
 
-    public String getCodigoPartida() { return codigoPartida; }
-    public void setCodigoPartida(String codigoPartida) { this.codigoPartida = codigoPartida; }
+    public void setIdPartida(Integer idPartida) { 
+        this.idPartida = idPartida; 
+    }
 
-    public Tema getTema() { return tema; }
-    public void setTema(Tema tema) { this.tema = tema; }
+    public String getCodigoPartida() { 
+        return codigoPartida; 
+    }
 
-    public Jugador getCreador() { return creador; }
-    public void setCreador(Jugador creador) { this.creador = creador; }
+    public void setCodigoPartida(String codigoPartida) { 
+        this.codigoPartida = codigoPartida; 
+    }
 
-    public int getTiempoEspera() { return tiempoEspera; }
-    public void setTiempoEspera(int tiempoEspera) { this.tiempoEspera = tiempoEspera; }
+    public Tema getTema() { 
+        return tema; 
+    }
 
-    public int getMaxJugadores() { return maxJugadores; }
-    public void setMaxJugadores(int maxJugadores) { this.maxJugadores = maxJugadores; }
+    public void setTema(Tema tema) { 
+        this.tema = tema; 
+    }
 
-    public boolean isEsPublica() { return esPublica; }
-    public void setEsPublica(boolean esPublica) { this.esPublica = esPublica; }
+    public Jugador getCreador() { 
+        return creador; 
+    }
 
-    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
-    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+    public void setCreador(Jugador creador) { 
+        this.creador = creador; 
+    }
 
-    public LocalDateTime getFechaFin() { return fechaFin; }
-    public void setFechaFin(LocalDateTime fechaFin) { this.fechaFin = fechaFin; }
+    public int getTiempoEspera() { 
+        return tiempoEspera; 
+    }
 
-    public EstadoPartida getEstado() { return estado; }
-    public void setEstado(EstadoPartida estado) { this.estado = estado; }
+    public void setTiempoEspera(int tiempoEspera) { 
+        this.tiempoEspera = tiempoEspera; 
+    }
 
-    public Boolean getRojoGana() { return rojoGana; }
-    public void setRojoGana(Boolean rojoGana) { this.rojoGana = rojoGana; }
+    public int getMaxJugadores() { 
+        return maxJugadores; 
+    }
+
+    public void setMaxJugadores(int maxJugadores) { 
+        this.maxJugadores = maxJugadores; 
+    }
+
+    public boolean isEsPublica() { 
+        return esPublica; 
+    }
+
+    public void setEsPublica(boolean esPublica) { 
+        this.esPublica = esPublica; 
+    }
+
+    public LocalDateTime getFechaCreacion() { 
+        return fechaCreacion; 
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { 
+        this.fechaCreacion = fechaCreacion; 
+    }
+
+    public LocalDateTime getFechaFin() { 
+        return fechaFin; 
+    }
+
+    public void setFechaFin(LocalDateTime fechaFin) { 
+        this.fechaFin = fechaFin; 
+    }
+
+    public EstadoPartida getEstado() { 
+        return estado; 
+    }
+
+    public void setEstado(EstadoPartida estado) { 
+        this.estado = estado; 
+    }
+
+    public Boolean getRojoGana() { 
+        return rojoGana; 
+    }
+
+    public void setRojoGana(Boolean rojoGana) { 
+        this.rojoGana = rojoGana; 
+    }
 }

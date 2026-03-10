@@ -40,21 +40,51 @@ public class JugadorLogro {
     public JugadorLogro() {}
 
     // Getters y Setters
-    public JugadorLogroId getId() { return id; }
-    public void setId(JugadorLogroId id) { this.id = id; }
+    public JugadorLogroId getId() { 
+        return id; 
+    }
 
-    public Jugador getJugador() { return jugador; }
-    public void setJugador(Jugador jugador) { this.jugador = jugador; }
+    public void setId(JugadorLogroId id) { 
+        this.id = id; 
+    }
 
-    public Logro getLogro() { return logro; }
-    public void setLogro(Logro logro) { this.logro = logro; }
+    public Jugador getJugador() { 
+        return jugador; 
+    }
 
-    public int getProgresoActual() { return progresoActual; }
-    public void setProgresoActual(int progresoActual) { this.progresoActual = progresoActual; }
+    public void setJugador(Jugador jugador) { 
+        this.jugador = jugador; 
+    }
 
-    public boolean isCompletado() { return completado; }
-    public void setCompletado(boolean completado) { this.completado = completado; }
+    public Logro getLogro() { 
+        return logro; 
+    }
 
-    public LocalDateTime getFechaDesbloqueo() { return fechaDesbloqueo; }
-    public void setFechaDesbloqueo(LocalDateTime fechaDesbloqueo) { this.fechaDesbloqueo = fechaDesbloqueo; }
+    public void setLogro(Logro logro) { 
+        this.logro = logro; 
+    }
+
+    public int getProgresoActual() { 
+        return progresoActual; 
+    }
+    
+    public void setProgresoActual(int progresoActual) { 
+        this.progresoActual = progresoActual; 
+    }
+
+    public boolean isCompletado() { 
+        return completado; 
+    }
+
+    public void setCompletado(boolean completado) { 
+        this.completado = completado; 
+    }
+
+    public LocalDateTime getFechaDesbloqueo() { 
+        return fechaDesbloqueo; 
+    }
+
+    public void setFechaDesbloqueo(LocalDateTime fechaDesbloqueo) { 
+        this.fechaDesbloqueo = fechaDesbloqueo; 
+    }
 }

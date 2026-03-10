@@ -31,15 +31,35 @@ public class InventarioPersonalizacion {
 
     public InventarioPersonalizacion() {}
 
-    public InventarioPersonalizacionId getId() { return id; }
-    public void setId(InventarioPersonalizacionId id) { this.id = id; }
+    public InventarioPersonalizacionId getId() { 
+        return id; 
+    }
 
-    public Jugador getJugador() { return jugador; }
-    public void setJugador(Jugador jugador) { this.jugador = jugador; }
+    public void setId(InventarioPersonalizacionId id) { 
+        this.id = id; 
+    }
 
-    public Personalizacion getPersonalizacion() { return personalizacion; }
-    public void setPersonalizacion(Personalizacion personalizacion) { this.personalizacion = personalizacion; }
+    public Jugador getJugador() { 
+        return jugador; 
+    }
 
-    public boolean isEquipado() { return equipado; }
-    public void setEquipado(boolean equipado) { this.equipado = equipado; }
+    public void setJugador(Jugador jugador) { 
+        this.jugador = jugador; 
+    }
+
+    public Personalizacion getPersonalizacion() { 
+        return personalizacion; 
+    }
+
+    public void setPersonalizacion(Personalizacion personalizacion) { 
+        this.personalizacion = personalizacion; 
+    }
+
+    public boolean isEquipado() { 
+        return equipado; 
+    }
+
+    public void setEquipado(boolean equipado) { 
+        this.equipado = equipado; 
+    }
 }

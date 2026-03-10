@@ -22,11 +22,21 @@ public class InventarioPersonalizacionId implements Serializable {
         this.idPersonalizacion = idPersonalizacion;
     }
 
-    public String getIdJugador() { return idJugador; }
-    public void setIdJugador(String idJugador) { this.idJugador = idJugador; }
+    public String getIdJugador() { 
+        return idJugador; 
+    }
 
-    public Integer getIdPersonalizacion() { return idPersonalizacion; }
-    public void setIdPersonalizacion(Integer idPersonalizacion) { this.idPersonalizacion = idPersonalizacion; }
+    public void setIdJugador(String idJugador) { 
+        this.idJugador = idJugador; 
+    }
+
+    public Integer getIdPersonalizacion() { 
+        return idPersonalizacion; 
+    }
+
+    public void setIdPersonalizacion(Integer idPersonalizacion) { 
+        this.idPersonalizacion = idPersonalizacion; 
+    }
 
     @Override
     public boolean equals(Object o) {

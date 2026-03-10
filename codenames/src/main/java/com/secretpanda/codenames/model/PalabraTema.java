@@ -32,16 +32,35 @@ public class PalabraTema {
     public PalabraTema() {
     }
 
-    // Getters y Setters
-    public Integer getIdPalabra() { return idPalabra; }
-    public void setIdPalabra(Integer idPalabra) { this.idPalabra = idPalabra; }
+    public Integer getIdPalabra() { 
+        return idPalabra; 
+    }
 
-    public Tema getTema() { return tema; }
-    public void setTema(Tema tema) { this.tema = tema; }
+    public void setIdPalabra(Integer idPalabra) { 
+        this.idPalabra = idPalabra; 
+    }
 
-    public String getValor() { return valor; }
-    public void setValor(String valor) { this.valor = valor; }
+    public Tema getTema() { 
+        return tema; 
+    }
 
-    public boolean isActivo() { return activo; }
-    public void setActivo(boolean activo) { this.activo = activo; }
+    public void setTema(Tema tema) { 
+        this.tema = tema; 
+    }
+
+    public String getValor() { 
+        return valor; 
+    }
+
+    public void setValor(String valor) { 
+        this.valor = valor; 
+    }
+
+    public boolean isActivo() { 
+        return activo; 
+    }
+
+    public void setActivo(boolean activo) { 
+        this.activo = activo; 
+    }
 }

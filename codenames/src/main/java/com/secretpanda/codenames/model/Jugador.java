@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 public class Jugador {
 
     @Id 
-    @Column(name = "id_google", length = 2048)
+    @Column(name = "id_google", length = 255)
     private String idGoogle;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -44,34 +44,79 @@ public class Jugador {
 
     public Jugador() {}
 
-    // Getters y Setters
-    public String getIdGoogle() { return idGoogle; }
-    public void setIdGoogle(String idGoogle) { this.idGoogle = idGoogle; }
+    public String getIdGoogle() { 
+        return idGoogle; 
+    }
+
+    public void setIdGoogle(String idGoogle) { 
+        this.idGoogle = idGoogle; 
+    }
     
-    public String getTag() { return tag; }
-    public void setTag(String tag) { this.tag = tag; }
+    public String getTag() { 
+        return tag; 
+    }
 
-    public String getFotoPerfil() { return fotoPerfil; }
-    public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
+    public void setTag(String tag) { 
+        this.tag = tag; 
+    }
 
-    public int getBalas() { return balas; }
-    public void setBalas(int balas) { this.balas = balas; }
+    public String getFotoPerfil() { 
+        return fotoPerfil; 
+    }
 
-    public LocalDateTime getFechaRegistro() { return fechaRegistro; }
-    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+    public void setFotoPerfil(String fotoPerfil) { 
+        this.fotoPerfil = fotoPerfil; 
+    }
 
-    public int getPartidasJugadas() { return partidasJugadas; }
-    public void setPartidasJugadas(int partidasJugadas) { this.partidasJugadas = partidasJugadas; }
+    public int getBalas() { 
+        return balas; 
+    }
+
+    public void setBalas(int balas) { 
+        this.balas = balas; 
+    }
+
+    public LocalDateTime getFechaRegistro() { 
+        return fechaRegistro; 
+    }
+
+    public void setFechaRegistro(LocalDateTime fechaRegistro) { 
+        this.fechaRegistro = fechaRegistro; 
+    }
+
+    public int getPartidasJugadas() { 
+        return partidasJugadas; 
+    }
+
+    public void setPartidasJugadas(int partidasJugadas) { 
+        this.partidasJugadas = partidasJugadas; 
+    }
 
     public int getVictorias() { return victorias; }
-    public void setVictorias(int victorias) { this.victorias = victorias; }
 
-    public int getNumAciertos() { return numAciertos; }
-    public void setNumAciertos(int numAciertos) { this.numAciertos = numAciertos; }
+    public void setVictorias(int victorias) { 
+        this.victorias = victorias; 
+    }
+
+    public int getNumAciertos() { 
+        return numAciertos; 
+    }
+
+    public void setNumAciertos(int numAciertos) { 
+        this.numAciertos = numAciertos; 
+    }
 
     public int getNumFallos() { return numFallos; }
-    public void setNumFallos(int numFallos) { this.numFallos = numFallos; }
 
-    public int getAbandonos() { return abandonos; }
-    public void setAbandonos(int abandonos) { this.abandonos = abandonos; }
+    public void setNumFallos(int numFallos) { 
+        this.numFallos = numFallos; 
+    }
+
+    public int getAbandonos() { 
+        return abandonos; 
+    }
+
+    public void setAbandonos(int abandonos) { 
+        this.abandonos = abandonos; 
+    }
 }

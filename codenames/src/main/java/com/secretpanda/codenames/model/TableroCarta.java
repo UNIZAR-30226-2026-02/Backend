@@ -2,6 +2,8 @@ package com.secretpanda.codenames.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +18,14 @@ import jakarta.persistence.UniqueConstraint;
     @UniqueConstraint(columnNames = {"id_partida", "fila", "columna"})
 })
 public class TableroCarta {
+
+    public enum EstadoCarta {
+        oculta, revelada
+    }
+
+    public enum TipoCarta {
+        rojo, azul, civil, asesino
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,33 +46,69 @@ public class TableroCarta {
     @Column(nullable = false)
     private int columna;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private String estado = "oculta";
+    private EstadoCarta estado = EstadoCarta.oculta;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String tipo;
+    private TipoCarta tipo;
 
     public TableroCarta() {}
 
-    // Getters y Setters
-    public Integer getIdCartaTablero() { return idCartaTablero; }
-    public void setIdCartaTablero(Integer idCartaTablero) { this.idCartaTablero = idCartaTablero; }
+    public Integer getIdCartaTablero() { 
+        return idCartaTablero; 
+    }
 
-    public Partida getPartida() { return partida; }
-    public void setPartida(Partida partida) { this.partida = partida; }
+    public void setIdCartaTablero(Integer idCartaTablero) { 
+        this.idCartaTablero = idCartaTablero; 
+    }
 
-    public PalabraTema getPalabra() { return palabra; }
-    public void setPalabra(PalabraTema palabra) { this.palabra = palabra; }
+    public Partida getPartida() { 
+        return partida; 
+    }
 
-    public int getFila() { return fila; }
-    public void setFila(int fila) { this.fila = fila; }
+    public void setPartida(Partida partida) { 
+        this.partida = partida; 
+    }
 
-    public int getColumna() { return columna; }
-    public void setColumna(int columna) { this.columna = columna; }
+    public PalabraTema getPalabra() { 
+        return palabra; 
+    }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public void setPalabra(PalabraTema palabra) { 
+        this.palabra = palabra; 
+    }
 
-    public String getTipo() { return tipo; }
-    public void setTipo(String tipo) { this.tipo = tipo; }
+    public int getFila() { 
+        return fila; 
+    }
+
+    public void setFila(int fila) { 
+        this.fila = fila; 
+    }
+
+    public int getColumna() { 
+        return columna; 
+    }
+
+    public void setColumna(int columna) { 
+        this.columna = columna; 
+    }
+
+    public EstadoCarta getEstado() { 
+        return estado; 
+    }
+
+    public void setEstado(EstadoCarta estado) { 
+        this.estado = estado; 
+    }
+
+    public TipoCarta getTipo() { 
+        return tipo; 
+    }
+
+    public void setTipo(TipoCarta tipo) { 
+        this.tipo = tipo; 
+    }
 }
