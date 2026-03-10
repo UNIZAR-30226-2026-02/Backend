@@ -9,7 +9,7 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class InventarioPersonalizacionId implements Serializable {
 
-    @Column(name = "id_jugador", length = 2048)
+    @Column(name = "id_jugador", length = 255)
     private String idJugador;
 
     @Column(name = "id_personalizacion")

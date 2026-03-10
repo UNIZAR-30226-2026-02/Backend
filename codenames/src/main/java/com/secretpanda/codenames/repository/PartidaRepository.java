@@ -22,6 +22,9 @@ public interface PartidaRepository extends JpaRepository<Partida, Integer> {
     List<Partida> findByEsPublicaTrueAndEstadoOrderByFechaCreacionDesc(Partida.EstadoPartida estado);
 
     // Mostrar salas públicas esperando jugadores de una temática concreta, ordenadas de más nuevas a más antiguas
+    List<Partida> findByEsPublicaTrueAndEstado(Partida.EstadoPartida estado);
+
+    // Mostrar salas públicas esperando jugadores de una temática concreta, ordenadas de más nuevas a más antiguas
     List<Partida> findByEsPublicaTrueAndEstadoAndTema_IdTemaOrderByFechaCreacionDesc(Partida.EstadoPartida estado, Integer idTema);
 
     // Buscar partidas antiguas que sigan en estado "ESPERANDO_JUGADORES" para cerrarlas automáticamente

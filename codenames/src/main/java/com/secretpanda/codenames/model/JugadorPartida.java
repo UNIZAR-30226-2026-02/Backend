@@ -37,16 +37,17 @@ public class JugadorPartida {
     private String rol; 
 
     @Column(name = "num_fallos", nullable = false)
-    private Integer numFallos = 0;
+    private int numFallos = 0;
 
     @Column(name = "num_aciertos", nullable = false)
-    private Integer numAciertos = 0;
+    private int numAciertos = 0;
 
     @Column(nullable = false)
-    private Boolean abandono = false;
+    private boolean abandono = false;
 
     public JugadorPartida() {}
 
+    // Getters y Setters
     public Integer getIdJugadorPartida() { return idJugadorPartida; }
     public void setIdJugadorPartida(Integer idJugadorPartida) { this.idJugadorPartida = idJugadorPartida; }
 
@@ -62,12 +63,12 @@ public class JugadorPartida {
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }
 
-    public Integer getNumFallos() { return numFallos; }
-    public void setNumFallos(Integer numFallos) { this.numFallos = numFallos; }
+    public int getNumFallos() { return numFallos; }
+    public void setNumFallos(int numFallos) { this.numFallos = numFallos; }
 
-    public Integer getNumAciertos() { return numAciertos; }
-    public void setNumAciertos(Integer numAciertos) { this.numAciertos = numAciertos; }
+    public int getNumAciertos() { return numAciertos; }
+    public void setNumAciertos(int numAciertos) { this.numAciertos = numAciertos; }
 
-    public Boolean getAbandono() { return abandono; }
-    public void setAbandono(Boolean abandono) { this.abandono = abandono; }
+    public boolean isAbandono() { return abandono; }
+    public void setAbandono(boolean abandono) { this.abandono = abandono; }
 }

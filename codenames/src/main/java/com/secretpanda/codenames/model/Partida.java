@@ -18,7 +18,6 @@ import jakarta.persistence.Table;
 @Table(name = "partida")
 public class Partida {
 
-    // CORRECCIÓN: Añadido CANCELADA
     public enum EstadoPartida {
         ESPERANDO, EN_CURSO, FINALIZADA, CANCELADA
     }
@@ -40,13 +39,13 @@ public class Partida {
     private Jugador creador;
 
     @Column(name = "tiempo_espera", nullable = false)
-    private Integer tiempoEspera = 60;
+    private int tiempoEspera = 60;
 
     @Column(name = "max_jugadores", nullable = false)
-    private Integer maxJugadores = 8;
+    private int maxJugadores = 8;
 
     @Column(name = "es_publica", nullable = false)
-    private Boolean esPublica = true;
+    private boolean esPublica = true;
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion = LocalDateTime.now();
@@ -58,11 +57,13 @@ public class Partida {
     @Column(nullable = false, length = 32)
     private EstadoPartida estado = EstadoPartida.ESPERANDO;
 
+    // Se mantiene Boolean (Objeto) porque admite NULL mientras la partida no termina
     @Column(name = "rojo_gana")
     private Boolean rojoGana;
 
     public Partida() {}
 
+    // Getters y Setters
     public Integer getIdPartida() { return idPartida; }
     public void setIdPartida(Integer idPartida) { this.idPartida = idPartida; }
 
@@ -75,14 +76,14 @@ public class Partida {
     public Jugador getCreador() { return creador; }
     public void setCreador(Jugador creador) { this.creador = creador; }
 
-    public Integer getTiempoEspera() { return tiempoEspera; }
-    public void setTiempoEspera(Integer tiempoEspera) { this.tiempoEspera = tiempoEspera; }
+    public int getTiempoEspera() { return tiempoEspera; }
+    public void setTiempoEspera(int tiempoEspera) { this.tiempoEspera = tiempoEspera; }
 
-    public Integer getMaxJugadores() { return maxJugadores; }
-    public void setMaxJugadores(Integer maxJugadores) { this.maxJugadores = maxJugadores; }
+    public int getMaxJugadores() { return maxJugadores; }
+    public void setMaxJugadores(int maxJugadores) { this.maxJugadores = maxJugadores; }
 
-    public Boolean getEsPublica() { return esPublica; }
-    public void setEsPublica(Boolean esPublica) { this.esPublica = esPublica; }
+    public boolean isEsPublica() { return esPublica; }
+    public void setEsPublica(boolean esPublica) { this.esPublica = esPublica; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }

@@ -11,6 +11,9 @@ import com.secretpanda.codenames.model.JugadorPartida;
 @Repository
 public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, Integer> {
     
+    // Obtener todas las participaciones de un jugador concreto
+    List<JugadorPartida> findByJugador_IdGoogle(String idGoogle);
+
     // Obtener todos los jugadores en una partida concreta
     List<JugadorPartida> findByPartida_IdPartida(Integer idPartida);
     

@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 public class Personalizacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Se autogenera por ser SERIAL
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_personalizacion")
     private Integer idPersonalizacion;
 
@@ -23,72 +23,38 @@ public class Personalizacion {
     private String descripcion;
 
     @Column(name = "precio_bala", nullable = false)
-    private Integer precioBala;
+    private int precioBala = 0; // Primitivo para cálculos seguros
 
     @Column(nullable = false, length = 64)
-    private String tipo; // 'carta' o 'tablero'
+    private String tipo; 
 
     @Column(name = "valor_visual", columnDefinition = "TEXT")
-    private String valorVisual; // Guardará la URL de la imagen
+    private String valorVisual; 
 
     @Column(nullable = false)
-    private Boolean activo = true;
+    private boolean activo = true; // Primitivo para filtros booleanos rápidos
 
     public Personalizacion() {}
 
-    public Integer getIdPersonalizacion() {
-        return idPersonalizacion;
-    }
+    // Getters y Setters
+    public Integer getIdPersonalizacion() { return idPersonalizacion; }
+    public void setIdPersonalizacion(Integer idPersonalizacion) { this.idPersonalizacion = idPersonalizacion; }
 
-    public void setIdPersonalizacion(Integer idPersonalizacion) {
-        this.idPersonalizacion = idPersonalizacion;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public int getPrecioBala() { return precioBala; }
+    public void setPrecioBala(int precioBala) { this.precioBala = precioBala; }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
+    public String getValorVisual() { return valorVisual; }
+    public void setValorVisual(String valorVisual) { this.valorVisual = valorVisual; }
 
-    public Integer getPrecioBala() {
-        return precioBala;
-    }
-
-    public void setPrecioBala(Integer precioBala) {
-        this.precioBala = precioBala;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
-    public String getValorVisual() {
-        return valorVisual;
-    }
-
-    public void setValorVisual(String valorVisual) {
-        this.valorVisual = valorVisual;
-    }
-
-    public Boolean getActivo() {
-        return activo;
-    }
-
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
-    }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 }

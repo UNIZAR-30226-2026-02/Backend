@@ -9,10 +9,10 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class AmistadId implements Serializable {
 
-    @Column(name = "id_solicitante", length = 2048)
+    @Column(name = "id_solicitante", length = 255)
     private String idSolicitante;
 
-    @Column(name = "id_receptor", length = 2048)
+    @Column(name = "id_receptor", length = 255)
     private String idReceptor;
 
     public AmistadId() {}

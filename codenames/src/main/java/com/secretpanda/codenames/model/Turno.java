@@ -31,18 +31,17 @@ public class Turno {
     private JugadorPartida jugadorPartida;
 
     @Column(name = "num_turno", nullable = false)
-    private Integer numTurno;
+    private int numTurno; // Primitivo para evitar nulos en la secuencia cronológica
 
-    // CORRECCIÓN: Quitamos el nullable = false para permitir crear el turno antes de dar la pista
     @Column(name = "palabra_pista", length = 256)
     private String palabraPista;
 
-    // CORRECCIÓN: Quitamos el nullable = false
     @Column(name = "pista_numero")
-    private Integer pistaNumero;
+    private Integer pistaNumero; // Se mantiene Integer porque es nulo hasta que el jefe de espías decide
 
     public Turno() {}
     
+    // Getters y Setters
     public Integer getIdTurno() { return idTurno; }
     public void setIdTurno(Integer idTurno) { this.idTurno = idTurno; }
 
@@ -52,8 +51,8 @@ public class Turno {
     public JugadorPartida getJugadorPartida() { return jugadorPartida; }
     public void setJugadorPartida(JugadorPartida jugadorPartida) { this.jugadorPartida = jugadorPartida; }
 
-    public Integer getNumTurno() { return numTurno; }
-    public void setNumTurno(Integer numTurno) { this.numTurno = numTurno; }
+    public int getNumTurno() { return numTurno; }
+    public void setNumTurno(int numTurno) { this.numTurno = numTurno; }
 
     public String getPalabraPista() { return palabraPista; }
     public void setPalabraPista(String palabraPista) { this.palabraPista = palabraPista; }

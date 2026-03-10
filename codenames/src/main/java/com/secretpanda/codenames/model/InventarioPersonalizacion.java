@@ -21,13 +21,13 @@ public class InventarioPersonalizacion {
     @JoinColumn(name = "id_jugador")
     private Jugador jugador;
 
-    @ManyToOne(fetch = FetchType.EAGER) // Eager para traer los datos del cosmético automáticamente
+    @ManyToOne(fetch = FetchType.EAGER)
     @MapsId("idPersonalizacion")
     @JoinColumn(name = "id_personalizacion")
     private Personalizacion personalizacion;
 
     @Column(nullable = false)
-    private Boolean equipado = false;
+    private boolean equipado = false;
 
     public InventarioPersonalizacion() {}
 
@@ -40,6 +40,6 @@ public class InventarioPersonalizacion {
     public Personalizacion getPersonalizacion() { return personalizacion; }
     public void setPersonalizacion(Personalizacion personalizacion) { this.personalizacion = personalizacion; }
 
-    public Boolean getEquipado() { return equipado; }
-    public void setEquipado(Boolean equipado) { this.equipado = equipado; }
+    public boolean isEquipado() { return equipado; }
+    public void setEquipado(boolean equipado) { this.equipado = equipado; }
 }

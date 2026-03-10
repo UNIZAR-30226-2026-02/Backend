@@ -22,26 +22,25 @@ public class Jugador {
     private String fotoPerfil;
 
     @Column(nullable = false)
-    private Integer balas = 0;
+    private int balas = 0;
 
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
     @Column(name = "partidas_jugadas", nullable = false)
-    private Integer partidasJugadas = 0;
+    private int partidasJugadas = 0;
 
     @Column(nullable = false)
-    private Integer victorias = 0;
+    private int victorias = 0;
 
     @Column(name = "num_aciertos", nullable = false)
-    private Integer numAciertos = 0;
+    private int numAciertos = 0;
 
     @Column(name = "num_fallos", nullable = false)
-    private Integer numFallos = 0;
+    private int numFallos = 0;
 
-    // CORRECCIÓN: Añadido el contador histórico de abandonos
     @Column(nullable = false)
-    private Integer abandonos = 0;
+    private int abandonos = 0;
 
     public Jugador() {}
 
@@ -55,24 +54,24 @@ public class Jugador {
     public String getFotoPerfil() { return fotoPerfil; }
     public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
 
-    public Integer getBalas() { return balas; }
-    public void setBalas(Integer balas) { this.balas = balas; }
+    public int getBalas() { return balas; }
+    public void setBalas(int balas) { this.balas = balas; }
 
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
 
-    public Integer getPartidasJugadas() { return partidasJugadas; }
-    public void setPartidasJugadas(Integer partidasJugadas) { this.partidasJugadas = partidasJugadas; }
+    public int getPartidasJugadas() { return partidasJugadas; }
+    public void setPartidasJugadas(int partidasJugadas) { this.partidasJugadas = partidasJugadas; }
 
-    public Integer getVictorias() { return victorias; }
-    public void setVictorias(Integer victorias) { this.victorias = victorias; }
+    public int getVictorias() { return victorias; }
+    public void setVictorias(int victorias) { this.victorias = victorias; }
 
-    public Integer getNumAciertos() { return numAciertos; }
-    public void setNumAciertos(Integer numAciertos) { this.numAciertos = numAciertos; }
+    public int getNumAciertos() { return numAciertos; }
+    public void setNumAciertos(int numAciertos) { this.numAciertos = numAciertos; }
 
-    public Integer getNumFallos() { return numFallos; }
-    public void setNumFallos(Integer numFallos) { this.numFallos = numFallos; }
+    public int getNumFallos() { return numFallos; }
+    public void setNumFallos(int numFallos) { this.numFallos = numFallos; }
 
-    public Integer getAbandonos() { return abandonos; }
-    public void setAbandonos(Integer abandonos) { this.abandonos = abandonos; }
+    public int getAbandonos() { return abandonos; }
+    public void setAbandonos(int abandonos) { this.abandonos = abandonos; }
 }
