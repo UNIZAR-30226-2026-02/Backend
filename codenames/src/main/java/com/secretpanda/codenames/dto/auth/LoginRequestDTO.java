@@ -10,23 +10,14 @@ public class LoginRequestDTO {
     private String tag;
 
     // Contructor vacío
-    public LoginRequestDTO() {
-    }
+    public LoginRequestDTO() {}
 
     // Getters y Setters
-    public String getIdToken() {
-        return idToken;
-    }
+    public String getIdToken() { return idToken; }
 
-    public void setIdToken(String idToken) {
-        this.idToken = idToken;
-    }
+    public void setIdToken(String idToken) { this.idToken = idToken; }
 
-    public String getTag() {
-        return tag;
-    }
+    public String getTag() { return tag; }
 
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
+    public void setTag(String tag) { this.tag = tag; }
 }

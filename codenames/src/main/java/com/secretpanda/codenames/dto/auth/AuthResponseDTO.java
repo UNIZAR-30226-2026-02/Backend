@@ -57,24 +57,14 @@ public class AuthResponseDTO {
         }
 
         // Getters
-        public String getIdGoogle() { 
-            return idGoogle; 
-        }
+        public String getIdGoogle() { return idGoogle; }
 
-        public String getTag() { 
-            return tag; 
-        }
+        public String getTag() { return tag; }
 
-        public String getFotoPerfil() { 
-            return fotoPerfil; 
-        }
+        public String getFotoPerfil() { return fotoPerfil; }
 
-        public Integer getBalas() { 
-            return balas; 
-        }
+        public Integer getBalas() { return balas; }
         
-        public Integer getVictorias() { 
-            return victorias; 
-        }
+        public Integer getVictorias() { return victorias; }
     }
 }
