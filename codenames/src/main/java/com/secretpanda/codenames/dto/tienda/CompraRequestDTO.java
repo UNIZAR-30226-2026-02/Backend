@@ -3,9 +3,6 @@ package com.secretpanda.codenames.dto.tienda;
 /**
  * DTO para la solicitud de compra o equipamiento de una personalización.
  */
-
-#WARNING REVISAR 
-
 public class CompraRequestDTO {
 
     // Nota: El idJugador podría omitirse si se obtiene del token JWT de seguridad.
