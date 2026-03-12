@@ -1,0 +1,45 @@
+CLIENTE (React / Android)
+        │
+        │  1. El usuario pulsa "Iniciar sesión con Google"
+        │     El SDK de Google gestiona todo (pantalla de selección de cuenta,
+        │     consentimiento, etc.) y devuelve un **idToken** (JWT firmado por Google)
+        │
+        ▼
+CLIENTE → BACKEND   POST /api/auth/login
+        │           Body: { idToken: "<token de Google>", tag: "NombreUsuario" }
+        │
+        ▼
+GoogleAuthService.verificarToken(idToken)
+        │   Llama a los servidores de Google para validar la firma del token
+        │   y que el audience coincide con nuestro client-id
+        │   Extrae: idGoogle (sub), email, nombre
+        │
+        ▼
+Lógica upsert en AuthService / AuthController
+        │
+        ├─ ¿Existe el jugador (idGoogle)?
+        │       NO → Crear nuevo Jugador (registro automático)
+        │            Necesita el campo "tag" del body
+        │       SÍ → Devolver el Jugador existente (login)
+        │
+        ▼
+JwtService.generarToken(idGoogle)
+        │   Genera nuestro propio JWT interno con idGoogle como subject
+        │
+        ▼
+BACKEND → CLIENTE   200 OK
+        │           Body: { token: "<nuestro JWT>", perfil: { tag, fotoPerfil, balas... } }
+        │
+        ▼
+CLIENTE almacena el JWT y lo adjunta en todas las peticiones siguientes:
+        Authorization: Bearer <nuestro JWT>
+        │
+        ▼
+JwtFilter intercepta cada petición REST
+        │   Valida el JWT → extrae idGoogle → autentica en SecurityContext
+        │
+        ▼
+WebSocketConfig intercepta el CONNECT de STOMP
+        │   Igual que JwtFilter pero para WebSocket
+        ▼
+Acceso concedido al recurso

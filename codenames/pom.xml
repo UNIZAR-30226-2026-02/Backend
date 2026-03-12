@@ -42,13 +42,13 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
-        <!-- ===== SEGURIDAD ===== -->
+        <!-- ===== SEGURIDAD — Persona 1 ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- ===== JWT ===== -->
+        <!-- ===== JWT — Persona 1 ===== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -67,7 +67,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ===== GOOGLE OAUTH ===== -->
+        <!-- ===== GOOGLE OAUTH — Persona 1 ===== -->
         <dependency>
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-oauth2-http</artifactId>
@@ -81,14 +81,14 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ===== LOMBOK ===== -->
+        <!-- ===== LOMBOK — Todos ===== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- ===== MAPSTRUCT ===== -->
+        <!-- ===== MAPSTRUCT — Todos ===== -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
@@ -110,6 +110,7 @@
 
     <build>
         <plugins>
+            <!-- Compilador con MapStruct + Lombok correctamente enlazados -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

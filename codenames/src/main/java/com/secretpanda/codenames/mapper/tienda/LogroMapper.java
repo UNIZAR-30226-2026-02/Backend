@@ -7,17 +7,7 @@ import com.secretpanda.codenames.model.Logro.TipoLogro;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 
- *
- * Gestiona la conversión bidireccional entre la entidad y el DTO
- * usado en el catálogo de logros (pantalla de logros del jugador)
- * y en los endpoints de administración (crear/actualizar logros).
- *
- * El enum TipoLogro se serializa como String ("medalla" o "logro")
- * y se deserializa con valueOf() para mantener el contrato de la API
- * independiente de la implementación interna del enum.
- */
+
 // Mapper estático para la entidad Logro
 public class LogroMapper {
 
