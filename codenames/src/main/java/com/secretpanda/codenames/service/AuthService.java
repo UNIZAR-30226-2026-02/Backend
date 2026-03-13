@@ -1,5 +1,12 @@
 package com.secretpanda.codenames.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.secretpanda.codenames.dto.auth.AuthResponseDTO;
 import com.secretpanda.codenames.dto.auth.LoginRequestDTO;
 import com.secretpanda.codenames.model.Jugador;
@@ -8,19 +15,17 @@ import com.secretpanda.codenames.security.GoogleAuthService;
 import com.secretpanda.codenames.security.GoogleAuthService.DatosGoogle;
 import com.secretpanda.codenames.security.JwtService;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.server.ResponseStatusException;
-
 /**
- * Gestiona el flujo completo de autenticación mediante Google OAuth 2.0.
+ * Gestiona el flujo de autenticación con Google OAuth 2.0.
  *
- * Un único endpoint cubre tanto el registro (primera vez) como el login
- * (visitas siguientes). La decisión se toma comprobando si el idGoogle
- * ya existe en la base de datos (patrón upsert).
+ * Contrato API (POST /auth/login):
+ *   - Verifica el token con Google.
+ *   - Si el jugador no existe → INSERT con estadísticas a 0.
+ *   - Si el jugador existe    → login directo.
+ *   - Devuelve el JUGADOR completo + token JWT.
+ *
+ * El tag inicial es el nombre de Google. El usuario puede cambiarlo
+ * después con PUT /jugadores/{id_google} (RF-6).
  */
 @Service
 public class AuthService {
@@ -34,77 +39,58 @@ public class AuthService {
     @Autowired
     private JugadorRepository jugadorRepository;
 
-    /**
-     * Punto de entrada único para login y registro.
-     *
-     * @param dto contiene el idToken de Google y el tag deseado por el usuario
-     * @return AuthResponseDTO con nuestro JWT interno y el perfil básico del jugador
-     */
     @Transactional
     public AuthResponseDTO loginORegistrar(LoginRequestDTO dto) {
 
-        // 1. Verificar el idToken con los servidores de Google
-        DatosGoogle datosGoogle = googleAuthService.verificarToken(dto.getIdToken());
+        // 1. Verificar el token con Google
+        DatosGoogle datosGoogle = googleAuthService.verificarToken(dto.getId_google());
 
-        // 2. Buscar si el jugador ya existe por su idGoogle
+        // 2. Buscar si el jugador ya existe
         Jugador jugador = jugadorRepository.findByIdGoogle(datosGoogle.idGoogle())
                 .orElse(null);
 
         if (jugador == null) {
-            // ── REGISTRO: primera vez que este usuario accede ──────────────
-            jugador = registrarNuevoJugador(datosGoogle, dto.getTag());
+            // Primera vez → registrar con estadísticas a 0
+            jugador = registrarNuevoJugador(datosGoogle);
         }
-        // Si ya existe simplemente seguimos con el jugador recuperado de BD
-        // (login: no modificamos sus datos)
 
-        // 3. Generar nuestro propio JWT interno
+        // 3. Generar JWT interno
         String token = jwtService.generarToken(jugador.getIdGoogle());
 
-        // 4. Construir y devolver la respuesta
+        // 4. Devolver JUGADOR completo + token
         return new AuthResponseDTO(token, jugador);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Métodos privados
-    // ──────────────────────────────────────────────────────────────────────────
-
     /**
-     * Crea y persiste un nuevo Jugador a partir de los datos de Google y el
-     * tag elegido por el usuario en el cliente.
-     *
-     * Reglas:
-     *  - El tag no puede estar vacío.
-     *  - El tag debe ser único en la base de datos.
-     *  - Si no se proporciona tag se usa el nombre de Google como fallback.
+     * Crea y persiste un nuevo Jugador.
+     * Tag inicial = nombre de Google. Si ya está en uso, añade sufijo _1, _2...
      */
-    private Jugador registrarNuevoJugador(DatosGoogle datosGoogle, String tagSolicitado) {
+    private Jugador registrarNuevoJugador(DatosGoogle datosGoogle) {
 
-        // Determinar el tag definitivo
-        String tag = StringUtils.hasText(tagSolicitado)
-                ? tagSolicitado.trim()
-                : datosGoogle.nombre();   // fallback al nombre de Google
+        String tagBase = StringUtils.hasText(datosGoogle.nombre())
+                ? datosGoogle.nombre().trim()
+                : "user_" + datosGoogle.idGoogle().substring(0, 8);
 
-        if (!StringUtils.hasText(tag)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "El tag (nombre de usuario) es obligatorio para el registro"
-            );
-        }
-
-        // Comprobar unicidad del tag
-        if (jugadorRepository.existsByTag(tag)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "El tag '" + tag + "' ya está en uso. Elige otro nombre de usuario."
-            );
+        // Garantizar unicidad del tag
+        String tag = tagBase;
+        int intento = 1;
+        while (jugadorRepository.existsByTag(tag)) {
+            tag = tagBase + "_" + intento;
+            intento++;
         }
 
         Jugador nuevo = new Jugador();
         nuevo.setIdGoogle(datosGoogle.idGoogle());
         nuevo.setTag(tag);
-        // fotoPerfil: null por defecto, el usuario la elige después (RF-6)
-        // balas, victorias, etc.: se inicializan a 0 en el propio modelo
+        // balas, victorias, aciertos, fallos → se inicializan a 0 en el modelo
 
-        return jugadorRepository.save(nuevo);
+        try {
+            return jugadorRepository.save(nuevo);
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error al registrar el jugador: " + e.getMessage()
+            );
+        }
     }
 }

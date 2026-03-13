@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,15 +12,19 @@ import com.secretpanda.codenames.dto.auth.AuthResponseDTO;
 import com.secretpanda.codenames.dto.auth.LoginRequestDTO;
 import com.secretpanda.codenames.service.AuthService;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
- * Controlador de autenticación.
+ * Controlador de autenticación — POST /api/auth/login
  *
- * Expone un único endpoint público que actúa como puerta de entrada
- * para cualquier usuario, tanto si es la primera vez (registro)
- * como si ya tiene cuenta (login). La distinción la gestiona AuthService.
+ * Tras verificar el token de Google devuelve el JWT de dos formas:
  *
- * Este endpoint está marcado como permitAll() en SecurityConfig,
- * por lo que no requiere JWT para ser invocado.
+ *   1. Cookie HttpOnly "token_sesion" → React web.
+ *      Set-Cookie: token_sesion=<jwt>; HttpOnly; Secure; SameSite=Strict
+ *      El navegador la adjunta automáticamente con credentials:"include".
+ *
+ *   2. Campo "token" en el body JSON → Android.
+ *      La app lee el token del body y lo guarda en su storage local.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -28,24 +33,42 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Value("${jwt.expiration-ms:86400000}")
+    private long jwtExpirationMs;
+
     /**
      * Login / Registro con Google OAuth 2.0.
      *
-     * El cliente (React o Android) obtiene previamente un idToken del SDK de
-     * Google y lo envía aquí junto con el tag deseado.
-     *
-     * Casos:
-     *   - Usuario nuevo  → se registra automáticamente y recibe JWT
-     *   - Usuario existente → recibe JWT directamente
-     *
-     * @param dto { idToken: "<Google idToken>", tag: "NombreJugador" }
-     * @return 200 con { token, perfil } si todo va bien
-     *         400 si el tag está vacío o el idToken es inválido
-     *         409 si el tag ya está en uso (solo en registro)
+     * @param dto  { "id_google": "<token de Google>" }
+     * @return 200 con el JUGADOR completo + token JWT
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<AuthResponseDTO> login(
+            @RequestBody LoginRequestDTO dto,
+            HttpServletResponse httpResponse) {
+
         AuthResponseDTO respuesta = authService.loginORegistrar(dto);
+
+        // Emitir cookie HttpOnly para React
+        // SameSite=Strict via header manual (Jakarta Servlet 6 no tiene setSameSite)
+        httpResponse.setHeader("Set-Cookie",
+                String.format("token_sesion=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=%d",
+                        respuesta.getToken(),
+                        jwtExpirationMs / 1000));
+
+        // El token también va en el body para Android
         return ResponseEntity.ok(respuesta);
     }
+
+    /**
+     * Logout — invalida la cookie en el navegador.
+     * Android simplemente descarta su token local.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse httpResponse) {
+        httpResponse.setHeader("Set-Cookie",
+                "token_sesion=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");
+        return ResponseEntity.noContent().build();
+    }
 }
+

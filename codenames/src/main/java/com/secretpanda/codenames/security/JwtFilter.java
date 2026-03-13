@@ -8,25 +8,29 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Filtro JWT que se ejecuta una sola vez por petición HTTP.
+ * Filtro JWT — se ejecuta una sola vez por petición HTTP.
  *
- * Flujo:
- *   1. Extrae el token del header "Authorization: Bearer <token>"
- *   2. Lo valida con JwtService
- *   3. Si es válido, autentica la petición en el SecurityContext
- *      para que Spring Security la deje pasar al controlador.
+ * Busca el JWT en dos sitios por orden de prioridad:
+ *
+ *   1. Cookie "token_sesion" (HttpOnly) → React web.
+ *      El navegador la adjunta automáticamente con credentials:"include".
+ *
+ *   2. Header "Authorization: Bearer <token>" → Android.
+ *      La app lo añade manualmente en cada petición.
  */
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final String COOKIE_NAME = "token_sesion";
 
     @Autowired
     private JwtService jwtService;
@@ -39,13 +43,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = extraerToken(request);
 
-        // Si hay token y es válido, autenticamos la petición
         if (token != null && jwtService.esTokenValido(token)) {
 
             String idGoogle = jwtService.extraerIdGoogle(token);
 
-            // Creamos el objeto de autenticación con el idGoogle como principal.
-            // No necesitamos roles por ahora (lista vacía de authorities).
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             idGoogle,
@@ -54,24 +55,37 @@ public class JwtFilter extends OncePerRequestFilter {
                     );
 
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            // Registramos la autenticación en el contexto de Spring Security
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
-        // Continuamos con el siguiente filtro de la cadena
         filterChain.doFilter(request, response);
     }
 
     /**
-     * Extrae el token JWT del header Authorization.
-     * Devuelve null si el header no existe o no empieza por "Bearer ".
+     * Busca el JWT primero en la cookie HttpOnly (React),
+     * y si no existe en el header Authorization (Android).
      */
     private String extraerToken(HttpServletRequest request) {
+
+        // 1. Cookie token_sesion (React web)
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (COOKIE_NAME.equals(cookie.getName())) {
+                    String valor = cookie.getValue();
+                    if (valor != null && !valor.isBlank()) {
+                        return valor;
+                    }
+                }
+            }
+        }
+
+        // 2. Header Authorization: Bearer <token> (Android)
         String authHeader = request.getHeader("Authorization");
-        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
+
         return null;
     }
 }
