@@ -1,13 +1,22 @@
 package com.secretpanda.codenames.controller;
 
-import com.secretpanda.codenames.model.JugadorPartida;
-import com.secretpanda.codenames.service.JugadorPartidaService;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.secretpanda.codenames.model.JugadorPartida;
+import com.secretpanda.codenames.model.JugadorPartida.Equipo;
+import com.secretpanda.codenames.model.JugadorPartida.Rol;
+import com.secretpanda.codenames.service.JugadorPartidaService;
 
 @RestController
 @RequestMapping("/api/participantes")
@@ -33,8 +42,8 @@ public class JugadorPartidaController {
     public ResponseEntity<JugadorPartida> unirse(
             @PathVariable Integer idPartida,
             @PathVariable String idJugador,
-            @RequestParam String equipo,
-            @RequestParam String rol) {
+            @RequestParam Equipo equipo,
+            @RequestParam Rol rol) {
         try {
             return ResponseEntity.ok(jugadorPartidaService.unirseAPartida(idJugador, idPartida, equipo, rol));
         } catch (RuntimeException e) {
@@ -46,8 +55,8 @@ public class JugadorPartidaController {
     @PutMapping("/{idJugadorPartida}/cambiar-rol")
     public ResponseEntity<JugadorPartida> cambiarRol(
             @PathVariable Integer idJugadorPartida,
-            @RequestParam String equipo,
-            @RequestParam String rol) {
+            @RequestParam Equipo equipo,
+            @RequestParam Rol rol) {
         try {
             return ResponseEntity.ok(jugadorPartidaService.actualizarRolEquipo(idJugadorPartida, equipo, rol));
         } catch (RuntimeException e) {

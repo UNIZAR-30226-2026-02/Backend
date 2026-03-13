@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.model.JugadorPartida.Equipo;
+import com.secretpanda.codenames.model.JugadorPartida.Rol;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
 import com.secretpanda.codenames.repository.PartidaRepository;
@@ -38,7 +40,7 @@ public class JugadorPartidaService {
     }
 
     // Unirse a una partida en la sala de espera
-    public JugadorPartida unirseAPartida(String idJugador, Integer idPartida, String equipo, String rol) {
+    public JugadorPartida unirseAPartida(String idJugador, Integer idPartida, Equipo equipo, Rol rol) {
         if (jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_IdPartida(idJugador, idPartida)) {
             throw new RuntimeException("El jugador ya está en esta partida");
         }
@@ -47,9 +49,6 @@ public class JugadorPartidaService {
                 .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
         Partida partida = partidaRepository.findById(idPartida)
                 .orElseThrow(() -> new RuntimeException("Partida no encontrada"));
-
-        // Nota: Tienes un trigger en la BD que verifica aforos y estados, 
-        // pero podemos hacer una validación previa aquí si queremos.
 
         JugadorPartida jugadorPartida = new JugadorPartida();
         jugadorPartida.setJugador(jugador);
@@ -64,7 +63,7 @@ public class JugadorPartidaService {
     }
 
     // Cambiarse de equipo o rol en la sala de espera
-    public JugadorPartida actualizarRolEquipo(Integer idJugadorPartida, String nuevoEquipo, String nuevoRol) {
+    public JugadorPartida actualizarRolEquipo(Integer idJugadorPartida, Equipo nuevoEquipo, Rol nuevoRol) {
         return jugadorPartidaRepository.findById(idJugadorPartida).map(jp -> {
             jp.setEquipo(nuevoEquipo);
             jp.setRol(nuevoRol);

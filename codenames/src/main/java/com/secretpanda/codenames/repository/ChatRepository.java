@@ -29,6 +29,9 @@ public interface ChatRepository extends JpaRepository<Chat, Integer> {
     // Solo los de su equipo
     List<Chat> findByPartida_IdPartidaAndJugadorPartida_EquipoOrderByFechaDesc(Integer idPartida, JugadorPartida.Equipo equipo, Pageable pageable);
 
+    // Cargar todo el historial de la partida (sin importar el equipo)
+    List<Chat> findByPartida_IdPartidaOrderByFechaAsc(Integer idPartida);
+
     // MANTENIMIENTO (Limpieza de Base de Datos)
     // Código Secreto genera muchos mensajes. Si la partida se cancela o termina, 
     // interesante borrar el chat entero para ahorrar espacio en el servidor.
