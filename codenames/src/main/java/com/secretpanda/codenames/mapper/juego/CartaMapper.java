@@ -16,13 +16,16 @@ public class CartaMapper {
         if (carta == null) return null;
 
         CartaDTO dto = new CartaDTO();
-        dto.setIdCarta(carta.getIdCartaTablero());
+        
+        // Atributo actualizado al formato snake_case
+        dto.setId_carta(carta.getIdCartaTablero()); 
+        
         dto.setPalabra(carta.getPalabra().getValor());
         dto.setFila(carta.getFila());
         dto.setColumna(carta.getColumna());
         dto.setEstado(carta.getEstado().name());
 
-        // El tipo solo lo revelamos al líder o si la carta ya está revelada (es importante que lo controlemos)
+        // El tipo solo lo revelamos al líder o si la carta ya está revelada
         boolean cartaRevelada = EstadoCarta.revelada.equals(carta.getEstado());
         if (esLider || cartaRevelada) {
             dto.setTipo(carta.getTipo().name());
@@ -33,7 +36,7 @@ public class CartaMapper {
         return dto;
     }
 
-    // Convertimos la lista de TableroCarta a CartaDTO para controlar la visibilidad de las cartas
+    // Convertimos la lista de TableroCarta a CartaDTO para controlar la visibilidad
     public static List<CartaDTO> toDTOList(List<TableroCarta> cartas, boolean esLider) {
         return cartas.stream()
                 .map(carta -> toDTO(carta, esLider))

@@ -33,4 +33,10 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
 
     // Buscar jugador con un rol específico en un equipo específico dentro de una partida
     Optional<JugadorPartida> findByPartida_IdPartidaAndEquipoAndRol(Integer idPartida, Equipo equipo, Rol rol);
+
+    // Contar cuántos jugadores NO han abandonado la partida (Para verificar si se puede jugar)
+    long countByPartida_IdPartidaAndAbandonoFalse(Integer idPartida);
+
+    // Obtener la lista de jugadores que siguen activos en la partida (Los que no han abandonado)
+    List<JugadorPartida> findByPartida_IdPartidaAndAbandonoFalse(Integer idPartida);
 }

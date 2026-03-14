@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,9 @@ public interface TemaRepository extends JpaRepository<Tema, Integer> {
     // Validar duplicados por nombre
     boolean existsByNombre(String nombre);
 
-    // Búsqueda de temas activos por coincidencia de nombre
+    // Buscar un tema concreto por su nombre exacto
+    Optional<Tema> findByNombre(String nombre);
+
+    // Búsqueda de temas activos por coincidencia de nombre (parcial)
     List<Tema> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre);
 }

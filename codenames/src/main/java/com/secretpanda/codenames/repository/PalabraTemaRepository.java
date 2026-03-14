@@ -18,6 +18,9 @@ public interface PalabraTemaRepository extends JpaRepository<PalabraTema, Intege
     // Obtener solo las palabras activas de un tema específico (para generar el tablero del juego)
     List<PalabraTema> findByTema_IdTemaAndActivoTrue(Integer idTema);
 
+    // Validar que no exista ya la misma palabra dentro del mismo tema
+    boolean existsByPalabraAndTema_IdTema(String palabra, Integer idTema);
+
     // MEJORAS DE RENDIMIENTO
     // Extrae un número X de palabras aleatorias directamente desde PostgreSQL.
     // Parametrizamos el LIMIT para que el Service decida cuántas cartas quiere

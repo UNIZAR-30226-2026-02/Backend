@@ -1,8 +1,8 @@
 package com.secretpanda.codenames.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Collection;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +18,9 @@ public interface JugadorRepository extends JpaRepository<Jugador, String> {
 
     // Buscar a un jugador por su tag
     Optional<Jugador> findByTag(String tag);
+
+    // Buscador de jugadores por tag (Parcial) para encontrar amigos
+    List<Jugador> findByTagContainingIgnoreCase(String tag, Pageable pageable);
 
     // Obtener el Ranking Global Dinámico por Victorias
     List<Jugador> findByOrderByVictoriasDesc(Pageable pageable);

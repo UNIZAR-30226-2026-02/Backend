@@ -16,18 +16,20 @@ public class JugadorPartidaMapper {
         if (jp == null) return null;
 
         JugadorPartidaDTO dto = new JugadorPartidaDTO();
-        dto.setIdJugadorPartida(jp.getIdJugadorPartida());
+        
+        // Identificador (snake_case)
+        dto.setId_jugador_partida(jp.getIdJugadorPartida());
 
-        // Datos del jugador
-        dto.setIdJugador(jp.getJugador().getIdGoogle());
-        dto.setTagJugador(jp.getJugador().getTag());
-        dto.setFotoJugador(jp.getJugador().getFotoPerfil());
+        // Datos del jugador (snake_case)
+        dto.setId_jugador(jp.getJugador().getIdGoogle());
+        dto.setTag_jugador(jp.getJugador().getTag());
+        dto.setFoto_jugador(jp.getJugador().getFotoPerfil());
 
-        // Estado del jugador en la partida
+        // Estado del jugador en la partida (snake_case)
         dto.setEquipo(jp.getEquipo().name());
         dto.setRol(jp.getRol().name());
-        dto.setNumAciertos(jp.getNumAciertos());
-        dto.setNumFallos(jp.getNumFallos());
+        dto.setNum_aciertos(jp.getNumAciertos());
+        dto.setNum_fallos(jp.getNumFallos());
         dto.setAbandono(jp.isAbandono());
 
         return dto;
@@ -35,6 +37,8 @@ public class JugadorPartidaMapper {
 
     // Conversión de lista
     public static List<JugadorPartidaDTO> toDTOList(List<JugadorPartida> participantes) {
+        if (participantes == null) return null; // Seguro contra nulos
+        
         return participantes.stream()
                 .map(JugadorPartidaMapper::toDTO)
                 .collect(Collectors.toList());

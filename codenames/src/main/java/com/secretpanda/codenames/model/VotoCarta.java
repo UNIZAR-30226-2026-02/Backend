@@ -12,7 +12,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-// CORRECCIÓN: Unique constraint a 3 columnas para permitir varios votos en el mismo turno a distintas cartas
 @Table(name = "voto_carta", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"id_turno", "id_jugador_partida", "id_carta_tablero"})
 })
