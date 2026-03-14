@@ -10,8 +10,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @Entity
 @Table(name = "tablero_carta", uniqueConstraints = {
@@ -36,25 +39,36 @@ public class TableroCarta {
     @JoinColumn(name = "id_partida", nullable = false)
     private Partida partida;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_palabra", nullable = false)
     private PalabraTema palabra;
 
+    @Min(0)
+    @Max(3)
     @Column(nullable = false)
     private int fila;
 
+    @Min(0)
+    @Max(4)
     @Column(nullable = false)
     private int columna;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private EstadoCarta estado = EstadoCarta.oculta;
+    private EstadoCarta estado;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TipoCarta tipo;
 
     public TableroCarta() {}
+
+    @PrePersist
+    protected void onPersist() {
+        if (this.estado == null) {
+            this.estado = EstadoCarta.oculta;
+        }
+    }
 
     public Integer getIdCartaTablero() { 
         return idCartaTablero; 

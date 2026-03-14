@@ -23,7 +23,7 @@ public class JugadorLogro {
     @JoinColumn(name = "id_jugador")
     private Jugador jugador;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idLogro")
     @JoinColumn(name = "id_logro")
     private Logro logro;

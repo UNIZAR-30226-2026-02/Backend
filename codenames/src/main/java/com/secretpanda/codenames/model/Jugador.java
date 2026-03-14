@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity 
@@ -25,7 +26,7 @@ public class Jugador {
     private int balas = 0;
 
     @Column(name = "fecha_registro", nullable = false, updatable = false)
-    private LocalDateTime fechaRegistro = LocalDateTime.now();
+    private LocalDateTime fechaRegistro;
 
     @Column(name = "partidas_jugadas", nullable = false)
     private int partidasJugadas = 0;
@@ -40,6 +41,13 @@ public class Jugador {
     private int numFallos = 0;
 
     public Jugador() {}
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.fechaRegistro == null) {
+            this.fechaRegistro = LocalDateTime.now();
+        }
+    }
 
     public String getIdGoogle() { 
         return idGoogle;

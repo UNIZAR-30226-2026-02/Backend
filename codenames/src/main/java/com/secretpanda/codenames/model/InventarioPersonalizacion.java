@@ -21,7 +21,7 @@ public class InventarioPersonalizacion {
     @JoinColumn(name = "id_jugador")
     private Jugador jugador;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idPersonalizacion")
     @JoinColumn(name = "id_personalizacion")
     private Personalizacion personalizacion;

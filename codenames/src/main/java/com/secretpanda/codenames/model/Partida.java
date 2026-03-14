@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -48,19 +49,36 @@ public class Partida {
     private boolean esPublica = true;
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion = LocalDateTime.now();
+    private LocalDateTime fechaCreacion;
 
     @Column(name = "fecha_fin")
     private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private EstadoPartida estado = EstadoPartida.esperando;
+    private EstadoPartida estado;
 
     @Column(name = "rojo_gana")
     private Boolean rojoGana;
 
     public Partida() {}
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = LocalDateTime.now();
+        }
+        if (this.estado == null) {
+            this.estado = EstadoPartida.esperando;
+        }
+
+        if (this.maxJugadores < 4 || this.maxJugadores > 16) {
+            throw new IllegalStateException("El número de jugadores debe estar entre 4 y 16");
+        }
+        if (this.tiempoEspera != 30 && this.tiempoEspera != 60 && this.tiempoEspera != 90 && this.tiempoEspera != 120) {
+            throw new IllegalStateException("El tiempo de espera debe ser 30, 60, 90 o 120 segundos");
+        }
+    }
 
     public Integer getIdPartida() { 
         return idPartida; 

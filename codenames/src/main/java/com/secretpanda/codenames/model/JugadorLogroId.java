@@ -9,10 +9,10 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class JugadorLogroId implements Serializable {
 
-    @Column(name = "id_jugador", length = 255)
+    @Column(name = "id_jugador", length = 255, nullable = false)
     private String idJugador;
 
-    @Column(name = "id_logro")
+    @Column(name = "id_logro", nullable = false)
     private Integer idLogro;
 
     public JugadorLogroId() {}
@@ -33,6 +33,7 @@ public class JugadorLogroId implements Serializable {
     public Integer getIdLogro() { 
         return idLogro; 
     }
+    
     public void setIdLogro(Integer idLogro) { 
         this.idLogro = idLogro; 
     }
