@@ -16,7 +16,7 @@ public class AuthResponseDTO {
     // JWT interno — para Android (React usa la cookie HttpOnly)
     private String token;
 
-    // Todos los campos del JUGADOR según el contrato
+    // Todos los campos del JUGADOR 
     private String idGoogle;
     private String tag;
     private String fotoPerfil;
