@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * Tabla intermedia entre Jugador y Logro que
  * registra el progreso de cada jugador en cada logro
  *
- * Vamos a reutilizar LogroDTO en lugar de crear un DTO separado (solo necesitaremos una vista del logro)
+ * Reutilizamos LogroDTO en lugar de crear un DTO separado para tener una vista unificada.
  */
 public class JugadorLogroMapper {
 
@@ -23,13 +23,21 @@ public class JugadorLogroMapper {
     public static LogroDTO toEnrichedDTO(JugadorLogro jugadorLogro) {
         if (jugadorLogro == null) return null;
 
+        // Cargamos los datos estáticos de la medalla (nombre, descripción, objetivo...)
         LogroDTO dto = LogroMapper.toDTO(jugadorLogro.getLogro());
+
+        // INYECTAMOS el progreso del jugador (¡esto es lo que faltaba!)
+        dto.setProgreso_actual(jugadorLogro.getProgresoActual());
+        dto.setCompletado(jugadorLogro.isCompletado());
+        dto.setFecha_desbloqueo(jugadorLogro.getFechaDesbloqueo());
 
         return dto;
     }
 
-    // Convertimos la lista de JugadorLogro a una lista de LogroDTO (al que hemos añadido el progreso del jugador)
+    // Convertimos la lista de JugadorLogro a una lista de LogroDTO enriquecidos
     public static List<LogroDTO> toEnrichedDTOList(List<JugadorLogro> jugadorLogros) {
+        if (jugadorLogros == null) return null; // Pequeño seguro extra por si acaso
+        
         return jugadorLogros.stream()
                 .map(JugadorLogroMapper::toEnrichedDTO)
                 .collect(Collectors.toList());

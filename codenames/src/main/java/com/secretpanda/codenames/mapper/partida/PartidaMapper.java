@@ -19,12 +19,18 @@ public class PartidaMapper {
         if (partida == null) return null;
 
         LobbyStatusDTO dto = new LobbyStatusDTO();
-        dto.setIdPartida(partida.getIdPartida());
-        dto.setCodigoPartida(partida.getCodigoPartida());
+        
+        // Adaptado a snake_case
+        dto.setId_partida(partida.getIdPartida());
+        dto.setCodigo_partida(partida.getCodigoPartida());
         dto.setEstado(partida.getEstado().name());
-        dto.setMaxJugadores(partida.getMaxJugadores());
-
-        dto.setNombreTema(partida.getTema().getNombre());
+        dto.setMax_jugadores(partida.getMaxJugadores());
+        
+        // ¡Estos dos campos te los habías saltado!
+        dto.setEs_publica(partida.getEsPublica()); 
+        dto.setId_tema(partida.getTema().getIdTema()); 
+        
+        dto.setNombre_tema(partida.getTema().getNombre());
 
         // Hacemos la conversión de cada jugador con su mapper
         List<JugadorPartidaDTO> jugadoresDTO = JugadorPartidaMapper.toDTOList(participantes);
@@ -38,20 +44,21 @@ public class PartidaMapper {
         if (partida == null || jpDelJugador == null) return null;
 
         PartidaResumenDTO dto = new PartidaResumenDTO();
-        dto.setIdPartida(partida.getIdPartida());
-        dto.setFechaFin(partida.getFechaFin());
+        
+        // Adaptado a snake_case
+        dto.setId_partida(partida.getIdPartida());
+        dto.setFecha_fin(partida.getFechaFin());
+        dto.setNombre_tema(partida.getTema().getNombre());
 
-        dto.setNombreTema(partida.getTema().getNombre());
-
-        // Datos del jugador
-        dto.setEquipoJugador(jpDelJugador.getEquipo().name());
-        dto.setRolJugador(jpDelJugador.getRol().name());
-        dto.setNumAciertos(jpDelJugador.getNumAciertos());
-        dto.setNumFallos(jpDelJugador.getNumFallos());
+        // Datos del jugador en snake_case
+        dto.setEquipo_jugador(jpDelJugador.getEquipo().name());
+        dto.setRol_jugador(jpDelJugador.getRol().name());
+        dto.setNum_aciertos(jpDelJugador.getNumAciertos());
+        dto.setNum_fallos(jpDelJugador.getNumFallos());
 
         // Calculamos si el jugador ha ganado o perdido
         if (partida.getRojoGana() != null) {
-            boolean jugadorEsRojo = JugadorPartida.Equipo.rojo.equals(jpDelJugador.getEquipo());
+            boolean jugadorEsRojo = "rojo".equalsIgnoreCase(jpDelJugador.getEquipo().name());
             boolean victoria = (partida.getRojoGana() && jugadorEsRojo)
                              || (!partida.getRojoGana() && !jugadorEsRojo);
             dto.setVictoria(victoria);
@@ -64,6 +71,7 @@ public class PartidaMapper {
 
     // Conversión de lista de partidas a lista de DTOs de las partidas para el historial del jugador
     public static List<PartidaResumenDTO> toResumenDTOList(List<JugadorPartida> participaciones) {
+        if (participaciones == null) return null;
         return participaciones.stream()
                 .map(jp -> toResumenDTO(jp.getPartida(), jp))
                 .collect(Collectors.toList());

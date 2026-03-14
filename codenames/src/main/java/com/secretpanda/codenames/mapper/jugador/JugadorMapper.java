@@ -2,9 +2,9 @@ package com.secretpanda.codenames.mapper.jugador;
 
 import com.secretpanda.codenames.dto.jugador.ActualizarPerfilDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
-import com.secretpanda.codenames.dto.jugador.JugadorStatsDTO;
 import com.secretpanda.codenames.dto.social.RankingDTO;
 import com.secretpanda.codenames.model.Jugador;
+import com.secretpanda.codenames.util.EstadisticasCalculator;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,38 +14,29 @@ public class JugadorMapper {
 
     private JugadorMapper() {}
 
-    // Convertimos el jugador en un DTO (JugadorDTO) solo con los datos del Id, del tag y la foto de perfil
-    public static JugadorDTO toDTO(Jugador jugador) {
+    // Convertimos el jugador en el DTO Maestro (JugadorDTO) con TODOS sus datos y estadísticas
+    // Inyectamos el EstadisticasCalculator que creamos previamente.
+    public static JugadorDTO toDTO(Jugador jugador, EstadisticasCalculator calculator) {
         if (jugador == null) return null;
 
         JugadorDTO dto = new JugadorDTO();
-        dto.setIdGoogle(jugador.getIdGoogle());
+        
+        // Identidad (Entidad en camelCase -> DTO en snake_case)
+        dto.setId_google(jugador.getIdGoogle());
         dto.setTag(jugador.getTag());
-        dto.setFotoPerfil(jugador.getFotoPerfil());
-        return dto;
-    }
+        dto.setFoto_perfil(jugador.getFotoPerfil());
+        dto.setBalas(jugador.getBalas());
 
-    // Convertimos el jugador en un DTO pero esta vez con sus estádisticas (las mostraremos en el perfil)
-    public static JugadorStatsDTO toStatsDTO(Jugador jugador) {
-        if (jugador == null) return null;
-
-        JugadorStatsDTO dto = new JugadorStatsDTO();
-        dto.setTag(jugador.getTag());
-        dto.setFotoPerfil(jugador.getFotoPerfil());
-        dto.setPartidasJugadas(jugador.getPartidasJugadas());
+        // Estadísticas base procedentes de la BD
+        dto.setPartidas_jugadas(jugador.getPartidasJugadas());
         dto.setVictorias(jugador.getVictorias());
-        dto.setNumAciertos(jugador.getNumAciertos());
-        dto.setNumFallos(jugador.getNumFallos());
+        dto.setNum_aciertos(jugador.getNumAciertos());
+        dto.setNum_fallos(jugador.getNumFallos());
 
-        // Datos calculados (no los alamacenamos en la BD)
-        int derrotas = jugador.getPartidasJugadas() - jugador.getVictorias();
-        dto.setDerrotas(Math.max(derrotas, 0));
-
-        if (jugador.getPartidasJugadas() > 0) {
-            double ratio = ((double) jugador.getVictorias() / jugador.getPartidasJugadas()) * 100;
-            dto.setPorcentajeVictorias(Math.round(ratio * 100.0) / 100.0);
-        } else {
-            dto.setPorcentajeVictorias(0.0);
+        // Cálculos delegados a nuestra clase Util
+        if (calculator != null) {
+            dto.setDerrotas(calculator.calcularDerrotas(jugador.getPartidasJugadas(), jugador.getVictorias()));
+            dto.setPorcentaje_victorias(calculator.calcularWinrate(jugador.getVictorias(), jugador.getPartidasJugadas()));
         }
 
         return dto;
@@ -57,31 +48,34 @@ public class JugadorMapper {
 
         RankingDTO dto = new RankingDTO();
         dto.setTag(jugador.getTag());
-        dto.setFotoPerfil(jugador.getFotoPerfil());
+        dto.setFoto_perfil(jugador.getFotoPerfil());
         dto.setVictorias(jugador.getVictorias());
         return dto;
     }
 
-    // Para aplicar cambios sobre un jugador existente (recibimos el DTO)
+    // Para aplicar cambios sobre un jugador existente (recibimos el DTO y actualizamos la Entidad)
     public static void applyUpdateDTO(ActualizarPerfilDTO dto, Jugador jugador) {
         if (dto == null || jugador == null) return;
 
         if (dto.getTag() != null) {
             jugador.setTag(dto.getTag());
         }
-        if (dto.getFotoPerfil() != null) {
-            jugador.setFotoPerfil(dto.getFotoPerfil());
+        if (dto.getFoto_perfil() != null) {
+            jugador.setFotoPerfil(dto.getFoto_perfil());
         }
     }
 
-    // Conversores de lista de jugadores a lista de DTOs (para el ranking o para los jugadores del lobby)
-    public static List<JugadorDTO> toDTOList(List<Jugador> jugadores) {
+    // Conversores de lista de jugadores a lista de DTOs maestros
+    public static List<JugadorDTO> toDTOList(List<Jugador> jugadores, EstadisticasCalculator calculator) {
+        if (jugadores == null) return null;
         return jugadores.stream()
-                .map(JugadorMapper::toDTO)
+                .map(j -> toDTO(j, calculator))
                 .collect(Collectors.toList());
     }
 
+    // Conversores para el Ranking
     public static List<RankingDTO> toRankingDTOList(List<Jugador> jugadores) {
+        if (jugadores == null) return null;
         return jugadores.stream()
                 .map(JugadorMapper::toRankingDTO)
                 .collect(Collectors.toList());

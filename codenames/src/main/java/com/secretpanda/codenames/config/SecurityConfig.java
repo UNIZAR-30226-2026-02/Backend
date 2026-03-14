@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,9 +20,9 @@ import com.secretpanda.codenames.security.JwtFilter;
  * basa en el JWT que el cliente incluye en cada petición.
  *
  * Rutas públicas (sin token):
- *   - POST /api/auth/**          → login / registro via Google OAuth
- *   - GET  /api/temas/activos    → catálogo de temas (pantalla de inicio)
- *   - GET  /ws/**                → handshake inicial del WebSocket (STOMP)
+ * - POST /api/auth/** → login / registro via Google OAuth
+ * - GET  /api/temas/activos    → catálogo de temas (pantalla de inicio)
+ * - GET  /ws/** → handshake inicial del WebSocket (STOMP)
  *
  * El resto de rutas requieren un JWT válido.
  */
@@ -39,8 +40,8 @@ public class SecurityConfig {
             // Desactivamos CSRF: usamos JWT, no cookies de sesión
             .csrf(csrf -> csrf.disable())
 
-            // CORS lo gestiona WebConfig, aquí solo lo habilitamos
-            .cors(cors -> cors.configure(http))
+            // CORS lo gestiona WebConfig, aquí solo lo habilitamos con la sintaxis moderna
+            .cors(Customizer.withDefaults())
 
             // Sin estado: Spring Security no crea ni usa sesiones HTTP
             .sessionManagement(session ->
@@ -54,7 +55,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
 
                 // ── Catálogo público ───────────────────────────────────────
-                // Permite ver los temas disponibles sin estar logueado
+                // Permite ver los temas y logros disponibles sin estar logueado
                 .requestMatchers(HttpMethod.GET, "/api/temas/activos").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/logros/activos").permitAll()
 
