@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,9 @@ public interface PersonalizacionRepository extends JpaRepository<Personalizacion
     
     // Validar que no haya cosméticos con el mismo nombre
     boolean existsByNombre(String nombre);
+
+    // Buscar una personalización concreta por su nombre
+    Optional<Personalizacion> findByNombre(String nombre);
 
     // Catálogo ordenado por precio
     List<Personalizacion> findByTipoAndActivoTrueOrderByPrecioBalaAsc(TipoPersonalizacion tipo);

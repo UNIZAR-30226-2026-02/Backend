@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.secretpanda.codenames.model.TableroCarta;
-import com.secretpanda.codenames.model.TableroCarta.TipoCarta;
 import com.secretpanda.codenames.model.TableroCarta.EstadoCarta;
+import com.secretpanda.codenames.model.TableroCarta.TipoCarta;
 
 @Repository
 public interface TableroCartaRepository extends JpaRepository<TableroCarta, Integer> {
@@ -18,6 +18,9 @@ public interface TableroCartaRepository extends JpaRepository<TableroCarta, Inte
     
     // Obtener una carta específica por sus coordenadas
     Optional<TableroCarta> findByPartida_IdPartidaAndFilaAndColumna(Integer idPartida, Integer fila, Integer columna);
+
+    // Obtener cartas filtradas por estado (Útil para traer solo las REVELADAS o solo las OCULTAS)
+    List<TableroCarta> findByPartida_IdPartidaAndEstado(Integer idPartida, EstadoCarta estado);
 
     // Numero de cartas de un tipo y estado concreto para validar victoria o derrota
     long countByPartida_IdPartidaAndTipoAndEstado(Integer idPartida, TipoCarta tipo, EstadoCarta estado);

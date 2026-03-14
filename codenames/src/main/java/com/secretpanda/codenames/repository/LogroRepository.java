@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,9 @@ public interface LogroRepository extends JpaRepository<Logro, Integer> {
     
     // Método para validar que no haya dos logros con el mismo nombre
     boolean existsByNombre(String nombre);
+
+    // Obtener un logro concreto por su nombre
+    Optional<Logro> findByNombre(String nombre);
 
     // Devuelve el catálogo filtrando por tipo y que estén activos.
     List<Logro> findByTipoAndActivoTrue(TipoLogro tipo);

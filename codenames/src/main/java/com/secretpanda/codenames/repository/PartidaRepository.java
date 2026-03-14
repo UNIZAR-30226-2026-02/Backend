@@ -16,9 +16,15 @@ public interface PartidaRepository extends JpaRepository<Partida, Integer> {
     
     // Buscar una partida por su código de invitación
     Optional<Partida> findByCodigoPartida(String codigoPartida);
+
+    // Buscar una partida por código asegurando que esté en un estado concreto (Ej. ESPERANDO)
+    Optional<Partida> findByCodigoPartidaAndEstado(String codigoPartida, Partida.EstadoPartida estado);
     
     // Comprobar si un código ya existe
     boolean existsByCodigoPartida(String codigoPartida);
+
+    // Contar cuántas partidas hay en un estado determinado (Para métricas de carga del servidor)
+    long countByEstado(Partida.EstadoPartida estado);
 
     // Mostrar salas públicas esperando jugadores ordenadas por fecha
     List<Partida> findByEsPublicaTrueAndEstadoOrderByFechaCreacionDesc(Partida.EstadoPartida estado);
