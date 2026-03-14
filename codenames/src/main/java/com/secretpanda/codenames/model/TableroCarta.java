@@ -64,7 +64,7 @@ public class TableroCarta {
     public TableroCarta() {}
 
     @PrePersist
-    protected void onPersist() {
+    protected void onCreate() {
         if (this.estado == null) {
             this.estado = EstadoCarta.oculta;
         }

@@ -53,7 +53,7 @@ public class Amistad {
             this.estado = EstadoAmistad.pendiente;
         }
         
-        if (solicitante != null && receptor != null && solicitante.equals(receptor)) {
+        if (solicitante != null && receptor != null && solicitante.getIdGoogle().equals(receptor.getIdGoogle())) {
             throw new IllegalStateException("Un jugador no puede enviarse una solicitud de amistad a sí mismo");
         }
     }
