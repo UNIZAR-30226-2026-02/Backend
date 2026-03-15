@@ -1,6 +1,5 @@
 package com.secretpanda.codenames.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,22 +18,26 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * Tras verificar el token de Google devuelve el JWT de dos formas:
  *
- *   1. Cookie HttpOnly "token_sesion" → React web.
- *      Set-Cookie: token_sesion=<jwt>; HttpOnly; Secure; SameSite=Strict
- *      El navegador la adjunta automáticamente con credentials:"include".
+ * 1. Cookie HttpOnly "token_sesion" → React web.
+ * Set-Cookie: token_sesion=<jwt>; HttpOnly; Secure; SameSite=Strict
+ * El navegador la adjunta automáticamente con credentials:"include".
  *
- *   2. Campo "token" en el body JSON → Android.
- *      La app lee el token del body y lo guarda en su storage local.
+ * 2. Campo "token" en el body JSON → Android.
+ * La app lee el token del body y lo guarda en su storage local.
  */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     @Value("${jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
+
+    // Inyección de dependencias segura por constructor
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     /**
      * Login / Registro con Google OAuth 2.0.
@@ -47,22 +50,22 @@ public class AuthController {
             @RequestBody LoginRequestDTO dto,
             HttpServletResponse httpResponse) {
 
-        AuthResponseDTO respuesta = authService.loginORegistrar(dto);
+        // 1. Llamada al servicio actualizado (cumpliendo el contrato estricto de API)
+        AuthResponseDTO respuesta = authService.login(dto.getIdGoogle());
 
-        // Emitir cookie HttpOnly para React
-        // SameSite=Strict via header manual (Jakarta Servlet 6 no tiene setSameSite)
+        // 2. Emitir cookie HttpOnly para la versión Web en React
         httpResponse.setHeader("Set-Cookie",
                 String.format("token_sesion=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=%d",
                         respuesta.getToken(),
                         jwtExpirationMs / 1000));
 
-        // El token también va en el body para Android
+        // 3. El token y el DTO del jugador también van en el body para Android
         return ResponseEntity.ok(respuesta);
     }
 
     /**
-     * Logout — invalida la cookie en el navegador.
-     * Android simplemente descarta su token local.
+     * Logout — invalida la cookie en el navegador web.
+     * En Android simplemente se descarta su token local en el dispositivo.
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse httpResponse) {
@@ -71,4 +74,3 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 }
-

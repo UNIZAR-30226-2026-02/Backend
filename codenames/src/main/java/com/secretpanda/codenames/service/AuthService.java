@@ -1,96 +1,60 @@
 package com.secretpanda.codenames.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.secretpanda.codenames.dto.auth.AuthResponseDTO;
-import com.secretpanda.codenames.dto.auth.LoginRequestDTO;
+import com.secretpanda.codenames.dto.jugador.JugadorDTO;
+import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.repository.JugadorRepository;
 import com.secretpanda.codenames.security.GoogleAuthService;
-import com.secretpanda.codenames.security.GoogleAuthService.DatosGoogle;
 import com.secretpanda.codenames.security.JwtService;
 
-/**
- * Gestiona el flujo de autenticación con Google OAuth 2.0.
- *
- * Contrato API (POST /auth/login):
- *   - Verifica el token con Google.
- *   - Si el jugador no existe → INSERT con estadísticas a 0.
- *   - Si el jugador existe    → login directo.
- *   - Devuelve el JUGADOR completo + token JWT.
- *
- * El tag inicial es el nombre de Google. El usuario puede cambiarlo
- * después con PUT /jugadores/{id_google} (RF-6).
- */
 @Service
 public class AuthService {
 
-    @Autowired
-    private GoogleAuthService googleAuthService;
+    private final GoogleAuthService googleAuthService;
+    private final JwtService jwtService;
+    private final JugadorRepository jugadorRepository;
 
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private JugadorRepository jugadorRepository;
+    public AuthService(GoogleAuthService googleAuthService, JwtService jwtService, JugadorRepository jugadorRepository) {
+        this.googleAuthService = googleAuthService;
+        this.jwtService = jwtService;
+        this.jugadorRepository = jugadorRepository;
+    }
 
     @Transactional
-    public AuthResponseDTO loginORegistrar(LoginRequestDTO dto) {
+    public AuthResponseDTO login(String idTokenGoogle) {
+        // 1. Verifica el token con la API de Google Auth 2.0 (RNF-7)
+        GoogleAuthService.DatosGoogle datos = googleAuthService.verificarToken(idTokenGoogle);
 
-        // 1. Verificar el token con Google
-        DatosGoogle datosGoogle = googleAuthService.verificarToken(dto.getId_google());
+        // 2. Busca en la tabla JUGADOR. Si no existe, hace un INSERT con estadísticas a 0 y balas iniciales.
+        Jugador jugador = jugadorRepository.findById(datos.idGoogle()).orElseGet(() -> {
+            Jugador nuevo = new Jugador();
+            nuevo.setIdGoogle(datos.idGoogle());
+            // Generamos un tag temporal basado en el nombre de Google (quitando espacios)
+            nuevo.setTag(datos.nombre().replaceAll("\\s+", "") + "_" + (int)(Math.random() * 1000));
+            // Nota: victorias, num_aciertos, num_fallos y partidas_jugadas ya se inicializan a 0
+            // automáticamente por los valores DEFAULT de PostgreSQL.
+            nuevo.setBalas(0); 
+            return jugadorRepository.save(nuevo);
+        });
 
-        // 2. Buscar si el jugador ya existe
-        Jugador jugador = jugadorRepository.findByIdGoogle(datosGoogle.idGoogle())
-                .orElse(null);
-
-        if (jugador == null) {
-            // Primera vez → registrar con estadísticas a 0
-            jugador = registrarNuevoJugador(datosGoogle);
-        }
-
-        // 3. Generar JWT interno
-        String token = jwtService.generarToken(jugador.getIdGoogle());
-
-        // 4. Devolver JUGADOR completo + token
-        return new AuthResponseDTO(token, jugador);
+        // 3. Ejecuta el método iniciarSesionGoogle()
+        return iniciarSesionGoogle(jugador);
     }
 
     /**
-     * Crea y persiste un nuevo Jugador.
-     * Tag inicial = nombre de Google. Si ya está en uso, añade sufijo _1, _2...
+     * Método especificado en el contrato de la API para completar el inicio de sesión.
+     * Genera el JWT propio del sistema y devuelve el objeto JUGADOR completo.
      */
-    private Jugador registrarNuevoJugador(DatosGoogle datosGoogle) {
+    private AuthResponseDTO iniciarSesionGoogle(Jugador jugador) {
+        // Generamos el JWT de Secret Panda
+        String token = jwtService.generarToken(jugador.getIdGoogle());
 
-        String tagBase = StringUtils.hasText(datosGoogle.nombre())
-                ? datosGoogle.nombre().trim()
-                : "user_" + datosGoogle.idGoogle().substring(0, 8);
-
-        // Garantizar unicidad del tag
-        String tag = tagBase;
-        int intento = 1;
-        while (jugadorRepository.existsByTag(tag)) {
-            tag = tagBase + "_" + intento;
-            intento++;
-        }
-
-        Jugador nuevo = new Jugador();
-        nuevo.setIdGoogle(datosGoogle.idGoogle());
-        nuevo.setTag(tag);
-        // balas, victorias, aciertos, fallos → se inicializan a 0 en el modelo
-
-        try {
-            return jugadorRepository.save(nuevo);
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Error al registrar el jugador: " + e.getMessage()
-            );
-        }
+        // Devolvemos el objeto JUGADOR completo (pasando null al calculator para ir directo al MVP)
+        JugadorDTO jugadorDTO = JugadorMapper.toDTO(jugador, null);
+        return new AuthResponseDTO(token, jugadorDTO);
     }
 }

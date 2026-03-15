@@ -1,71 +1,76 @@
 package com.secretpanda.codenames.controller;
 
+import java.security.Principal;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.dto.partida.CrearPartidaDTO;
+import com.secretpanda.codenames.dto.partida.JugadorPartidaDTO;
+import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
+import com.secretpanda.codenames.dto.partida.UnirsePartidaDTO;
 import com.secretpanda.codenames.service.PartidaService;
 
+/**
+ * Controlador REST para la gestión de partidas antes de que empiecen (Lobby / Matchmaking).
+ */
 @RestController
 @RequestMapping("/api/partidas")
 public class PartidaController {
 
-    @Autowired
-    private PartidaService partidaService;
+    private final PartidaService partidaService;
 
-    @GetMapping("/disponibles")
-    public ResponseEntity<List<Partida>> listarPartidasDisponibles() {
-        return ResponseEntity.ok(partidaService.obtenerPartidasPublicasEnEspera());
+    // Inyección de dependencias por constructor (buenas prácticas)
+    public PartidaController(PartidaService partidaService) {
+        this.partidaService = partidaService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Partida> obtenerPorId(@PathVariable Integer id) {
-        return partidaService.obtenerPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    /**
+     * Endpoint: POST /api/partidas
+     * Contrato: Crea una sala nueva y autogenera el código.
+     */
+    @PostMapping
+    public ResponseEntity<LobbyStatusDTO> crearPartida(@RequestBody CrearPartidaDTO dto, Principal principal) {
+        // principal.getName() contiene el idGoogle del token validado, nadie puede suplantar al creador
+        LobbyStatusDTO response = partidaService.crearPartida(dto, principal.getName());
+        return new ResponseEntity<>(response, HttpStatus.CREATED); // Devuelve 201 Created
     }
 
-    @GetMapping("/codigo/{codigo}")
-    public ResponseEntity<Partida> obtenerPorCodigo(@PathVariable String codigo) {
-        return partidaService.obtenerPorCodigo(codigo)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    /**
+     * Endpoint: GET /api/partidas/publicas
+     * Contrato: Listado de partidas con esPublica=true y estado=ESPERANDO para el matchmaking.
+     */
+    @GetMapping("/publicas")
+    public ResponseEntity<List<LobbyStatusDTO>> listarPartidasPublicas() {
+        // Obtenemos la lista segura y mapeada a DTOs
+        List<LobbyStatusDTO> publicas = partidaService.listarPartidasPublicasDisponibles();
+        return ResponseEntity.ok(publicas); // Devuelve 200 OK
     }
 
-    @PostMapping("/crear/{idTema}/{idCreador}")
-    public ResponseEntity<Partida> crearPartida(
-            @PathVariable Integer idTema,
-            @PathVariable String idCreador,
-            @RequestBody Partida partida) {
-        return ResponseEntity.ok(partidaService.crearPartida(idTema, idCreador, partida));
-    }
-
-    @PutMapping("/{id}/comenzar")
-    public ResponseEntity<Partida> comenzarPartida(@PathVariable Integer id) {
-        return ResponseEntity.ok(partidaService.comenzarPartida(id));
-    }
-
-    @PutMapping("/{id}/estado")
-    public ResponseEntity<Partida> cambiarEstado(
-            @PathVariable Integer id,
-            @RequestParam Partida.EstadoPartida estado) { 
-        return ResponseEntity.ok(partidaService.actualizarEstado(id, estado));
-    }
-
-    @PutMapping("/{id}/finalizar")
-    public ResponseEntity<Partida> finalizarPartida(
-            @PathVariable Integer id,
-            @RequestParam Boolean rojoGana) {
-        return ResponseEntity.ok(partidaService.declararGanador(id, rojoGana));
+    /**
+     * Endpoint: POST /api/partidas/{id_partida}/unirse
+     * Contrato: Entrar al lobby de una partida. Recibe el código si es privada.
+     */
+    @PostMapping("/{id_partida}/unirse")
+    public ResponseEntity<JugadorPartidaDTO> unirsePartida(
+            @PathVariable("id_partida") Integer idPartida,
+            @RequestBody(required = false) UnirsePartidaDTO dto, 
+            Principal principal) {
+        
+        // Si la partida es pública y el frontend envía un body vacío, evitamos el NullPointerException
+        if (dto == null) {
+            dto = new UnirsePartidaDTO();
+        }
+        
+        // Unimos al jugador (extraído del token de forma segura) a la partida
+        JugadorPartidaDTO response = partidaService.unirsePartida(idPartida, dto, principal.getName());
+        return ResponseEntity.ok(response); // Devuelve 200 OK
     }
 }

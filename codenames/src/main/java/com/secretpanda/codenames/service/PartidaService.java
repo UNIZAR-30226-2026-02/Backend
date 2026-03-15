@@ -1,17 +1,20 @@
 package com.secretpanda.codenames.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import com.secretpanda.codenames.dto.partida.CrearPartidaDTO;
+import com.secretpanda.codenames.dto.partida.JugadorPartidaDTO;
+import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
+import com.secretpanda.codenames.dto.partida.UnirsePartidaDTO;
+import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.GameLogicException;
+import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.mapper.partida.JugadorPartidaMapper;
+import com.secretpanda.codenames.mapper.partida.PartidaMapper;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
@@ -20,116 +23,124 @@ import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
 import com.secretpanda.codenames.repository.PartidaRepository;
 import com.secretpanda.codenames.repository.TemaRepository;
+import com.secretpanda.codenames.util.CodigoPartidaGenerator;
 
 @Service
 public class PartidaService {
 
-    @Autowired
-    private PartidaRepository partidaRepository;
+    private final PartidaRepository partidaRepository;
+    private final JugadorRepository jugadorRepository;
+    private final TemaRepository temaRepository;
+    private final JugadorPartidaRepository jugadorPartidaRepository;
+    private final CodigoPartidaGenerator codigoGenerator;
 
-    @Autowired
-    private JugadorRepository jugadorRepository;
-
-    @Autowired
-    private TemaRepository temaRepository;
-
-    @Autowired
-    private JugadorPartidaRepository jugadorPartidaRepository;
-
-    @Autowired
-    private TableroCartaService tableroCartaService;
-
-    public List<Partida> obtenerPartidasPublicasEnEspera() {
-        return partidaRepository.findByEsPublicaTrueAndEstado(Partida.EstadoPartida.ESPERANDO);
+    public PartidaService(PartidaRepository partidaRepository, JugadorRepository jugadorRepository, 
+                          TemaRepository temaRepository, JugadorPartidaRepository jugadorPartidaRepository,
+                          CodigoPartidaGenerator codigoGenerator) {
+        this.partidaRepository = partidaRepository;
+        this.jugadorRepository = jugadorRepository;
+        this.temaRepository = temaRepository;
+        this.jugadorPartidaRepository = jugadorPartidaRepository;
+        this.codigoGenerator = codigoGenerator;
     }
 
-    public Optional<Partida> obtenerPorId(Integer id) {
-        return partidaRepository.findById(id);
-    }
-
-    public Optional<Partida> obtenerPorCodigo(String codigoPartida) {
-        return partidaRepository.findByCodigoPartida(codigoPartida);
-    }
-
+    /**
+     * Endpoint: POST /partidas (RF-12)
+     */
     @Transactional
-    public Partida crearPartida(Integer idTema, String idCreador, Partida detalles) {
-        Tema tema = temaRepository.findById(idTema)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tema no encontrado"));
-        Jugador creador = jugadorRepository.findById(idCreador)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador creador no encontrado"));
-
-        detalles.setTema(tema);
-        detalles.setCreador(creador);
-        detalles.setEstado(Partida.EstadoPartida.ESPERANDO);
+    public LobbyStatusDTO crearPartida(CrearPartidaDTO dto, String idGoogleCreador) {
+        Tema tema = temaRepository.findById(dto.getIdTema())
+                .orElseThrow(() -> new NotFoundException("El tema seleccionado no existe."));
         
-        if (detalles.getCodigoPartida() == null || detalles.getCodigoPartida().isEmpty()) {
-            String codigo;
-            do {
-                codigo = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-            } while (partidaRepository.existsByCodigoPartida(codigo));
-            detalles.setCodigoPartida(codigo);
-        }
+        Jugador creador = jugadorRepository.findById(idGoogleCreador)
+                .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
 
-        try {
-            return partidaRepository.save(detalles);
-        } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMostSpecificCause().getMessage());
-        }
+        Partida partida = new Partida();
+        partida.setTema(tema);
+        partida.setCreador(creador);
+        partida.setTiempoEspera(dto.getTiempoEspera());
+        partida.setMaxJugadores(dto.getMaxJugadores());
+        partida.setEsPublica(dto.isEsPublica());
+        partida.setEstado(Partida.EstadoPartida.esperando);
+
+        // Generamos el código seguro y legible de 6 caracteres sin ambigüedades
+        String codigo;
+        do {
+            codigo = codigoGenerator.generarCodigo();
+        } while (partidaRepository.existsByCodigoPartida(codigo));
+        partida.setCodigoPartida(codigo);
+
+        partida = partidaRepository.save(partida);
+
+        // Añadimos automáticamente al creador a la tabla JUGADOR_PARTIDA
+        JugadorPartida jp = new JugadorPartida();
+        jp.setJugador(creador);
+        jp.setPartida(partida);
+        // Asignación temporal por defecto, el matchmaking final (RF-18) los redistribuirá
+        jp.setEquipo(JugadorPartida.Equipo.rojo);
+        jp.setRol(JugadorPartida.Rol.lider); 
+        jugadorPartidaRepository.save(jp);
+
+        partida.getJugadores().add(jp);
+        return PartidaMapper.toLobbyStatusDTO(partida, partida.getJugadores());
     }
 
+    /**
+     * Endpoint: GET /partidas/publicas (RF-19 Matchmaking)
+     */
+    @Transactional(readOnly = true)
+    public List<LobbyStatusDTO> listarPartidasPublicasDisponibles() {
+        // Obtenemos solo las partidas públicas, en estado esperando y con huecos libres
+        List<Partida> partidas = partidaRepository.findPartidasPublicasDisponibles(Partida.EstadoPartida.esperando);
+
+        return partidas.stream()
+                .map(p -> PartidaMapper.toLobbyStatusDTO(p, p.getJugadores()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Endpoint: POST /partidas/{id_partida}/unirse
+     */
     @Transactional
-    public Partida comenzarPartida(Integer idPartida) {
+    public JugadorPartidaDTO unirsePartida(Integer idPartida, UnirsePartidaDTO dto, String idGoogleJugador) {
         Partida partida = partidaRepository.findById(idPartida)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida no encontrada"));
-                
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
-        List<JugadorPartida> participantes = jugadorPartidaRepository.findByPartida_IdPartida(idPartida);
-        if (participantes.size() < 4) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Se necesitan al menos 4 jugadores para empezar");
+        // Validar si la partida ya ha empezado
+        if (!Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
+            throw new GameLogicException("La partida ya ha comenzado o finalizado.");
         }
 
-        if (Partida.EstadoPartida.ESPERANDO != partida.getEstado()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La partida ya ha comenzado");
+        // Validar código si es privada
+        if (!partida.isEsPublica()) {
+            if (dto.getCodigoPartida() == null || !partida.getCodigoPartida().equalsIgnoreCase(dto.getCodigoPartida())) {
+                throw new BadRequestException("Código de partida incorrecto.");
+            }
         }
-        partida.setEstado(Partida.EstadoPartida.EN_CURSO);
-        Partida partidaActualizada = partidaRepository.save(partida);
 
-        // Sincronizado con la nueva firma de TableroCartaService
-        tableroCartaService.generarTablero(partidaActualizada.getIdPartida());
-
-        return partidaActualizada;
-    }
-
-    @Transactional
-    public Partida actualizarEstado(Integer id, Partida.EstadoPartida nuevoEstado) {
-        Partida partida = partidaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida no encontrada"));
-                
-        partida.setEstado(nuevoEstado); 
-        if (Partida.EstadoPartida.FINALIZADA == nuevoEstado) {
-            partida.setFechaFin(LocalDateTime.now());
+        // Validar si ya está llena
+        long jugadoresActuales = jugadorPartidaRepository.countByPartida_IdPartidaAndAbandonoFalse(idPartida);
+        if (jugadoresActuales >= partida.getMaxJugadores()) {
+            throw new GameLogicException("La partida ya está llena.");
         }
-        
-        try {
-            return partidaRepository.save(partida);
-        } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMostSpecificCause().getMessage());
-        }
-    }
 
-    @Transactional
-    public Partida declararGanador(Integer id, Boolean rojoGana) {
-        Partida partida = partidaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida no encontrada"));
-                
-        partida.setRojoGana(rojoGana);
-        partida.setEstado(Partida.EstadoPartida.FINALIZADA);
-        partida.setFechaFin(LocalDateTime.now());
-        
-        try {
-            return partidaRepository.save(partida);
-        } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMostSpecificCause().getMessage());
+        // Validar si el jugador ya está dentro de esta partida
+        if (jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_IdPartida(idGoogleJugador, idPartida)) {
+            throw new GameLogicException("Ya estás dentro de esta partida.");
         }
+
+        Jugador jugador = jugadorRepository.findById(idGoogleJugador)
+                .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
+
+        JugadorPartida jp = new JugadorPartida();
+        jp.setJugador(jugador);
+        jp.setPartida(partida);
+        // Asignación por defecto (Rojo/Agente). Deberá ajustarse según el balanceo.
+        jp.setEquipo(JugadorPartida.Equipo.rojo);
+        jp.setRol(JugadorPartida.Rol.agente);
+
+        jp = jugadorPartidaRepository.save(jp);
+
+        return JugadorPartidaMapper.toDTO(jp);
     }
 }

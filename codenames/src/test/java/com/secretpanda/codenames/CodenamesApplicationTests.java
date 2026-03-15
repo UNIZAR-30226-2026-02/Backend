@@ -1,16 +1,28 @@
 package com.secretpanda.codenames;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import java.time.LocalDateTime;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.secretpanda.codenames.model.*;
-import com.secretpanda.codenames.repository.*;
+import com.secretpanda.codenames.model.Amistad;
+import com.secretpanda.codenames.model.AmistadId;
+import com.secretpanda.codenames.model.Jugador;
+import com.secretpanda.codenames.model.JugadorPartida;
+import com.secretpanda.codenames.model.PalabraTema;
+import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.model.TableroCarta;
+import com.secretpanda.codenames.model.Tema;
+import com.secretpanda.codenames.repository.AmistadRepository;
+import com.secretpanda.codenames.repository.JugadorPartidaRepository;
+import com.secretpanda.codenames.repository.JugadorRepository;
+import com.secretpanda.codenames.repository.PalabraTemaRepository;
+import com.secretpanda.codenames.repository.PartidaRepository;
+import com.secretpanda.codenames.repository.TableroCartaRepository;
+import com.secretpanda.codenames.repository.TemaRepository;
 
 @SpringBootTest
 class CodenamesApplicationTests {
@@ -21,65 +33,91 @@ class CodenamesApplicationTests {
     @Autowired private PartidaRepository partidaRepository;
     @Autowired private TableroCartaRepository tableroCartaRepository;
     @Autowired private AmistadRepository amistadRepository;
+    @Autowired private JugadorPartidaRepository jugadorPartidaRepository;
 
     @Test
     @Transactional
-    @Rollback(true) 
-    void testFlujoIntegralSistema() {
-        System.out.println("\n🚀 INICIANDO TEST DE INTEGRACIÓN COMPLETO");
+    void testSistemaCompleto_DesdeUsuarioHastaTablero() {
+        System.out.println("\n🕵️‍♂️ INICIANDO TEST DE INTEGRACIÓN END-TO-END");
 
         // 1. JUGADORES
-        Jugador j1 = crearJugador("google_01", "panda@test.com", "PandaMaster");
-        Jugador j2 = crearJugador("google_02", "ninja@test.com", "NinjaCoder");
-        jugadorRepository.saveAll(List.of(j1, j2));
+        Jugador p1 = new Jugador();
+        p1.setIdGoogle("google_panda_01");
+        p1.setTag("PandaMaster");
+        p1.setBalas(100);
 
-        // 2. AMISTAD
-        AmistadId amistadId = new AmistadId(j1.getIdGoogle(), j2.getIdGoogle());
-        Amistad amistad = new Amistad();
-        amistad.setId(amistadId);
-        amistad.setSolicitante(j1);
-        amistad.setReceptor(j2);
-        amistad.setEstado(Amistad.EstadoAmistad.ACEPTADA);
-        amistadRepository.save(amistad);
+        Jugador p2 = new Jugador();
+        p2.setIdGoogle("google_ninja_02");
+        p2.setTag("NinjaCoder");
+        
+        jugadorRepository.saveAll(List.of(p1, p2));
+        System.out.println("✅ Jugadores creados.");
 
-        // 3. TEMA Y PALABRAS
-        Tema temaTech = new Tema();
-        temaTech.setNombre("Tecnología " + System.currentTimeMillis()); // Evitar duplicados
-        temaTech.setPrecioBalas(0);
-        temaTech.setActivo(true);
-        temaRepository.save(temaTech);
+        // 2. SISTEMA SOCIAL (Amistad)
+        AmistadId idAmistad = new AmistadId(p1.getIdGoogle(), p2.getIdGoogle());
+        Amistad relacion = new Amistad();
+        relacion.setId(idAmistad);
+        relacion.setSolicitante(p1);
+        relacion.setReceptor(p2);
+        relacion.setEstado(Amistad.EstadoAmistad.aceptada);
+        
+        amistadRepository.save(relacion);
+        System.out.println("✅ Relación de amistad guardada.");
 
-        PalabraTema pt = new PalabraTema();
-        pt.setValor("Java"); // Tu modelo usa 'valor'
-        pt.setTema(temaTech);
-        pt.setActivo(true);
-        palabraTemaRepository.save(pt);
+        // 3. CONTENIDO DEL JUEGO (Tema y Palabra)
+        Tema tema = new Tema();
+        tema.setNombre("Ciberseguridad_" + System.currentTimeMillis());
+        tema.setPrecioBalas(0);
+        tema.setActivo(true);
+        temaRepository.save(tema);
+
+        PalabraTema palabra = new PalabraTema();
+        palabra.setValor("Firewall");
+        palabra.setTema(tema);
+        palabra.setActivo(true);
+        palabraTemaRepository.save(palabra);
+        System.out.println("✅ Diccionario configurado.");
 
         // 4. PARTIDA
         Partida partida = new Partida();
-        partida.setCodigoPartida("PANDA-" + System.currentTimeMillis());
-        partida.setEstado(Partida.EstadoPartida.ESPERANDO);
-        partida.setCreador(j1); // El modelo exige un creador
-        partida.setTema(temaTech);
+        partida.setCodigoPartida("TEST-" + System.currentTimeMillis());
+        partida.setEstado(Partida.EstadoPartida.esperando);
+        partida.setCreador(p1);
+        partida.setTema(tema);
+        partida.setMaxJugadores(4);
+        partida.setEsPublica(true);
         partidaRepository.save(partida);
+        System.out.println("✅ Partida creada.");
 
-        // 5. TABLERO
-        TableroCarta carta = new TableroCarta();
-        carta.setPartida(partida);
-        carta.setFila(0);
-        carta.setColumna(0);
-        carta.setPalabra(pt); // Tu modelo pide el objeto PalabraTema, no un String
-        carta.setTipo("AZUL");
-        tableroCartaRepository.save(carta);
+        // 5. JUGADOR_PARTIDA (Unión a equipos)
+        JugadorPartida jp1 = new JugadorPartida();
+        jp1.setJugador(p1);
+        jp1.setPartida(partida);
+        jp1.setEquipo(JugadorPartida.Equipo.rojo);
+        jp1.setRol(JugadorPartida.Rol.lider);
+        jugadorPartidaRepository.save(jp1);
+        System.out.println("✅ Jugador unido a partida.");
 
-        System.out.println("✅ TEST FINALIZADO CON ÉXITO");
-    }
+        // 6. GENERACIÓN DEL TABLERO (Uso de tu método exacto)
+        TableroCarta cartaAsesino = new TableroCarta();
+        cartaAsesino.setPartida(partida);
+        cartaAsesino.setFila(0);
+        cartaAsesino.setColumna(0);
+        cartaAsesino.setPalabra(palabra);
+        cartaAsesino.setTipo(TableroCarta.TipoCarta.asesino);
+        cartaAsesino.setEstado(TableroCarta.EstadoCarta.oculta);
+        tableroCartaRepository.save(cartaAsesino);
 
-    private Jugador crearJugador(String id, String email, String tag) {
-        Jugador j = new Jugador();
-        j.setIdGoogle(id);
-        j.setEmail(email);
-        j.setTag(tag);
-        return j;
+        // --- VALIDACIÓN USANDO TU MÉTODO countByPartida_IdPartidaAndTipoAndEstado ---
+        long contador = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
+            partida.getIdPartida(), 
+            TableroCarta.TipoCarta.asesino, 
+            TableroCarta.EstadoCarta.oculta
+        );
+
+        assertThat(contador).isEqualTo(1);
+        System.out.println("✅ Validación con método countBy... exitosa.");
+
+        System.out.println("\n🏆 ¡TEST DE INTEGRACIÓN COMPLETADO CON ÉXITO!");
     }
 }
