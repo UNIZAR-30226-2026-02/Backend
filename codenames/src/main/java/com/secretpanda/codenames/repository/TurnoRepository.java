@@ -22,8 +22,8 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
     // Obtener el turno actual de la partida
     Optional<Turno> findFirstByPartida_IdPartidaOrderByNumTurnoDesc(Integer idPartida);
 
-    // Historial de turnos filtrado por equipo (Usa el campo directo del modelo Turno)
-    List<Turno> findByPartida_IdPartidaAndEquipo(Integer idPartida, Equipo equipo);
+    // Historial de turnos filtrado por equipo (A través de la relación con JugadorPartida)
+    List<Turno> findByPartida_IdPartidaAndJugadorPartida_Equipo(Integer idPartida, Equipo equipo);
 
     // MANTENIMIENTO: Borrar historial de turnos de una partida
     @Transactional

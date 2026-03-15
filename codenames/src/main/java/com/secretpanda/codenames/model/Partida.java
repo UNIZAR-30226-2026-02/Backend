@@ -1,7 +1,12 @@
 package com.secretpanda.codenames.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,8 +17,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @Entity
 @Table(name = "partida")
@@ -42,12 +50,15 @@ public class Partida {
     @Column(name = "tiempo_espera", nullable = false)
     private int tiempoEspera = 60;
 
+    @Min(4)
+    @Max(16)
     @Column(name = "max_jugadores", nullable = false)
     private int maxJugadores = 8;
 
     @Column(name = "es_publica", nullable = false)
     private boolean esPublica = true;
 
+    @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -61,25 +72,52 @@ public class Partida {
     @Column(name = "rojo_gana")
     private Boolean rojoGana;
 
+    @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JugadorPartida> jugadores = new ArrayList<>();
+
+    @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TableroCarta> cartasTablero = new ArrayList<>();
+
+    @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Turno> turnos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Chat> mensajesChat = new ArrayList<>();
+
     public Partida() {}
 
     @PrePersist
     protected void onCreate() {
-        if (this.fechaCreacion == null) {
-            this.fechaCreacion = LocalDateTime.now();
-        }
         if (this.estado == null) {
             this.estado = EstadoPartida.esperando;
-        }
-
-        if (this.maxJugadores < 4 || this.maxJugadores > 16) {
-            throw new IllegalStateException("El número de jugadores debe estar entre 4 y 16");
         }
         if (this.tiempoEspera != 30 && this.tiempoEspera != 60 && this.tiempoEspera != 90 && this.tiempoEspera != 120) {
             throw new IllegalStateException("El tiempo de espera debe ser 30, 60, 90 o 120 segundos");
         }
     }
 
+    // Helpers Bidireccionales
+    public void addJugador(JugadorPartida jugadorPartida) {
+        jugadores.add(jugadorPartida);
+        jugadorPartida.setPartida(this);
+    }
+
+    public void addCartaTablero(TableroCarta carta) {
+        cartasTablero.add(carta);
+        carta.setPartida(this);
+    }
+
+    public void addTurno(Turno turno) {
+        turnos.add(turno);
+        turno.setPartida(this);
+    }
+
+    public void addMensajeChat(Chat chat) {
+        mensajesChat.add(chat);
+        chat.setPartida(this);
+    }
+
+    // Getters y Setters
     public Integer getIdPartida() { 
         return idPartida; 
     }
@@ -166,5 +204,37 @@ public class Partida {
 
     public void setRojoGana(Boolean rojoGana) { 
         this.rojoGana = rojoGana; 
+    }
+
+    public List<JugadorPartida> getJugadores() { 
+        return jugadores; 
+    }
+
+    public void setJugadores(List<JugadorPartida> jugadores) { 
+        this.jugadores = jugadores; 
+    }
+
+    public List<TableroCarta> getCartasTablero() { 
+        return cartasTablero; 
+    }
+
+    public void setCartasTablero(List<TableroCarta> cartasTablero) { 
+        this.cartasTablero = cartasTablero; 
+    }
+
+    public List<Turno> getTurnos() { 
+        return turnos; 
+    }
+
+    public void setTurnos(List<Turno> turnos) { 
+        this.turnos = turnos; 
+    }
+
+    public List<Chat> getMensajesChat() { 
+        return mensajesChat; 
+    }
+
+    public void setMensajesChat(List<Chat> mensajesChat) { 
+        this.mensajesChat = mensajesChat; 
     }
 }

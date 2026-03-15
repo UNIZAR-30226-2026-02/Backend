@@ -1,10 +1,15 @@
 package com.secretpanda.codenames.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -28,7 +33,15 @@ public class Tema {
     @Column(nullable = false)
     private boolean activo = true;
 
-    public Tema() {
+    @OneToMany(mappedBy = "tema", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PalabraTema> palabras = new ArrayList<>();
+
+    public Tema() {}
+
+    // Helper Bidireccional
+    public void addPalabra(PalabraTema palabra) {
+        palabras.add(palabra);
+        palabra.setTema(this);
     }
 
     public Integer getIdTema() { 
@@ -69,5 +82,13 @@ public class Tema {
 
     public void setActivo(boolean activo) { 
         this.activo = activo; 
+    }
+
+    public List<PalabraTema> getPalabras() { 
+        return palabras; 
+    }
+
+    public void setPalabras(List<PalabraTema> palabras) { 
+        this.palabras = palabras; 
     }
 }

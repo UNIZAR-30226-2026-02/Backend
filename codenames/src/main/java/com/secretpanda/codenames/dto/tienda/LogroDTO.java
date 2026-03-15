@@ -36,7 +36,6 @@ public class LogroDTO {
     public int getBalasRecompensa() { return balasRecompensa; } 
     public boolean isActivo() { return activo; }
     public int getProgresoActual() { return progresoActual; } 
-    public boolean isComprado() { return completado; } 
     public boolean isCompletado() { return completado; }
     public LocalDateTime getFechaDesbloqueo() { return fechaDesbloqueo; } 
 

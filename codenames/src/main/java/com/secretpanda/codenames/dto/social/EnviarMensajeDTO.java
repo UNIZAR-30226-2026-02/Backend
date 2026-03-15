@@ -2,11 +2,11 @@ package com.secretpanda.codenames.dto.social;
 
 /**
  * DTO para recibir la solicitud de envío de un nuevo mensaje de chat desde la app.
+ * NOTA: El id del jugador se extrae de forma segura del token JWT en el controlador.
  */
 public class EnviarMensajeDTO {
 
     private Integer idPartida; 
-    private String idJugador; 
     private String mensaje;
 
     public EnviarMensajeDTO() {
@@ -18,14 +18,6 @@ public class EnviarMensajeDTO {
 
     public void setIdPartida(Integer idPartida) { 
         this.idPartida = idPartida; 
-    }
-
-    public String getIdJugador() { 
-        return idJugador; 
-    }
-
-    public void setIdJugador(String idJugador) { 
-        this.idJugador = idJugador; 
     }
 
     public String getMensaje() {

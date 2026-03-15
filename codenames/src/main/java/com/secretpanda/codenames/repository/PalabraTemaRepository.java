@@ -19,7 +19,7 @@ public interface PalabraTemaRepository extends JpaRepository<PalabraTema, Intege
     List<PalabraTema> findByTema_IdTemaAndActivoTrue(Integer idTema);
 
     // Validar que no exista ya la misma palabra dentro del mismo tema
-    boolean existsByPalabraAndTema_IdTema(String palabra, Integer idTema);
+    boolean existsByValorAndTema_IdTema(String valor, Integer idTema);
 
     // MEJORAS DE RENDIMIENTO
     // Extrae un número X de palabras aleatorias directamente desde PostgreSQL.

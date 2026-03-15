@@ -24,5 +24,5 @@ public interface VotoCartaRepository extends JpaRepository<VotoCarta, Integer> {
     Optional<VotoCarta> findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartidaAndCartaTablero_IdCartaTablero(Integer idTurno, Integer idJugadorPartida, Integer idCartaTablero);
 
     // Numero de votos que ha recibido una carta en un turno concreto
-    long countByTurno_IdTurnoAndCartaTablero_IdCartaTablero(Integer idTurno, Integer idJugadorPartida);
+    long countByTurno_IdTurnoAndCartaTablero_IdCartaTablero(Integer idTurno, Integer idCartaTablero);
 }

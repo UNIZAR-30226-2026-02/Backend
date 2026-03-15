@@ -1,5 +1,9 @@
 package com.secretpanda.codenames.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -39,8 +44,19 @@ public class Turno {
     @Column(name = "pista_numero", nullable = false)
     private int pistaNumero;
 
+    // NUEVO: Relación para el RF-16 (Contabilizar votos en tiempo real)
+    @OneToMany(mappedBy = "turno", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VotoCarta> votos = new ArrayList<>();
+
     public Turno() {}
+
+    // Helper Bidireccional
+    public void addVoto(VotoCarta voto) {
+        votos.add(voto);
+        voto.setTurno(this);
+    }
     
+    // Getters y Setters
     public Integer getIdTurno() { 
         return idTurno; 
     }
@@ -87,5 +103,13 @@ public class Turno {
 
     public void setPistaNumero(int pistaNumero) { 
         this.pistaNumero = pistaNumero; 
+    }
+
+    public List<VotoCarta> getVotos() { 
+        return votos; 
+    }
+
+    public void setVotos(List<VotoCarta> votos) { 
+        this.votos = votos; 
     }
 }

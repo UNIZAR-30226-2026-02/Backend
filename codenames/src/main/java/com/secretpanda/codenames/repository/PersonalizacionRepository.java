@@ -29,10 +29,9 @@ public interface PersonalizacionRepository extends JpaRepository<Personalizacion
     // Catálogo ordenado por precio
     List<Personalizacion> findByTipoAndActivoTrueOrderByPrecioBalaAsc(TipoPersonalizacion tipo);
 
-    // Subconsulta para excluir artículos ya comprados
-    @Query(value = "SELECT p.* FROM personalizacion p WHERE p.activo = true AND p.tipo = :#{#tipo.name()} " +
-                   "AND p.id_personalizacion NOT IN " +
-                   "(SELECT ip.id_personalizacion FROM inventario_personalizacion ip WHERE ip.id_jugador = :idJugador)", 
-           nativeQuery = true)
+    // Subconsulta JPQL pura y fuertemente tipada para excluir artículos ya comprados
+    @Query("SELECT p FROM Personalizacion p WHERE p.activo = true AND p.tipo = :tipo " +
+           "AND p.idPersonalizacion NOT IN " +
+           "(SELECT ip.personalizacion.idPersonalizacion FROM InventarioPersonalizacion ip WHERE ip.jugador.idGoogle = :idJugador)")
     List<Personalizacion> findArticulosNoCompradosPorTipo(@Param("idJugador") String idJugador, @Param("tipo") TipoPersonalizacion tipo);
 }

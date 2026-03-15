@@ -1,11 +1,16 @@
 package com.secretpanda.codenames.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity 
@@ -25,6 +30,7 @@ public class Jugador {
     @Column(nullable = false)
     private int balas = 0;
 
+    @CreationTimestamp
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
@@ -40,84 +46,150 @@ public class Jugador {
     @Column(name = "num_fallos", nullable = false)
     private int numFallos = 0;
 
+    @OneToMany(mappedBy = "solicitante", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Amistad> amistadesEnviadas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receptor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Amistad> amistadesRecibidas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "jugador", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InventarioPersonalizacion> inventario = new ArrayList<>();
+
+    @OneToMany(mappedBy = "jugador", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JugadorLogro> logros = new ArrayList<>();
+
+    // NUEVO: Relación para el RF-4 (Historial de partidas)
+    @OneToMany(mappedBy = "jugador", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JugadorPartida> historialPartidas = new ArrayList<>();
+
     public Jugador() {}
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.fechaRegistro == null) {
-            this.fechaRegistro = LocalDateTime.now();
-        }
+    // Helpers Bidireccionales
+    public void addAmistadEnviada(Amistad amistad) {
+        amistadesEnviadas.add(amistad);
+        amistad.setSolicitante(this);
     }
 
+    public void addAmistadRecibida(Amistad amistad) {
+        amistadesRecibidas.add(amistad);
+        amistad.setReceptor(this);
+    }
+
+    public void addJugadorPartida(JugadorPartida jugadorPartida) {
+        historialPartidas.add(jugadorPartida);
+        jugadorPartida.setJugador(this);
+    }
+
+    // Getters y Setters
     public String getIdGoogle() { 
-        return idGoogle;
+        return idGoogle; 
     }
 
     public void setIdGoogle(String idGoogle) { 
-        this.idGoogle = idGoogle;
+        this.idGoogle = idGoogle; 
     }
-    
+
     public String getTag() { 
-        return tag;
+        return tag; 
     }
 
     public void setTag(String tag) { 
-        this.tag = tag;
+        this.tag = tag; 
     }
 
     public String getFotoPerfil() { 
-        return fotoPerfil;
+        return fotoPerfil; 
     }
 
     public void setFotoPerfil(String fotoPerfil) { 
-        this.fotoPerfil = fotoPerfil;
+        this.fotoPerfil = fotoPerfil; 
     }
 
     public int getBalas() { 
-        return balas;
+        return balas; 
     }
 
     public void setBalas(int balas) { 
-        this.balas = balas;
+        this.balas = balas; 
     }
 
     public LocalDateTime getFechaRegistro() { 
-        return fechaRegistro;
+        return fechaRegistro; 
     }
 
     public void setFechaRegistro(LocalDateTime fechaRegistro) { 
-        this.fechaRegistro = fechaRegistro;
+        this.fechaRegistro = fechaRegistro; 
     }
 
     public int getPartidasJugadas() { 
-        return partidasJugadas;
+        return partidasJugadas; 
     }
 
     public void setPartidasJugadas(int partidasJugadas) { 
-        this.partidasJugadas = partidasJugadas;
+        this.partidasJugadas = partidasJugadas; 
     }
 
     public int getVictorias() { 
-        return victorias;
+        return victorias; 
     }
 
     public void setVictorias(int victorias) { 
-        this.victorias = victorias;
+        this.victorias = victorias; 
     }
 
     public int getNumAciertos() { 
-        return numAciertos;
+        return numAciertos; 
     }
 
     public void setNumAciertos(int numAciertos) { 
-        this.numAciertos = numAciertos;
+        this.numAciertos = numAciertos; 
     }
 
     public int getNumFallos() { 
-        return numFallos;
+        return numFallos; 
     }
 
     public void setNumFallos(int numFallos) { 
-        this.numFallos = numFallos;
+        this.numFallos = numFallos; 
+    }
+
+    public List<Amistad> getAmistadesEnviadas() { 
+        return amistadesEnviadas; 
+    }
+
+    public void setAmistadesEnviadas(List<Amistad> amistadesEnviadas) { 
+        this.amistadesEnviadas = amistadesEnviadas; 
+    }
+
+    public List<Amistad> getAmistadesRecibidas() { 
+        return amistadesRecibidas; 
+    }
+
+    public void setAmistadesRecibidas(List<Amistad> amistadesRecibidas) { 
+        this.amistadesRecibidas = amistadesRecibidas; 
+    }
+
+    public List<InventarioPersonalizacion> getInventario() { 
+        return inventario; 
+    }
+
+    public void setInventario(List<InventarioPersonalizacion> inventario) { 
+        this.inventario = inventario; 
+    }
+
+    public List<JugadorLogro> getLogros() { 
+        return logros; 
+    }
+
+    public void setLogros(List<JugadorLogro> logros) { 
+        this.logros = logros; 
+    }
+
+    public List<JugadorPartida> getHistorialPartidas() { 
+        return historialPartidas; 
+    }
+
+    public void setHistorialPartidas(List<JugadorPartida> historialPartidas) { 
+        this.historialPartidas = historialPartidas; 
     }
 }

@@ -31,14 +31,13 @@ public class AmistadId implements Serializable {
     }
 
     public String getIdReceptor() { 
-        return idReceptor;
+        return idReceptor; 
     }
 
     public void setIdReceptor(String idReceptor) { 
         this.idReceptor = idReceptor; 
     }
 
-    // equals() y hashCode() son obligatorios en JPA para claves compuestas
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

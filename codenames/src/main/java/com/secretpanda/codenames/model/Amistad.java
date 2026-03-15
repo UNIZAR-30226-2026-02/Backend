@@ -2,6 +2,8 @@ package com.secretpanda.codenames.model;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -39,6 +41,7 @@ public class Amistad {
     @Column(nullable = false, length = 16)
     private EstadoAmistad estado;
 
+    @CreationTimestamp
     @Column(name = "fecha_solicitud", nullable = false, updatable = false)
     private LocalDateTime fechaSolicitud;
 
@@ -46,30 +49,51 @@ public class Amistad {
 
     @PrePersist
     protected void onCreate() {
-        if (this.fechaSolicitud == null) {
-            this.fechaSolicitud = LocalDateTime.now();
-        }
         if (this.estado == null) {
             this.estado = EstadoAmistad.pendiente;
         }
-        
         if (solicitante != null && receptor != null && solicitante.getIdGoogle().equals(receptor.getIdGoogle())) {
             throw new IllegalStateException("Un jugador no puede enviarse una solicitud de amistad a sí mismo");
         }
     }
 
-    public AmistadId getId() { return id; }
-    public void setId(AmistadId id) { this.id = id; }
+    public AmistadId getId() { 
+        return id; 
+    }
 
-    public Jugador getSolicitante() { return solicitante; }
-    public void setSolicitante(Jugador solicitante) { this.solicitante = solicitante; }
+    public void setId(AmistadId id) { 
+        this.id = id; 
+    }
 
-    public Jugador getReceptor() { return receptor; }
-    public void setReceptor(Jugador receptor) { this.receptor = receptor; }
+    public Jugador getSolicitante() { 
+        return solicitante; 
+    }
 
-    public EstadoAmistad getEstado() { return estado; }
-    public void setEstado(EstadoAmistad estado) { this.estado = estado; }
+    public void setSolicitante(Jugador solicitante) { 
+        this.solicitante = solicitante; 
+    }
 
-    public LocalDateTime getFechaSolicitud() { return fechaSolicitud; }
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
+    public Jugador getReceptor() { 
+        return receptor; 
+    }
+
+    public void setReceptor(Jugador receptor) { 
+        this.receptor = receptor; 
+    }
+
+    public EstadoAmistad getEstado() { 
+        return estado; 
+    }
+
+    public void setEstado(EstadoAmistad estado) { 
+        this.estado = estado; 
+    }
+
+    public LocalDateTime getFechaSolicitud() { 
+        return fechaSolicitud; 
+    }
+
+    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { 
+        this.fechaSolicitud = fechaSolicitud; 
+    }
 }

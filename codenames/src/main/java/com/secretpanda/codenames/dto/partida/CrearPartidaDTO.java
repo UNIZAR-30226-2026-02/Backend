@@ -2,24 +2,16 @@ package com.secretpanda.codenames.dto.partida;
 
 /**
  * DTO para recibir la solicitud de creación de una nueva partida desde la app.
+ * NOTA: El id del creador se extrae de forma segura del token JWT en el controlador.
  */
 public class CrearPartidaDTO {
 
-    private String idCreador; 
     private Integer idTema; 
     private int tiempoEspera; 
     private int maxJugadores; 
     private boolean esPublica; 
 
     public CrearPartidaDTO() {
-    }
-
-    public String getIdCreador() { 
-        return idCreador; 
-    }
-
-    public void setIdCreador(String idCreador) { 
-        this.idCreador = idCreador; 
     }
 
     public Integer getIdTema() { 
