@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
  */
 public class ChatMessageDTO {
 
-    private Integer idMensaje;
-    private Integer idPartida; 
+    private Integer idMensaje; 
+    private Integer idPartida;  
 
-    private String idJugador;
-    private String tagJugador;
+    private String idJugador; 
+    private String tag;
     private String equipo; 
     
     private String mensaje;
@@ -20,36 +20,36 @@ public class ChatMessageDTO {
     public ChatMessageDTO() {
     }
 
-    public Integer getIdMensaje() {
-        return idMensaje;
+    public Integer getIdMensaje() { 
+        return idMensaje; 
     }
 
-    public void setIdMensaje(Integer idMensaje) {
-        this.idMensaje = idMensaje;
+    public void setIdMensaje(Integer idMensaje) { 
+        this.idMensaje = idMensaje; 
     }
 
-    public Integer getIdPartida() {
-        return idPartida;
+    public Integer getIdPartida() { 
+        return idPartida; 
     }
 
-    public void setIdPartida(Integer idPartida) {
-        this.idPartida = idPartida;
+    public void setIdPartida(Integer idPartida) { 
+        this.idPartida = idPartida; 
     }
 
-    public String getIdJugador() {
-        return idJugador;
+    public String getIdJugador() { 
+        return idJugador; 
     }
 
-    public void setIdJugador(String idJugador) {
-        this.idJugador = idJugador;
+    public void setIdJugador(String idJugador) { 
+        this.idJugador = idJugador; 
     }
 
-    public String getTagJugador() {
-        return tagJugador;
+    public String getTag() {
+        return tag;
     }
 
-    public void setTagJugador(String tagJugador) {
-        this.tagJugador = tagJugador;
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public String getEquipo() {

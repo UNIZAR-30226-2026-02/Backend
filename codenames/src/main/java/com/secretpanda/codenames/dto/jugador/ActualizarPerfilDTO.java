@@ -13,6 +13,6 @@ public class ActualizarPerfilDTO {
     public String getTag() { return tag; }
     public void setTag(String tag) { this.tag = tag; }
 
-    public String getFotoPerfil() { return fotoPerfil; }
+    public String getFotoPerfil() { return fotoPerfil; } 
     public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
 }

@@ -6,7 +6,7 @@ package com.secretpanda.codenames.dto.social;
 public class RankingDTO {
 
     private String tag;
-    private String fotoPerfil;
+    private String fotoPerfil; 
     private int victorias;
 
     public RankingDTO() {
@@ -20,12 +20,12 @@ public class RankingDTO {
         this.tag = tag;
     }
 
-    public String getFotoPerfil() {
-        return fotoPerfil;
+    public String getFotoPerfil() { 
+        return fotoPerfil; 
     }
 
-    public void setFotoPerfil(String fotoPerfil) {
-        this.fotoPerfil = fotoPerfil;
+    public void setFotoPerfil(String fotoPerfil) { 
+        this.fotoPerfil = fotoPerfil; 
     }
 
     public int getVictorias() {

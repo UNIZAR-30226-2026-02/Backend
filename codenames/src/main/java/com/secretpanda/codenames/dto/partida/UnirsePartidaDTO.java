@@ -5,25 +5,25 @@ package com.secretpanda.codenames.dto.partida;
  */
 public class UnirsePartidaDTO {
 
-    private String idJugador;
-    private String codigoPartida;
+    private String idJugador; 
+    private String codigoPartida; 
 
     public UnirsePartidaDTO() {
     }
 
-    public String getIdJugador() {
-        return idJugador;
+    public String getIdJugador() { 
+        return idJugador; 
     }
 
-    public void setIdJugador(String idJugador) {
-        this.idJugador = idJugador;
+    public void setIdJugador(String idJugador) { 
+        this.idJugador = idJugador; 
     }
 
-    public String getCodigoPartida() {
-        return codigoPartida;
+    public String getCodigoPartida() { 
+        return codigoPartida; 
     }
 
-    public void setCodigoPartida(String codigoPartida) {
-        this.codigoPartida = codigoPartida;
+    public void setCodigoPartida(String codigoPartida) { 
+        this.codigoPartida = codigoPartida; 
     }
 }

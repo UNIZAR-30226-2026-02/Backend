@@ -8,28 +8,28 @@ import java.time.LocalDateTime;
  */
 public class PartidaResumenDTO {
 
-    private Integer idPartida;
+    private Integer idPartida; 
     private String nombreTema;
-    private LocalDateTime fechaFin;
+    private LocalDateTime fechaFin; 
     
     // Datos específicos de lo que hizo el jugador en esta partida
     private String equipoJugador; // "rojo" o "azul"
     private String rolJugador;    // "lider" o "agente"
-    private boolean victoria;     
+    private boolean victoria;      
     
     // Estadísticas del jugador en esa partida concreta
-    private int numAciertos;
-    private int numFallos;
+    private int numAciertos; 
+    private int numFallos; 
 
     public PartidaResumenDTO() {
     }
 
-    public Integer getIdPartida() {
-        return idPartida;
+    public Integer getIdPartida() { 
+        return idPartida; 
     }
 
-    public void setIdPartida(Integer idPartida) {
-        this.idPartida = idPartida;
+    public void setIdPartida(Integer idPartida) { 
+        this.idPartida = idPartida; 
     }
 
     public String getNombreTema() {
@@ -40,12 +40,12 @@ public class PartidaResumenDTO {
         this.nombreTema = nombreTema;
     }
 
-    public LocalDateTime getFechaFin() {
-        return fechaFin;
+    public LocalDateTime getFechaFin() { 
+        return fechaFin; 
     }
 
-    public void setFechaFin(LocalDateTime fechaFin) {
-        this.fechaFin = fechaFin;
+    public void setFechaFin(LocalDateTime fechaFin) { 
+        this.fechaFin = fechaFin; 
     }
 
     public String getEquipoJugador() {
@@ -72,19 +72,19 @@ public class PartidaResumenDTO {
         this.victoria = victoria;
     }
 
-    public int getNumAciertos() {
-        return numAciertos;
+    public int getNumAciertos() { 
+        return numAciertos; 
     }
 
-    public void setNumAciertos(int numAciertos) {
-        this.numAciertos = numAciertos;
+    public void setNumAciertos(int numAciertos) { 
+        this.numAciertos = numAciertos; 
     }
 
-    public int getNumFallos() {
-        return numFallos;
+    public int getNumFallos() { 
+        return numFallos; 
     }
 
-    public void setNumFallos(int numFallos) {
-        this.numFallos = numFallos;
+    public void setNumFallos(int numFallos) { 
+        this.numFallos = numFallos; 
     }
 }

@@ -5,52 +5,52 @@ package com.secretpanda.codenames.dto.partida;
  */
 public class CrearPartidaDTO {
 
-    private String idCreador;
-    private Integer idTema;
-    private int tiempoEspera;
-    private int maxJugadores;
-    private boolean esPublica;
+    private String idCreador; 
+    private Integer idTema; 
+    private int tiempoEspera; 
+    private int maxJugadores; 
+    private boolean esPublica; 
 
     public CrearPartidaDTO() {
     }
 
-    public String getIdCreador() {
-        return idCreador;
+    public String getIdCreador() { 
+        return idCreador; 
     }
 
-    public void setIdCreador(String idCreador) {
-        this.idCreador = idCreador;
+    public void setIdCreador(String idCreador) { 
+        this.idCreador = idCreador; 
     }
 
-    public Integer getIdTema() {
-        return idTema;
+    public Integer getIdTema() { 
+        return idTema; 
     }
 
-    public void setIdTema(Integer idTema) {
-        this.idTema = idTema;
+    public void setIdTema(Integer idTema) { 
+        this.idTema = idTema; 
     }
 
-    public int getTiempoEspera() {
-        return tiempoEspera;
+    public int getTiempoEspera() { 
+        return tiempoEspera; 
     }
 
-    public void setTiempoEspera(int tiempoEspera) {
-        this.tiempoEspera = tiempoEspera;
+    public void setTiempoEspera(int tiempoEspera) { 
+        this.tiempoEspera = tiempoEspera; 
     }
 
-    public int getMaxJugadores() {
-        return maxJugadores;
+    public int getMaxJugadores() { 
+        return maxJugadores; 
     }
 
-    public void setMaxJugadores(int maxJugadores) {
-        this.maxJugadores = maxJugadores;
+    public void setMaxJugadores(int maxJugadores) { 
+        this.maxJugadores = maxJugadores; 
     }
 
-    public boolean isEsPublica() {
-        return esPublica;
+    public boolean isEsPublica() { 
+        return esPublica; 
     }
 
-    public void setEsPublica(boolean esPublica) {
-        this.esPublica = esPublica;
+    public void setEsPublica(boolean esPublica) { 
+        this.esPublica = esPublica; 
     }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 public class GameStateDTO {
     
     private Integer idPartida;
-    private String estadoPartida; // "esperando", "en_curso" o "finalizada"
+    private String estado; // "esperando", "en_curso" o "finalizada"
     
     // Estado del Turno Actual
     private String equipoTurnoActual; // "rojo" ó "azul"
@@ -14,7 +14,7 @@ public class GameStateDTO {
     private int cartasRojasRestantes;
     private int cartasAzulesRestantes;
     
-    private Boolean victoriaRoja;
+    private Boolean rojoGana;
 
     // Componentes del juego
     private PistaDTO pistaActual; // Puede ser null si el líder aún no la ha introducido
@@ -25,11 +25,11 @@ public class GameStateDTO {
     public GameStateDTO() {}
 
     // Getters y Setters
-    public Integer getIdPartida() { return idPartida; }
-    public void setIdPartida(Integer idPartida) { this.idPartida = idPartida; }
+    public Integer getIdPartida() { return idPartida; } 
+    public void setIdPartida(Integer idPartida) { this.idPartida = idPartida; } 
 
-    public String getEstadoPartida() { return estadoPartida; }
-    public void setEstadoPartida(String estadoPartida) { this.estadoPartida = estadoPartida; }
+    public String getEstado() { return estado; } 
+    public void setEstado(String estado) { this.estado = estado; } 
 
     public String getEquipoTurnoActual() { return equipoTurnoActual; }
     public void setEquipoTurnoActual(String equipoTurnoActual) { this.equipoTurnoActual = equipoTurnoActual; }
@@ -43,8 +43,8 @@ public class GameStateDTO {
     public int getCartasAzulesRestantes() { return cartasAzulesRestantes; }
     public void setCartasAzulesRestantes(int cartasAzulesRestantes) { this.cartasAzulesRestantes = cartasAzulesRestantes; }
 
-    public Boolean getVictoriaRoja() { return victoriaRoja; }
-    public void setVictoriaRoja(Boolean victoriaRoja) { this.victoriaRoja = victoriaRoja; }
+    public Boolean getRojoGana() { return rojoGana; } 
+    public void setRojoGana(Boolean rojoGana) { this.rojoGana = rojoGana; } 
 
     public PistaDTO getPistaActual() { return pistaActual; }
     public void setPistaActual(PistaDTO pistaActual) { this.pistaActual = pistaActual; }

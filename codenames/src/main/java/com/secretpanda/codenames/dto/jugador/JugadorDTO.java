@@ -33,37 +33,37 @@ public class JugadorDTO {
      * externamente mediante el Util de cálculos.
      */
     public JugadorDTO(Jugador jugador) {
-        this.idGoogle = jugador.getIdGoogle();
+        this.idGoogle = jugador.getIdGoogle(); 
         this.tag = jugador.getTag();
-        this.fotoPerfil = jugador.getFotoPerfil();
+        this.fotoPerfil = jugador.getFotoPerfil(); 
         this.balas = jugador.getBalas();
-        this.partidasJugadas = jugador.getPartidasJugadas();
+        this.partidasJugadas = jugador.getPartidasJugadas(); 
         this.victorias = jugador.getVictorias();
-        this.numAciertos = jugador.getNumAciertos();
-        this.numFallos = jugador.getNumFallos();
+        this.numAciertos = jugador.getNumAciertos(); 
+        this.numFallos = jugador.getNumFallos(); 
     }
 
     // Getters
-    public String getIdGoogle() { return idGoogle; }
+    public String getIdGoogle() { return idGoogle; } 
     public String getTag() { return tag; }
-    public String getFotoPerfil() { return fotoPerfil; }
+    public String getFotoPerfil() { return fotoPerfil; } 
     public int getBalas() { return balas; }
-    public int getPartidasJugadas() { return partidasJugadas; }
+    public int getPartidasJugadas() { return partidasJugadas; } 
     public int getVictorias() { return victorias; }
-    public int getNumAciertos() { return numAciertos; }
-    public int getNumFallos() { return numFallos; }
+    public int getNumAciertos() { return numAciertos; } 
+    public int getNumFallos() { return numFallos; } 
     public int getDerrotas() { return derrotas; }
     public double getPorcentajeVictorias() { return porcentajeVictorias; }
 
     // Setters
-    public void setIdGoogle(String idGoogle) { this.idGoogle = idGoogle; }
+    public void setIdGoogle(String idGoogle) { this.idGoogle = idGoogle; } 
     public void setTag(String tag) { this.tag = tag; }
-    public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
+    public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; } 
     public void setBalas(int balas) { this.balas = balas; }
-    public void setPartidasJugadas(int partidasJugadas) { this.partidasJugadas = partidasJugadas; }
+    public void setPartidasJugadas(int partidasJugadas) { this.partidasJugadas = partidasJugadas; } 
     public void setVictorias(int victorias) { this.victorias = victorias; }
-    public void setNumAciertos(int numAciertos) { this.numAciertos = numAciertos; }
-    public void setNumFallos(int numFallos) { this.numFallos = numFallos; }
+    public void setNumAciertos(int numAciertos) { this.numAciertos = numAciertos; } 
+    public void setNumFallos(int numFallos) { this.numFallos = numFallos; } 
     public void setDerrotas(int derrotas) { this.derrotas = derrotas; }
     public void setPorcentajeVictorias(double porcentajeVictorias) { this.porcentajeVictorias = porcentajeVictorias; }
 }

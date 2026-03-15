@@ -10,8 +10,8 @@ public class JugadorPartidaDTO {
     
     // Datos básicos del Jugador
     private String idJugador;
-    private String tagJugador;
-    private String fotoJugador;
+    private String tag;
+    private String fotoPerfil;
 
     // Estado del jugador en la partida
     private String equipo; // "rojo" o "azul"
@@ -23,36 +23,36 @@ public class JugadorPartidaDTO {
     public JugadorPartidaDTO() {
     }
 
-    public Integer getIdJugadorPartida() {
-        return idJugadorPartida;
+    public Integer getIdJugadorPartida() { 
+        return idJugadorPartida; 
     }
 
-    public void setIdJugadorPartida(Integer idJugadorPartida) {
-        this.idJugadorPartida = idJugadorPartida;
+    public void setIdJugadorPartida(Integer idJugadorPartida) { 
+        this.idJugadorPartida = idJugadorPartida; 
     }
 
-    public String getIdJugador() {
-        return idJugador;
+    public String getIdJugador() { 
+        return idJugador; 
     }
 
-    public void setIdJugador(String idJugador) {
-        this.idJugador = idJugador;
+    public void setIdJugador(String idJugador) { 
+        this.idJugador = idJugador; 
+    }
+    
+    public String getTag() {
+        return tag;
     }
 
-    public String getTagJugador() {
-        return tagJugador;
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
-    public void setTagJugador(String tagJugador) {
-        this.tagJugador = tagJugador;
+    public String getFotoPerfil() {
+        return fotoPerfil;
     }
 
-    public String getFotoJugador() {
-        return fotoJugador;
-    }
-
-    public void setFotoJugador(String fotoJugador) {
-        this.fotoJugador = fotoJugador;
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
     }
 
     public String getEquipo() {
@@ -71,20 +71,20 @@ public class JugadorPartidaDTO {
         this.rol = rol;
     }
 
-    public int getNumAciertos() {
-        return numAciertos;
+    public int getNumAciertos() { 
+        return numAciertos; 
     }
 
-    public void setNumAciertos(int numAciertos) {
-        this.numAciertos = numAciertos;
+    public void setNumAciertos(int numAciertos) { 
+        this.numAciertos = numAciertos; 
     }
 
-    public int getNumFallos() {
-        return numFallos;
+    public int getNumFallos() { 
+        return numFallos; 
     }
 
-    public void setNumFallos(int numFallos) {
-        this.numFallos = numFallos;
+    public void setNumFallos(int numFallos) { 
+        this.numFallos = numFallos; 
     }
 
     public boolean isAbandono() {

@@ -6,25 +6,25 @@ package com.secretpanda.codenames.dto.tienda;
 public class CompraRequestDTO {
 
     // Nota: El idJugador podría omitirse si se obtiene del token JWT de seguridad.
-    private String idJugador;
-    private Integer idPersonalizacion;
+    private String idJugador; 
+    private Integer idPersonalizacion; 
 
     public CompraRequestDTO() {
     }
 
-    public String getIdJugador() {
-        return idJugador;
+    public String getIdJugador() { 
+        return idJugador; 
     }
 
-    public void setIdJugador(String idJugador) {
-        this.idJugador = idJugador;
+    public void setIdJugador(String idJugador) { 
+        this.idJugador = idJugador; 
     }
 
-    public Integer getIdPersonalizacion() {
-        return idPersonalizacion;
+    public Integer getIdPersonalizacion() { 
+        return idPersonalizacion; 
     }
 
-    public void setIdPersonalizacion(Integer idPersonalizacion) {
-        this.idPersonalizacion = idPersonalizacion;
+    public void setIdPersonalizacion(Integer idPersonalizacion) { 
+        this.idPersonalizacion = idPersonalizacion; 
     }
 }

@@ -4,8 +4,8 @@ import com.secretpanda.codenames.model.Turno;
 
 public class PistaDTO {
     
-    private String palabra;
-    private int numero;
+    private String palabraPista;
+    private int pistaNumero;
     private String equipoLider;
 
     // Constructor vacío
@@ -13,17 +13,17 @@ public class PistaDTO {
 
     // Constructor con parámetros para coger los datos del turno
     public PistaDTO(Turno turno) {
-        this.palabra = turno.getPalabraPista();
-        this.numero = turno.getPistaNumero();
+        this.palabraPista = turno.getPalabraPista(); 
+        this.pistaNumero = turno.getPistaNumero();
         this.equipoLider = turno.getJugadorPartida().getEquipo().name();
     }
 
     // Getters y Setters
-    public String getPalabra() { return palabra; }
-    public void setPalabra(String palabra) { this.palabra = palabra; }
+    public String getPalabraPista() { return palabraPista; } 
+    public void setPalabraPista(String palabraPista) { this.palabraPista = palabraPista; }
 
-    public int getNumero() { return numero; }
-    public void setNumero(int numero) { this.numero = numero; }
+    public int getPistaNumero() { return pistaNumero; } 
+    public void setPistaNumero(int pistaNumero) { this.pistaNumero = pistaNumero; }
 
     public String getEquipoLider() { return equipoLider; }
     public void setEquipoLider(String equipoLider) { this.equipoLider = equipoLider; }

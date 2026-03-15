@@ -9,28 +9,28 @@ import java.time.LocalDateTime;
 public class AmistadDTO {
 
     // Datos de quien envía la solicitud
-    private String idSolicitante;
+    private String idSolicitante; 
     private String tagSolicitante;
     private String fotoSolicitante;
 
     // Datos de quien recibe la solicitud
-    private String idReceptor;
+    private String idReceptor; 
     private String tagReceptor;
     private String fotoReceptor;
 
     // Estado y metadatos de la amistad
     private String estado; // "pendiente" o "aceptada"
-    private LocalDateTime fechaSolicitud;
+    private LocalDateTime fechaSolicitud; 
 
     public AmistadDTO() {
     }
 
-    public String getIdSolicitante() {
-        return idSolicitante;
+    public String getIdSolicitante() { 
+        return idSolicitante; 
     }
 
-    public void setIdSolicitante(String idSolicitante) {
-        this.idSolicitante = idSolicitante;
+    public void setIdSolicitante(String idSolicitante) { 
+        this.idSolicitante = idSolicitante; 
     }
 
     public String getTagSolicitante() {
@@ -49,12 +49,12 @@ public class AmistadDTO {
         this.fotoSolicitante = fotoSolicitante;
     }
 
-    public String getIdReceptor() {
-        return idReceptor;
+    public String getIdReceptor() { 
+        return idReceptor; 
     }
 
-    public void setIdReceptor(String idReceptor) {
-        this.idReceptor = idReceptor;
+    public void setIdReceptor(String idReceptor) { 
+        this.idReceptor = idReceptor; 
     }
 
     public String getTagReceptor() {
@@ -81,11 +81,11 @@ public class AmistadDTO {
         this.estado = estado;
     }
 
-    public LocalDateTime getFechaSolicitud() {
-        return fechaSolicitud;
+    public LocalDateTime getFechaSolicitud() { 
+        return fechaSolicitud; 
     }
 
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
-        this.fechaSolicitud = fechaSolicitud;
+    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { 
+        this.fechaSolicitud = fechaSolicitud; 
     }
 }
