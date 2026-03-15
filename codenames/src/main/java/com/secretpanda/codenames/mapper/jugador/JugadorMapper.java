@@ -22,21 +22,21 @@ public class JugadorMapper {
         JugadorDTO dto = new JugadorDTO();
         
         // Identidad (Entidad en camelCase -> DTO en snake_case)
-        dto.setId_google(jugador.getIdGoogle());
+        dto.setIdGoogle(jugador.getIdGoogle());
         dto.setTag(jugador.getTag());
-        dto.setFoto_perfil(jugador.getFotoPerfil());
+        dto.setFotoPerfil(jugador.getFotoPerfil());
         dto.setBalas(jugador.getBalas());
 
         // Estadísticas base procedentes de la BD
-        dto.setPartidas_jugadas(jugador.getPartidasJugadas());
+        dto.setPartidasJugadas(jugador.getPartidasJugadas());
         dto.setVictorias(jugador.getVictorias());
-        dto.setNum_aciertos(jugador.getNumAciertos());
-        dto.setNum_fallos(jugador.getNumFallos());
+        dto.setNumAciertos(jugador.getNumAciertos());
+        dto.setNumFallos(jugador.getNumFallos());
 
         // Cálculos delegados a nuestra clase Util
         if (calculator != null) {
             dto.setDerrotas(calculator.calcularDerrotas(jugador.getPartidasJugadas(), jugador.getVictorias()));
-            dto.setPorcentaje_victorias(calculator.calcularWinrate(jugador.getVictorias(), jugador.getPartidasJugadas()));
+            dto.setPorcentajeVictorias(calculator.calcularWinrate(jugador.getVictorias(), jugador.getPartidasJugadas()));
         }
 
         return dto;
@@ -48,7 +48,7 @@ public class JugadorMapper {
 
         RankingDTO dto = new RankingDTO();
         dto.setTag(jugador.getTag());
-        dto.setFoto_perfil(jugador.getFotoPerfil());
+        dto.setFotoPerfil(jugador.getFotoPerfil());
         dto.setVictorias(jugador.getVictorias());
         return dto;
     }
@@ -60,8 +60,8 @@ public class JugadorMapper {
         if (dto.getTag() != null) {
             jugador.setTag(dto.getTag());
         }
-        if (dto.getFoto_perfil() != null) {
-            jugador.setFotoPerfil(dto.getFoto_perfil());
+        if (dto.getFotoPerfil() != null) {
+            jugador.setFotoPerfil(dto.getFotoPerfil());
         }
     }
 

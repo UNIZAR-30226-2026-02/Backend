@@ -19,13 +19,13 @@ public class LogroMapper {
         LogroDTO dto = new LogroDTO();
         
         // Atributos en formato snake_case
-        dto.setId_logro(logro.getIdLogro());
+        dto.setIdLogro(logro.getIdLogro());
         dto.setNombre(logro.getNombre());
         dto.setDescripcion(logro.getDescripcion());
         dto.setTipo(logro.getTipo().name());
-        dto.setEstadistica_clave(logro.getEstadisticaClave());
-        dto.setValor_objetivo(logro.getValorObjetivo());
-        dto.setBalas_recompensa(logro.getBalasRecompensa());
+        dto.setEstadisticaClave(logro.getEstadisticaClave());
+        dto.setValorObjetivo(logro.getValorObjetivo());
+        dto.setBalasRecompensa(logro.getBalasRecompensa());
         dto.setActivo(logro.isActivo());
         
         return dto;
@@ -41,9 +41,9 @@ public class LogroMapper {
         logro.setTipo(TipoLogro.valueOf(dto.getTipo()));
         
         // Leemos usando getters en snake_case y guardamos en la entidad (camelCase)
-        logro.setEstadisticaClave(dto.getEstadistica_clave());
-        logro.setValorObjetivo(dto.getValor_objetivo());
-        logro.setBalasRecompensa(dto.getBalas_recompensa());
+        logro.setEstadisticaClave(dto.getEstadisticaClave());
+        logro.setValorObjetivo(dto.getValorObjetivo());
+        logro.setBalasRecompensa(dto.getBalasRecompensa());
         logro.setActivo(dto.isActivo());
         
         return logro;
@@ -58,9 +58,9 @@ public class LogroMapper {
         logro.setTipo(TipoLogro.valueOf(dto.getTipo()));
         
         // Leemos usando getters en snake_case
-        logro.setEstadisticaClave(dto.getEstadistica_clave());
-        logro.setValorObjetivo(dto.getValor_objetivo());
-        logro.setBalasRecompensa(dto.getBalas_recompensa());
+        logro.setEstadisticaClave(dto.getEstadisticaClave());
+        logro.setValorObjetivo(dto.getValorObjetivo());
+        logro.setBalasRecompensa(dto.getBalasRecompensa());
         logro.setActivo(dto.isActivo());
     }
 

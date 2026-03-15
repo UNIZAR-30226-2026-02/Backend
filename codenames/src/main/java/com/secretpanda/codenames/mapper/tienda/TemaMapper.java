@@ -13,10 +13,10 @@ public class TemaMapper {
         if (tema == null) return null;
 
         TemaDTO dto = new TemaDTO();
-        dto.setId_tema(tema.getIdTema());
+        dto.setIdTema(tema.getIdTema());
         dto.setNombre(tema.getNombre());
         dto.setDescripcion(tema.getDescripcion());
-        dto.setPrecio_balas(tema.getPrecioBalas());
+        dto.setPrecioBalas(tema.getPrecioBalas());
         dto.setActivo(tema.isActivo());
         
         // El campo 'comprado' se gestionará en el Service cruzando con el Inventario

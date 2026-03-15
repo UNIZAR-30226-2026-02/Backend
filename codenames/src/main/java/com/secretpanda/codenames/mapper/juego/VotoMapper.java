@@ -1,9 +1,10 @@
 package com.secretpanda.codenames.mapper.juego;
 
-import com.secretpanda.codenames.dto.juego.VotoDTO;
-import com.secretpanda.codenames.model.VotoCarta;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.secretpanda.codenames.dto.juego.VotoDTO;
+import com.secretpanda.codenames.model.VotoCarta;
 
 public class VotoMapper {
 
@@ -13,8 +14,8 @@ public class VotoMapper {
         if (voto == null) return null;
 
         VotoDTO dto = new VotoDTO();
-        dto.setId_carta(voto.getCartaTablero().getIdCartaTablero());
-        dto.setTag_jugador(voto.getJugadorPartida().getJugador().getTag());
+        dto.setIdCartaTablero(voto.getCartaTablero().getIdCartaTablero());
+        dto.setTag(voto.getJugadorPartida().getJugador().getTag());
         dto.setEquipo(voto.getJugadorPartida().getEquipo().name());
 
         return dto;

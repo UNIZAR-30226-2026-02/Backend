@@ -18,7 +18,7 @@ public class CartaMapper {
         CartaDTO dto = new CartaDTO();
         
         // Atributo actualizado al formato snake_case
-        dto.setId_carta(carta.getIdCartaTablero()); 
+        dto.setIdCartaTablero(carta.getIdCartaTablero()); 
         
         dto.setPalabra(carta.getPalabra().getValor());
         dto.setFila(carta.getFila());

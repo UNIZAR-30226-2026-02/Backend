@@ -19,12 +19,12 @@ public class PersonalizacionMapper {
         PersonalizacionDTO dto = new PersonalizacionDTO();
         
         // Atributos en formato snake_case para el DTO
-        dto.setId_personalizacion(personalizacion.getIdPersonalizacion());
+        dto.setIdPersonalizacion(personalizacion.getIdPersonalizacion());
         dto.setNombre(personalizacion.getNombre());
         dto.setDescripcion(personalizacion.getDescripcion());
-        dto.setPrecio_bala(personalizacion.getPrecioBala());
+        dto.setPrecioBala(personalizacion.getPrecioBala());
         dto.setTipo(personalizacion.getTipo().name());
-        dto.setValor_visual(personalizacion.getValorVisual());
+        dto.setValorVisual(personalizacion.getValorVisual());
         dto.setActivo(personalizacion.isActivo());
         
         // Nota: Los campos 'comprado' y 'equipado' del DTO se rellenarán en la capa Service.
@@ -41,9 +41,9 @@ public class PersonalizacionMapper {
         personalizacion.setDescripcion(dto.getDescripcion());
         
         // Leemos usando getters en snake_case y guardamos en la entidad (camelCase)
-        personalizacion.setPrecioBala(dto.getPrecio_bala());
+        personalizacion.setPrecioBala(dto.getPrecioBala());
         personalizacion.setTipo(TipoPersonalizacion.valueOf(dto.getTipo())); // String → Enum
-        personalizacion.setValorVisual(dto.getValor_visual());
+        personalizacion.setValorVisual(dto.getValorVisual());
         personalizacion.setActivo(dto.isActivo());
         
         return personalizacion;
@@ -57,9 +57,9 @@ public class PersonalizacionMapper {
         personalizacion.setDescripcion(dto.getDescripcion());
         
         // Leemos usando getters en snake_case
-        personalizacion.setPrecioBala(dto.getPrecio_bala());
+        personalizacion.setPrecioBala(dto.getPrecioBala());
         personalizacion.setTipo(TipoPersonalizacion.valueOf(dto.getTipo()));
-        personalizacion.setValorVisual(dto.getValor_visual());
+        personalizacion.setValorVisual(dto.getValorVisual());
         personalizacion.setActivo(dto.isActivo());
     }
 

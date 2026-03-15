@@ -11,10 +11,10 @@ public class PistaMapper {
         if (turno == null || turno.getPalabraPista() == null) return null;
 
         PistaDTO dto = new PistaDTO();
-        dto.setPalabra(turno.getPalabraPista());
-        dto.setNumero(turno.getPistaNumero());
+        dto.setPalabraPista(turno.getPalabraPista());
+        dto.setPistaNumero(turno.getPistaNumero());
         // Extraemos el equipo del jugador que creó el turno
-        dto.setEquipo_lider(turno.getJugadorPartida().getEquipo().name());
+        dto.setEquipoLider(turno.getJugadorPartida().getEquipo().name());
 
         return dto;
     }

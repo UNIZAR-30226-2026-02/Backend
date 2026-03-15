@@ -27,9 +27,9 @@ public class JugadorLogroMapper {
         LogroDTO dto = LogroMapper.toDTO(jugadorLogro.getLogro());
 
         // INYECTAMOS el progreso del jugador (¡esto es lo que faltaba!)
-        dto.setProgreso_actual(jugadorLogro.getProgresoActual());
+        dto.setProgresoActual(jugadorLogro.getProgresoActual());
         dto.setCompletado(jugadorLogro.isCompletado());
-        dto.setFecha_desbloqueo(jugadorLogro.getFechaDesbloqueo());
+        dto.setFechaDesbloqueo(jugadorLogro.getFechaDesbloqueo());
 
         return dto;
     }

@@ -18,18 +18,18 @@ public class AmistadMapper {
         AmistadDTO dto = new AmistadDTO();
 
         // Datos del que envía la petición (formato snake_case)
-        dto.setId_solicitante(amistad.getSolicitante().getIdGoogle());
-        dto.setTag_solicitante(amistad.getSolicitante().getTag());
-        dto.setFoto_solicitante(amistad.getSolicitante().getFotoPerfil());
+        dto.setIdSolicitante(amistad.getSolicitante().getIdGoogle());
+        dto.setTagSolicitante(amistad.getSolicitante().getTag());
+        dto.setFotoSolicitante(amistad.getSolicitante().getFotoPerfil());
 
         // Datos del que recibe la petición (formato snake_case)
-        dto.setId_receptor(amistad.getReceptor().getIdGoogle());
-        dto.setTag_receptor(amistad.getReceptor().getTag());
-        dto.setFoto_receptor(amistad.getReceptor().getFotoPerfil());
+        dto.setIdReceptor(amistad.getReceptor().getIdGoogle());
+        dto.setTagReceptor(amistad.getReceptor().getTag());
+        dto.setFotoReceptor(amistad.getReceptor().getFotoPerfil());
 
         // Estado y fecha de la relación entre ambos
         dto.setEstado(amistad.getEstado().name());
-        dto.setFecha_solicitud(amistad.getFechaSolicitud());
+        dto.setFechaSolicitud(amistad.getFechaSolicitud());
 
         return dto;
     }

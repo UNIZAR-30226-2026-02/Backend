@@ -15,12 +15,12 @@ public class ChatMapper {
 
         ChatMessageDTO dto = new ChatMessageDTO();
         // Ajustados a snake_case
-        dto.setId_mensaje(chat.getIdMensaje());
+        dto.setIdMensaje(chat.getIdMensaje());
         dto.setMensaje(chat.getMensaje());
         dto.setFecha(chat.getFecha());
-        dto.setId_partida(chat.getPartida().getIdPartida());
-        dto.setId_jugador(chat.getJugadorPartida().getJugador().getIdGoogle());
-        dto.setTag_jugador(chat.getJugadorPartida().getJugador().getTag());
+        dto.setIdPartida(chat.getPartida().getIdPartida());
+        dto.setIdJugador(chat.getJugadorPartida().getJugador().getIdGoogle());
+        dto.setTag(chat.getJugadorPartida().getJugador().getTag());
         dto.setEquipo(chat.getJugadorPartida().getEquipo().name());
 
         return dto;
