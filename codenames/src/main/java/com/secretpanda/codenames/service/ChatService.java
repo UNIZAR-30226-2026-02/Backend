@@ -73,4 +73,17 @@ public class ChatService {
         }
         return mensajeLimpio;
     }
+    @Transactional(readOnly = true)
+    public List<ChatMessageDTO> obtenerHistorialChat(Integer idPartida, String equipoStr) {
+    JugadorPartida.Equipo equipoEnum;
+    try {
+        equipoEnum = JugadorPartida.Equipo.valueOf(equipoStr.toLowerCase());
+    } catch (IllegalArgumentException e) {
+        throw new BadRequestException("Equipo no válido");
+    }
+    
+
+    List<Chat> mensajes = chatRepository.findByPartida_IdPartidaAndJugadorPartida_EquipoOrderByFechaAsc(idPartida, equipoEnum);
+    return ChatMapper.toDTOList(mensajes);
+}
 }
