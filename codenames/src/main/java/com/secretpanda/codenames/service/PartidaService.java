@@ -77,7 +77,21 @@ public class PartidaService {
         jp.setJugador(creador);
         jp.setPartida(partida);
         // Asignación temporal por defecto, el matchmaking final (RF-18) los redistribuirá
-        jp.setEquipo(JugadorPartida.Equipo.rojo);
+        boolean moneda = new java.util.Random().nextBoolean();
+        String miEquipo = moneda ? "rojo" : "azul";
+
+        if (moneda) {
+            jp.setEquipo(JugadorPartida.Equipo.rojo);
+        } else {
+            jp.setEquipo(JugadorPartida.Equipo.azul); 
+        }
+        boolean monedaRol = new java.util.Random().nextBoolean();
+        // (Ajusta esto según cómo se llame tu Enum de roles, igual que hicimos con Equipo)
+        if (monedaRol) {
+            jp.setRol(JugadorPartida.Rol.lider);
+        } else {
+            jp.setRol(JugadorPartida.Rol.agente);
+        }
         jp.setRol(JugadorPartida.Rol.lider); 
         jugadorPartidaRepository.save(jp);
 
@@ -135,9 +149,35 @@ public class PartidaService {
         JugadorPartida jp = new JugadorPartida();
         jp.setJugador(jugador);
         jp.setPartida(partida);
+        boolean moneda = new java.util.Random().nextBoolean();
+        String miEquipo = moneda ? "rojo" : "azul";
+
+        if (moneda) {
+            jp.setEquipo(JugadorPartida.Equipo.rojo);
+        } else {
+            jp.setEquipo(JugadorPartida.Equipo.azul); 
+        }
         // Asignación por defecto (Rojo/Agente). Deberá ajustarse según el balanceo.
-        jp.setEquipo(JugadorPartida.Equipo.rojo);
-        jp.setRol(JugadorPartida.Rol.agente);
+        boolean jefeYaExisteEnMiEquipo = false;
+
+        // Revisamos a todos los jugadores que YA están en la partida
+        for (JugadorPartida existente : partida.getJugadores()) {
+            if (existente.getEquipo().name().equalsIgnoreCase(miEquipo) 
+                && existente.getRol().name().equalsIgnoreCase("lider")) {
+                jefeYaExisteEnMiEquipo = true;
+                break; // ¡Ya hemos encontrado al jefe, dejamos de buscar!
+            }
+        }
+
+        // Asignamos el rol al nuevo jugador
+        if (jefeYaExisteEnMiEquipo) {
+            // Si ya hay jefe, le toca ser agente obligatoriamente
+            jp.setRol(JugadorPartida.Rol.agente);
+        } else {
+            // Si la plaza está libre, tiramos la moneda a ver si tiene suerte
+            boolean suerte = new java.util.Random().nextBoolean();
+            jp.setRol(suerte ? JugadorPartida.Rol.lider : JugadorPartida.Rol.agente);
+        }
 
         jp = jugadorPartidaRepository.save(jp);
 
