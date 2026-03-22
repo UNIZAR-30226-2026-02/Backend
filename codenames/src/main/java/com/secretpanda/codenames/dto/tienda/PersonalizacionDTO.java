@@ -1,8 +1,9 @@
 package com.secretpanda.codenames.dto.tienda;
 
 /**
- * DTO para transferir los datos de los objetos de personalización de la tienda.
- * Incluye el estado de posesión para la vista del usuario.
+ * DTO de catálogo para Personalización.
+ * Contiene exclusivamente los datos estáticos del ítem (tienda).
+ * El estado de posesión y equipamiento se gestiona en PersonalizacionInventarioDTO.
  */
 public class PersonalizacionDTO {
 
@@ -14,12 +15,7 @@ public class PersonalizacionDTO {
     private String valorVisual; 
     private boolean activo;
 
-    // ESTADOS PARA LA VISTA (Para que el frontend sepa qué botón pintar)
-    private boolean comprado;
-    private boolean equipado;
-
-    public PersonalizacionDTO() {
-    }
+    public PersonalizacionDTO() {}
 
     // Getters
     public Integer getIdPersonalizacion() { return idPersonalizacion; } 
@@ -29,8 +25,6 @@ public class PersonalizacionDTO {
     public String getTipo() { return tipo; }
     public String getValorVisual() { return valorVisual; } 
     public boolean isActivo() { return activo; }
-    public boolean isComprado() { return comprado; }
-    public boolean isEquipado() { return equipado; }
 
     // Setters
     public void setIdPersonalizacion(Integer idPersonalizacion) { this.idPersonalizacion = idPersonalizacion; } 
@@ -40,6 +34,4 @@ public class PersonalizacionDTO {
     public void setTipo(String tipo) { this.tipo = tipo; }
     public void setValorVisual(String valorVisual) { this.valorVisual = valorVisual; } 
     public void setActivo(boolean activo) { this.activo = activo; }
-    public void setComprado(boolean comprado) { this.comprado = comprado; }
-    public void setEquipado(boolean equipado) { this.equipado = equipado; }
 }

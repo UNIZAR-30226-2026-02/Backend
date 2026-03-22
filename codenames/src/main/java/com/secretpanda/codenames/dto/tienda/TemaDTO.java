@@ -1,7 +1,9 @@
 package com.secretpanda.codenames.dto.tienda;
 
 /**
- * DTO para transferir la información de los packs de palabras (Temas).
+ * DTO de catálogo para Tema.
+ * Contiene exclusivamente los datos estáticos del pack (tienda).
+ * El estado de posesión se gestiona en TemaInventarioDTO.
  */
 public class TemaDTO {
 
@@ -10,12 +12,8 @@ public class TemaDTO {
     private String descripcion;
     private int precioBalas; 
     private boolean activo;
-    
-    // Estado para la vista (Frontend)
-    private boolean comprado;
 
-    public TemaDTO() {
-    }
+    public TemaDTO() {}
 
     // Getters
     public Integer getIdTema() { return idTema; } 
@@ -23,7 +21,6 @@ public class TemaDTO {
     public String getDescripcion() { return descripcion; }
     public int getPrecioBalas() { return precioBalas; } 
     public boolean isActivo() { return activo; }
-    public boolean isComprado() { return comprado; }
 
     // Setters
     public void setIdTema(Integer idTema) { this.idTema = idTema; } 
@@ -31,5 +28,4 @@ public class TemaDTO {
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     public void setPrecioBalas(int precioBalas) { this.precioBalas = precioBalas; } 
     public void setActivo(boolean activo) { this.activo = activo; }
-    public void setComprado(boolean comprado) { this.comprado = comprado; }
 }
