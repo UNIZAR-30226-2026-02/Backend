@@ -4,14 +4,18 @@ config:
   look: handDrawn
 ---
 erDiagram
+    LOGRO ||--o{ JUGADOR_LOGRO : "es_rastreado_por"
+    JUGADOR ||--o{ JUGADOR_LOGRO : "obtiene_progreso_en"
+    
     JUGADOR ||--o{ AMISTAD : "envia_solicitud"
     JUGADOR ||--o{ AMISTAD : "recibe_solicitud"
     
-    JUGADOR ||--o{ JUGADOR_LOGRO : "obtiene_progreso_en"
-    LOGRO ||--o{ JUGADOR_LOGRO : "es_rastreado_por"
-    
     JUGADOR ||--o{ INVENTARIO_PERSONALIZACION : "posee"
     PERSONALIZACION ||--o{ INVENTARIO_PERSONALIZACION : "desbloquea"
+    
+    JUGADOR ||--o{ INVENTARIO_TEMA : "posee_tema"
+    TEMA ||--o{ INVENTARIO_TEMA : "es_desbloqueado_por"
+    
     TEMA ||--o{ PALABRA_TEMA : "contiene"
     TEMA ||..o{ PARTIDA : "configura"
     JUGADOR ||..o{ PARTIDA : "crea"
@@ -30,20 +34,14 @@ erDiagram
     JUGADOR {
         string id_google PK
         string tag UK
-        string fotoPerfil
+        string foto_perfil
         int balas
-        datetime fechaRegistro
+        datetime fecha_registro
+        boolean activo "Borrado lógico"
         int partidas_jugadas "Estadística global (Trigger)"
         int victorias "Estadística global (Trigger)"
-        int numAciertos "Estadística global (Trigger)"
-        int numFallos "Estadística global (Trigger)"
-    }
-
-    AMISTAD {
-        string id_solicitante PK, FK
-        string id_receptor PK, FK
-        string estado "pendiente, aceptada"
-        datetime fecha_solicitud
+        int num_aciertos "Estadística global (Trigger)"
+        int num_fallos "Estadística global (Trigger)"
     }
 
     LOGRO {
@@ -53,7 +51,7 @@ erDiagram
         string tipo "medalla, logro"
         string estadistica_clave
         int valor_objetivo
-        int balasRecompensa
+        int balas_recompensa
         boolean activo "Borrado lógico"
     }
 
@@ -65,11 +63,18 @@ erDiagram
         datetime fecha_desbloqueo
     }
 
+    AMISTAD {
+        string id_solicitante PK, FK
+        string id_receptor PK, FK
+        string estado "pendiente, aceptada"
+        datetime fecha_solicitud
+    }
+
     PERSONALIZACION {
         int id_personalizacion PK
         string nombre UK
         string descripcion
-        int precioBala
+        int precio_bala
         string tipo
         string valor_visual
         boolean activo "Borrado lógico"
@@ -81,11 +86,16 @@ erDiagram
         boolean equipado
     }
 
+    INVENTARIO_TEMA {
+        string id_jugador PK, FK
+        int id_tema PK, FK
+    }
+
     TEMA {
         int id_tema PK
         string nombre UK
         string descripcion
-        int precioBalas
+        int precio_balas
         boolean activo "Borrado lógico"
     }
 
@@ -101,13 +111,13 @@ erDiagram
         string codigo_partida UK "Código invitación"
         int id_tema FK
         string id_creador FK
-        int tiempoEspera
-        int maxJugadores
-        boolean esPublica
-        datetime fechaCreacion
-        datetime fechaFin
+        int tiempo_espera
+        int max_jugadores
+        boolean es_publica
+        datetime fecha_creacion
+        datetime fecha_fin
         string estado
-        boolean rojoGana
+        boolean rojo_gana
     }
 
     JUGADOR_PARTIDA {
@@ -116,8 +126,8 @@ erDiagram
         int id_partida FK
         string equipo
         string rol
-        int numFallos
-        int numAciertos
+        int num_fallos
+        int num_aciertos
         boolean abandono "Control de rage-quit"
     }
 
@@ -143,9 +153,9 @@ erDiagram
         int id_turno PK
         int id_partida FK "Desnormalizado por rendimiento"
         int id_jugador_partida FK
-        int numTurno
-        string palabraPista
-        int pistaNumero
+        int num_turno
+        string palabra_pista
+        int pista_numero
     }
 
     VOTO_CARTA {
