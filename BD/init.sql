@@ -93,6 +93,16 @@ CREATE TABLE tema (
 );
 
 -- ----------------------------------------------------------------
+-- INVENTARIO_TEMA
+-- ----------------------------------------------------------------
+CREATE TABLE inventario_tema (
+    id_jugador  VARCHAR(255)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
+    id_tema     INT           NOT NULL REFERENCES tema(id_tema)       ON DELETE CASCADE,
+    PRIMARY KEY (id_jugador, id_tema)
+);
+
+
+-- ----------------------------------------------------------------
 -- PALABRA_TEMA
 -- ----------------------------------------------------------------
 CREATE TABLE palabra_tema (
