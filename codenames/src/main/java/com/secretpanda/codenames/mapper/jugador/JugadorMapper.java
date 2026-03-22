@@ -1,13 +1,13 @@
 package com.secretpanda.codenames.mapper.jugador;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.secretpanda.codenames.dto.jugador.ActualizarPerfilDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 import com.secretpanda.codenames.dto.social.RankingDTO;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.util.EstadisticasCalculator;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 // Mapper estático para la entidad Jugador.
 public class JugadorMapper {
@@ -26,6 +26,7 @@ public class JugadorMapper {
         dto.setTag(jugador.getTag());
         dto.setFotoPerfil(jugador.getFotoPerfil());
         dto.setBalas(jugador.getBalas());
+        dto.setActivo(jugador.isActivo());
 
         // Estadísticas base procedentes de la BD
         dto.setPartidasJugadas(jugador.getPartidasJugadas());

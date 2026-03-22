@@ -11,6 +11,7 @@ CREATE TABLE jugador (
     foto_perfil          TEXT,
     balas                INT           NOT NULL DEFAULT 0,
     fecha_registro       TIMESTAMP     NOT NULL DEFAULT NOW(),
+    activo               BOOLEAN       NOT NULL DEFAULT TRUE,
     -- Estadísticas globales 
     partidas_jugadas     INT           NOT NULL DEFAULT 0,
     victorias            INT           NOT NULL DEFAULT 0,
@@ -96,11 +97,10 @@ CREATE TABLE tema (
 -- INVENTARIO_TEMA
 -- ----------------------------------------------------------------
 CREATE TABLE inventario_tema (
-    id_jugador  VARCHAR(255)  NOT NULL REFERENCES jugador(id_google) ON DELETE CASCADE,
-    id_tema     INT           NOT NULL REFERENCES tema(id_tema)       ON DELETE CASCADE,
+    id_jugador           VARCHAR(255)  NOT NULL REFERENCES jugador(id_google)  ON DELETE CASCADE,
+    id_tema              INT           NOT NULL REFERENCES tema(id_tema)        ON DELETE CASCADE,
     PRIMARY KEY (id_jugador, id_tema)
 );
-
 
 -- ----------------------------------------------------------------
 -- PALABRA_TEMA
