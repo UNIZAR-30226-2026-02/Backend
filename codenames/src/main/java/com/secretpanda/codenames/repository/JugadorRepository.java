@@ -33,4 +33,18 @@ public interface JugadorRepository extends JpaRepository<Jugador, String> {
 
     // Búsqueda explícita por ID de Google
     Optional<Jugador> findByIdGoogle(String idGoogle);
+
+    // ── Métodos con filtro activo (borrado lógico) ──────────────────────────
+
+    // Buscar jugadores activos por tag parcial (para buscar amigos)
+    List<Jugador> findByTagContainingIgnoreCaseAndActivoTrue(String tag, Pageable pageable);
+
+    // Ranking global por victorias solo entre jugadores activos
+    List<Jugador> findByActivoTrueOrderByVictoriasDesc(Pageable pageable);
+
+    // Ranking de amigos activos por victorias
+    List<Jugador> findByIdGoogleInAndActivoTrueOrderByVictoriasDesc(Collection<String> ids, Pageable pageable);
+
+    // Comprobar si un tag ya está en uso por un jugador activo
+    boolean existsByTagAndActivoTrue(String tag);
 }

@@ -34,6 +34,9 @@ public class Jugador {
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
+    @Column(nullable = false)
+    private boolean activo = true;
+
     @Column(name = "partidas_jugadas", nullable = false)
     private int partidasJugadas = 0;
 
@@ -127,6 +130,14 @@ public class Jugador {
 
     public void setFechaRegistro(LocalDateTime fechaRegistro) { 
         this.fechaRegistro = fechaRegistro; 
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 
     public int getPartidasJugadas() { 
