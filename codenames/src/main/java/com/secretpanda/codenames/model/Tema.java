@@ -36,12 +36,20 @@ public class Tema {
     @OneToMany(mappedBy = "tema", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PalabraTema> palabras = new ArrayList<>();
 
+    @OneToMany(mappedBy = "tema", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InventarioTema> inventarioTemas = new ArrayList<>();
+
     public Tema() {}
 
     // Helper Bidireccional
     public void addPalabra(PalabraTema palabra) {
         palabras.add(palabra);
         palabra.setTema(this);
+    }
+
+    public void addInventarioTema(InventarioTema inventarioTema) {
+        inventarioTemas.add(inventarioTema);
+        inventarioTema.setTema(this);
     }
 
     public Integer getIdTema() { 
@@ -90,5 +98,13 @@ public class Tema {
 
     public void setPalabras(List<PalabraTema> palabras) { 
         this.palabras = palabras; 
+    }
+
+    public List<InventarioTema> getInventarioTemas() {
+        return inventarioTemas;
+    }
+
+    public void setInventarioTemas(List<InventarioTema> inventarioTemas) {
+        this.inventarioTemas = inventarioTemas;
     }
 }

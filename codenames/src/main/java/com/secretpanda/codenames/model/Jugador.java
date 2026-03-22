@@ -56,6 +56,9 @@ public class Jugador {
     private List<InventarioPersonalizacion> inventario = new ArrayList<>();
 
     @OneToMany(mappedBy = "jugador", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InventarioTema> inventarioTemas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "jugador", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JugadorLogro> logros = new ArrayList<>();
 
     // NUEVO: Relación para el RF-4 (Historial de partidas)
@@ -78,6 +81,11 @@ public class Jugador {
     public void addJugadorPartida(JugadorPartida jugadorPartida) {
         historialPartidas.add(jugadorPartida);
         jugadorPartida.setJugador(this);
+    }
+
+    public void addInventarioTema(InventarioTema inventarioTema) {
+        inventarioTemas.add(inventarioTema);
+        inventarioTema.setJugador(this);
     }
 
     // Getters y Setters
@@ -175,6 +183,14 @@ public class Jugador {
 
     public void setInventario(List<InventarioPersonalizacion> inventario) { 
         this.inventario = inventario; 
+    }
+
+    public List<InventarioTema> getInventarioTemas() {
+        return inventarioTemas;
+    }
+
+    public void setInventarioTemas(List<InventarioTema> inventarioTemas) {
+        this.inventarioTemas = inventarioTemas;
     }
 
     public List<JugadorLogro> getLogros() { 
