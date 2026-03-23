@@ -3,29 +3,51 @@ package com.secretpanda.codenames.dto.auth;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 
 /**
- * Respuesta del endpoint POST /api/auth/login.
- * Devuelve el token JWT y el objeto Maestro del Jugador con todas sus estadísticas.
+ * Respuesta de /api/auth/login y /api/auth/registro.
+ *
+ * Login (esNuevo = true):  solo esNuevo=true, token=null, jugador=null
+ * Login (esNuevo = false): esNuevo=false + token + jugador (con partidaActivaId)
+ * Registro:                esNuevo=false + token + jugador
  */
 public class AuthResponseDTO {
 
-    // JWT interno — para Android (React usa la cookie HttpOnly)
-    private String token;
+    private boolean esNuevo;
 
-    // Objeto Maestro con toda la info del usuario
+    // Null cuando esNuevo = true
+    private String token;
     private JugadorDTO jugador;
+
+    // Id de la partida EN CURSO a la que pertenece el jugador (null si no hay)
+    private Integer partidaActivaId;
 
     public AuthResponseDTO() {}
 
-    public AuthResponseDTO(String token, JugadorDTO jugador) {
-        this.token = token;
-        this.jugador = jugador;
+    // Constructor para "jugador nuevo"
+    public static AuthResponseDTO nuevo() {
+        AuthResponseDTO r = new AuthResponseDTO();
+        r.esNuevo = true;
+        return r;
+    }
+
+    // Constructor para jugador existente o recién registrado
+    public static AuthResponseDTO existente(String token, JugadorDTO jugador, Integer partidaActivaId) {
+        AuthResponseDTO r = new AuthResponseDTO();
+        r.esNuevo = false;
+        r.token = token;
+        r.jugador = jugador;
+        r.partidaActivaId = partidaActivaId;
+        return r;
     }
 
     // Getters
-    public String getToken() { return token; }
-    public JugadorDTO getJugador() { return jugador; }
+    public boolean isEsNuevo()        { return esNuevo; }
+    public String getToken()          { return token; }
+    public JugadorDTO getJugador()    { return jugador; }
+    public Integer getPartidaActivaId() { return partidaActivaId; }
 
-    // Setters
-    public void setToken(String token) { this.token = token; }
-    public void setJugador(JugadorDTO jugador) { this.jugador = jugador; }
+    // Setters (para Jackson)
+    public void setEsNuevo(boolean esNuevo)              { this.esNuevo = esNuevo; }
+    public void setToken(String token)                    { this.token = token; }
+    public void setJugador(JugadorDTO jugador)            { this.jugador = jugador; }
+    public void setPartidaActivaId(Integer partidaActivaId) { this.partidaActivaId = partidaActivaId; }
 }

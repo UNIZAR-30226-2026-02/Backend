@@ -1,76 +1,118 @@
 package com.secretpanda.codenames.controller;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.secretpanda.codenames.dto.auth.AuthResponseDTO;
 import com.secretpanda.codenames.dto.auth.LoginRequestDTO;
+import com.secretpanda.codenames.dto.auth.RegistroRequestDTO;
 import com.secretpanda.codenames.service.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Controlador de autenticación — POST /api/auth/login
+ * POST /api/auth/login   → Google idToken → esNuevo + (si no nuevo) JWT + Jugador
+ * POST /api/auth/registro → id_google + tag → crea jugador + JWT + Jugador
+ * POST /api/auth/logout  → invalida cookie
+ * PUT  /api/auth/desactivar → borrado lógico
  *
- * Tras verificar el token de Google devuelve el JWT de dos formas:
- *
- * 1. Cookie HttpOnly "token_sesion" → React web.
- * Set-Cookie: token_sesion=<jwt>; HttpOnly; Secure; SameSite=Strict
- * El navegador la adjunta automáticamente con credentials:"include".
- *
- * 2. Campo "token" en el body JSON → Android.
- * La app lee el token del body y lo guarda en su storage local.
+ * COOKIE HttpOnly:  "token_sesion"   (solo cuando esNuevo = false o tras registro)
+ * BODY JSON:        campo "token"     (siempre, para WebSocket sessionStorage)
  */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final String COOKIE_NAME = "token_sesion";
+    private static final long   MAX_AGE_SEC = 86_400L; // 1 día
+
     private final AuthService authService;
 
-    @Value("${jwt.expiration-ms:86400000}")
-    private long jwtExpirationMs;
-
-    // Inyección de dependencias segura por constructor
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
+    // ─── Login ────────────────────────────────────────────────────────────────
+
     /**
-     * Login / Registro con Google OAuth 2.0.
-     *
-     * @param dto  { "id_google": "<token de Google>" }
-     * @return 200 con el JUGADOR completo + token JWT
+     * Recibe el idToken de Google.
+     * Si es nuevo: esNuevo=true, sin JWT ni Jugador → frontend va a /registro.
+     * Si ya existe: esNuevo=false, devuelve JWT + Jugador + cookie HttpOnly.
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(
             @RequestBody LoginRequestDTO dto,
-            HttpServletResponse httpResponse) {
+            HttpServletResponse response) {
 
-        // 1. Llamada al servicio actualizado (cumpliendo el contrato estricto de API)
         AuthResponseDTO respuesta = authService.login(dto.getIdGoogle());
 
-        // 2. Emitir cookie HttpOnly para la versión Web en React
-        httpResponse.setHeader("Set-Cookie",
-                String.format("token_sesion=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=%d",
-                        respuesta.getToken(),
-                        jwtExpirationMs / 1000));
+        // Solo emitimos la cookie cuando el jugador ya existe
+        if (!respuesta.isEsNuevo()) {
+            setCookie(response, respuesta.getToken());
+        }
 
-        // 3. El token y el DTO del jugador también van en el body para Android
         return ResponseEntity.ok(respuesta);
     }
 
+    // ─── Registro ─────────────────────────────────────────────────────────────
+
     /**
-     * Logout — invalida la cookie en el navegador web.
-     * En Android simplemente se descarta su token local en el dispositivo.
+     * Crea el jugador nuevo (ya verificado con Google en el login previo).
+     * Devuelve JWT + Jugador completo + cookie HttpOnly.
      */
+    @PostMapping("/registro")
+    public ResponseEntity<AuthResponseDTO> registro(
+            @RequestBody RegistroRequestDTO dto,
+            HttpServletResponse response) {
+
+        AuthResponseDTO respuesta = authService.registro(dto.getIdGoogle(), dto.getTag());
+        setCookie(response, respuesta.getToken());
+        return ResponseEntity.ok(respuesta);
+    }
+
+    // ─── Logout ───────────────────────────────────────────────────────────────
+
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse httpResponse) {
-        httpResponse.setHeader("Set-Cookie",
-                "token_sesion=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        // Invalida la cookie poniendo Max-Age=0
+        response.setHeader("Set-Cookie",
+                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");
         return ResponseEntity.noContent().build();
+    }
+
+    // ─── Desactivar cuenta ────────────────────────────────────────────────────
+
+    @PutMapping("/desactivar")
+    public ResponseEntity<Void> desactivar(
+            jakarta.servlet.http.HttpServletRequest request,
+            HttpServletResponse response) {
+
+        String idGoogle = extraerIdGoogleDeCookie(request);
+        authService.desactivarCuenta(idGoogle);
+        // También invalidamos la sesión
+        response.setHeader("Set-Cookie",
+                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");
+        return ResponseEntity.noContent().build();
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private void setCookie(HttpServletResponse response, String token) {
+        response.setHeader("Set-Cookie",
+                String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=%d",
+                        COOKIE_NAME, token, MAX_AGE_SEC));
+    }
+
+    /**
+     * Extrae el idGoogle de la cookie HttpOnly a través del JwtFilter ya ejecutado.
+     * El SecurityContext ya tiene el Principal tras pasar el JwtFilter.
+     */
+    private String extraerIdGoogleDeCookie(jakarta.servlet.http.HttpServletRequest request) {
+        // El JwtFilter ya inyectó el idGoogle como principal
+        java.security.Principal principal = request.getUserPrincipal();
+        if (principal == null) {
+            throw new com.secretpanda.codenames.exception.BadRequestException("No autenticado");
+        }
+        return principal.getName();
     }
 }

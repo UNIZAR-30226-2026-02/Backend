@@ -3,76 +3,41 @@ package com.secretpanda.codenames.dto.social;
 import java.time.LocalDateTime;
 
 /**
- * DTO para enviar la información de un mensaje de chat dentro de una partida.
+ * DTO de mensaje de chat. El campo esValido indica si superó el filtro de palabras.
+ * Si esValido = false el frontend muestra un popup de advertencia. Esto de momento no etá en el frontend, lo haremos más adelante
  */
 public class ChatMessageDTO {
 
-    private Integer idMensaje; 
-    private Integer idPartida;  
+    private Integer idMensaje;
+    private Integer idPartida;
 
-    private String idJugador; 
+    private String idJugador;
     private String tag;
-    private String equipo; 
-    
+    private String equipo;     // "rojo" o "azul" — define a qué topic se enruta
+
     private String mensaje;
     private LocalDateTime fecha;
+    private boolean esValido;  // true = mensaje limpio, false = fue censurado
 
-    public ChatMessageDTO() {
-    }
+    public ChatMessageDTO() {}
 
-    public Integer getIdMensaje() { 
-        return idMensaje; 
-    }
+    // Getters
+    public Integer getIdMensaje()     { return idMensaje; }
+    public Integer getIdPartida()     { return idPartida; }
+    public String getIdJugador()      { return idJugador; }
+    public String getTag()            { return tag; }
+    public String getEquipo()         { return equipo; }
+    public String getMensaje()        { return mensaje; }
+    public LocalDateTime getFecha()   { return fecha; }
+    public boolean isEsValido()       { return esValido; }
 
-    public void setIdMensaje(Integer idMensaje) { 
-        this.idMensaje = idMensaje; 
-    }
-
-    public Integer getIdPartida() { 
-        return idPartida; 
-    }
-
-    public void setIdPartida(Integer idPartida) { 
-        this.idPartida = idPartida; 
-    }
-
-    public String getIdJugador() { 
-        return idJugador; 
-    }
-
-    public void setIdJugador(String idJugador) { 
-        this.idJugador = idJugador; 
-    }
-
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
-    public String getEquipo() {
-        return equipo;
-    }
-
-    public void setEquipo(String equipo) {
-        this.equipo = equipo;
-    }
-
-    public String getMensaje() {
-        return mensaje;
-    }
-
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
-    }
-
-    public LocalDateTime getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(LocalDateTime fecha) {
-        this.fecha = fecha;
-    }
+    // Setters
+    public void setIdMensaje(Integer v)     { this.idMensaje = v; }
+    public void setIdPartida(Integer v)     { this.idPartida = v; }
+    public void setIdJugador(String v)      { this.idJugador = v; }
+    public void setTag(String v)            { this.tag = v; }
+    public void setEquipo(String v)         { this.equipo = v; }
+    public void setMensaje(String v)        { this.mensaje = v; }
+    public void setFecha(LocalDateTime v)   { this.fecha = v; }
+    public void setEsValido(boolean v)      { this.esValido = v; }
 }

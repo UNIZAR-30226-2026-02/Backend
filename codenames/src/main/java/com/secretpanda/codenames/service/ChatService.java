@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.secretpanda.codenames.dto.social.ChatMessageDTO;
 import com.secretpanda.codenames.dto.social.EnviarMensajeDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
-import com.secretpanda.codenames.mapper.social.ChatMapper;
 import com.secretpanda.codenames.model.Chat;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
@@ -21,56 +21,76 @@ import com.secretpanda.codenames.repository.PartidaRepository;
 @Service
 public class ChatService {
 
-    private final ChatRepository chatRepository;
-    private final PartidaRepository partidaRepository;
-    private final JugadorPartidaRepository jugadorPartidaRepository;
+    // Lista básica de palabras prohibidas — en producción reemplazar por una librería (e.g. better-profanity)
+    private static final List<String> PALABRAS_PROHIBIDAS = Arrays.asList(
+            "tonto", "tontito", "cara culo", "botijo"
+            // Ampliar con términos reales
+    );
 
-    // Lista básica de palabras prohibidas (simulación del filtro anti-toxicidad)
-    private static final List<String> PALABRAS_PROHIBIDAS = Arrays.asList("insulto1", "insulto2", "palabrota");
+    private final ChatRepository             chatRepository;
+    private final PartidaRepository          partidaRepository;
+    private final JugadorPartidaRepository   jugadorPartidaRepository;
 
-    public ChatService(ChatRepository chatRepository, PartidaRepository partidaRepository, JugadorPartidaRepository jugadorPartidaRepository) {
-        this.chatRepository = chatRepository;
-        this.partidaRepository = partidaRepository;
+    public ChatService(ChatRepository chatRepository,
+                       PartidaRepository partidaRepository,
+                       JugadorPartidaRepository jugadorPartidaRepository) {
+        this.chatRepository           = chatRepository;
+        this.partidaRepository        = partidaRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
     }
 
     @Transactional
-    public ChatMessageDTO procesarMensaje(EnviarMensajeDTO dto, String idGoogleJugador) {
-        if (dto.getMensaje() == null || dto.getMensaje().trim().isEmpty()) {
-            throw new BadRequestException("El mensaje no puede estar vacío");
+    public ChatMessageDTO procesarMensaje(EnviarMensajeDTO dto, String idGoogle) {
+        if (dto.getMensaje() == null || dto.getMensaje().isBlank()) {
+            throw new BadRequestException("El mensaje no puede estar vacío.");
         }
 
-        // 1. Filtro de palabras prohibidas (Contrato de API: Sección 2.4)
-        String mensajeFiltrado = aplicarFiltroOfensivo(dto.getMensaje());
-
         Partida partida = partidaRepository.findById(dto.getIdPartida())
-                .orElseThrow(() -> new NotFoundException("Partida no encontrada"));
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
-        // Asegurarnos de que el jugador que envía el mensaje realmente está en esa partida
-        JugadorPartida jp = jugadorPartidaRepository.findByJugador_IdGoogleAndPartida_IdPartida(idGoogleJugador, partida.getIdPartida())
-                .orElseThrow(() -> new BadRequestException("No perteneces a esta partida"));
+        JugadorPartida jp = jugadorPartidaRepository
+                .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, partida.getIdPartida())
+                .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
 
-        // 2. Inserta el mensaje en la tabla CHAT
+        // El jefe puede leer el chat pero NO puede escribir (RF-23)
+        if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
+            throw new GameLogicException("El jefe de espías no puede escribir en el chat.");
+        }
+
+        // Aplicar filtro
+        boolean[] censurado = { false };
+        String mensajeFiltrado = aplicarFiltro(dto.getMensaje(), censurado);
+
+        // Guardar en BD
         Chat chat = new Chat();
         chat.setPartida(partida);
         chat.setJugadorPartida(jp);
         chat.setMensaje(mensajeFiltrado);
-
         chat = chatRepository.save(chat);
 
-        // Devolvemos el DTO para que el Controlador (WebSocket) lo difunda al topic del equipo
-        return ChatMapper.toDTO(chat);
+        // Construir DTO de respuesta
+        ChatMessageDTO respuesta = new ChatMessageDTO();
+        respuesta.setIdMensaje(chat.getIdMensaje());
+        respuesta.setIdPartida(partida.getIdPartida());
+        respuesta.setIdJugador(jp.getJugador().getIdGoogle());
+        respuesta.setTag(jp.getJugador().getTag());
+        respuesta.setEquipo(jp.getEquipo().name());
+        respuesta.setMensaje(mensajeFiltrado);
+        respuesta.setFecha(chat.getFecha());
+        respuesta.setEsValido(!censurado[0]);
+
+        return respuesta;
     }
 
-    /**
-     * Reemplaza las palabras ofensivas por asteriscos para mantener un entorno de juego seguro.
-     */
-    private String aplicarFiltroOfensivo(String mensaje) {
-        String mensajeLimpio = mensaje;
+    private String aplicarFiltro(String mensaje, boolean[] censurado) {
+        String resultado = mensaje;
         for (String palabra : PALABRAS_PROHIBIDAS) {
-            // Reemplaza las palabras ignorando mayúsculas/minúsculas con asteriscos
-            mensajeLimpio = mensajeLimpio.replaceAll("(?i)" + palabra, "***");
+            String nuevo = resultado.replaceAll("(?i)" + java.util.regex.Pattern.quote(palabra), "***");
+            if (!nuevo.equals(resultado)) {
+                censurado[0] = true;
+            }
+            resultado = nuevo;
         }
-        return mensajeLimpio;
+        return resultado;
     }
 }
