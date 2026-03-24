@@ -74,13 +74,18 @@ public class AuthService {
      * Valida unicidad del tag. Devuelve JWT + datos jugador.
      */
     @Transactional
-    public AuthResponseDTO registro(String idGoogle, String tag) {
-        // Validar que el idGoogle aún no tiene cuenta (doble seguro)
-        if (jugadorRepository.existsById(idGoogle)) {
+    public AuthResponseDTO registro(String idTokenGoogle, String tag) {
+        
+        // 1. EXTRAER EL ID REAL (añadimos esto igual que en el login)
+        GoogleAuthService.DatosGoogle datos = googleAuthService.verificarToken(idTokenGoogle);
+        String idGoogleReal = datos.idGoogle();
+
+        // 2. Validar que el idGoogleReal aún no tiene cuenta (doble seguro)
+        if (jugadorRepository.existsById(idGoogleReal)) {
             throw new BadRequestException("Este usuario ya está registrado. Usa /login.");
         }
 
-        // Validar unicidad del tag
+        // 3. Validar unicidad del tag
         if (tag == null || tag.isBlank()) {
             throw new BadRequestException("El tag no puede estar vacío.");
         }
@@ -88,8 +93,9 @@ public class AuthService {
             throw new BadRequestException("Ese nombre de usuario ya está en uso.");
         }
 
+        // 4. Guardar con el ID corto
         Jugador nuevo = new Jugador();
-        nuevo.setIdGoogle(idGoogle);
+        nuevo.setIdGoogle(idGoogleReal);
         nuevo.setTag(tag.trim());
         nuevo.setBalas(0);
         jugadorRepository.save(nuevo);
