@@ -1,13 +1,13 @@
 package com.secretpanda.codenames.mapper.partida;
 
-import com.secretpanda.codenames.dto.partida.JugadorPartidaDTO;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.secretpanda.codenames.dto.partida.JugadorLobbyDTO;
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
 import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 // Mapper estático para la entidad Partida. Da DTOs para el lobby y para el resumen de la partida
 public class PartidaMapper {
@@ -31,8 +31,8 @@ public class PartidaMapper {
         dto.setNombreTema(partida.getTema().getNombre());
 
         // Hacemos la conversión de cada jugador con su mapper
-        List<JugadorPartidaDTO> jugadoresDTO = JugadorPartidaMapper.toDTOList(participantes);
-        dto.setJugadores(jugadoresDTO);
+        List<JugadorLobbyDTO> jugadoresLobby = JugadorPartidaMapper.toLobbyDTOList(participantes);
+        dto.setJugadores(jugadoresLobby);
 
         return dto;
     }

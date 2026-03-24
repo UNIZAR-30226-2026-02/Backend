@@ -1,13 +1,21 @@
 package com.secretpanda.codenames.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import com.secretpanda.codenames.dto.juego.TemporizadorDTO;
+
 import jakarta.annotation.PreDestroy;
 
 /**
@@ -18,6 +26,8 @@ import jakarta.annotation.PreDestroy;
 @Service
 public class TemporizadorService {
 
+    private static final Logger log = LoggerFactory.getLogger(TemporizadorService.class);
+
     private final SimpMessagingTemplate messagingTemplate;
     // Un scheduler dedicado con pool de 4 hilos (suficiente para 100 partidas concurrentes)
     private final ThreadPoolTaskScheduler scheduler;
@@ -25,7 +35,7 @@ public class TemporizadorService {
     // Mapa: idPartida → ScheduledFuture del contador tick
     private final Map<Integer, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
     // Mapa: idPartida → segundos restantes (para el broadcast)
-    private final Map<Integer, int[]>              segundos = new ConcurrentHashMap<>();
+    private final Map<Integer, AtomicInteger>              segundos = new ConcurrentHashMap<>();
 
     public TemporizadorService(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
@@ -43,27 +53,36 @@ public class TemporizadorService {
      * @param alExpirar      callback que se ejecuta al llegar a 0
      */
     public void iniciarTemporizador(Integer idPartida, int duracionSegundos, Runnable alExpirar) {
+        // Cancelar si ya existía uno previo (ej: alguien votó antes de que acabe el tiempo)
         cancelarTemporizador(idPartida);
 
-        int[] segs = { duracionSegundos };
-        segundos.put(idPartida, segs);
+        AtomicInteger tiempoRestante = new AtomicInteger(duracionSegundos);
+        segundos.put(idPartida, tiempoRestante);
 
+        // Usamos la API de Instant y Duration para retrasar el primer tick 1 segundo
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
-            segs[0]--;
+            
+            // Decrementa de forma segura para hilos y obtiene el nuevo valor
+            int actuales = tiempoRestante.decrementAndGet();
 
-            TemporizadorDTO dto = new TemporizadorDTO(idPartida, segs[0]);
+            TemporizadorDTO dto = new TemporizadorDTO(idPartida, actuales);
             messagingTemplate.convertAndSend(
                     "/topic/partidas/" + idPartida + "/temporizador", dto);
 
-            if (segs[0] <= 0) {
+            if (actuales <= 0) {
                 cancelarTemporizador(idPartida);
-                try {
-                    alExpirar.run();
-                } catch (Exception e) {
-                    // Log y continuar — nunca dejar morir el scheduler
-                }
+                
+                // IMPORTANTE: Ejecutamos la lógica de expiración en otro hilo
+                // para no bloquear los 4 hilos del scheduler si la BD va lenta.
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        alExpirar.run();
+                    } catch (Exception e) {
+                        log.error("Error al ejecutar el fin de turno automático para la partida {}", idPartida, e);
+                    }
+                });
             }
-        }, 1000); // cada 1 segundo
+        }, Instant.now().plusSeconds(1), Duration.ofSeconds(1));
 
         timers.put(idPartida, future);
     }
@@ -79,8 +98,8 @@ public class TemporizadorService {
 
     /** Devuelve los segundos restantes de una partida (0 si no hay temporizador activo). */
     public int getSegundosRestantes(Integer idPartida) {
-        int[] segs = segundos.get(idPartida);
-        return segs != null ? segs[0] : 0;
+        AtomicInteger segs = segundos.get(idPartida);
+        return segs != null ? segs.get() : 0;
     }
 
     @PreDestroy
