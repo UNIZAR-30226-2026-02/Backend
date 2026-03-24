@@ -3,14 +3,16 @@ package com.secretpanda.codenames.controller;
 import java.security.Principal;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.secretpanda.codenames.dto.juego.*;
-import com.secretpanda.codenames.dto.social.ChatMessageDTO;
-import com.secretpanda.codenames.dto.social.EnviarMensajeDTO;
+import com.secretpanda.codenames.dto.juego.GameStateDTO;
 import com.secretpanda.codenames.service.ChatService;
 import com.secretpanda.codenames.service.JuegoService;
 
@@ -97,28 +99,28 @@ public class JuegoController {
                 principal.getName());
     }
 
-    // ─── WS: chat ─────────────────────────────────────────────────────────────
+    // // ─── WS: chat ─────────────────────────────────────────────────────────────
 
-    /**
-     * /app/partidas/{id_partida}/chat
-     * Payload: { "mensaje": "creo que es el gato" }
-     *
-     * El backend:
-     *  1. Filtra el mensaje
-     *  2. Guarda en CHAT
-     *  3. Emite a /topic/partidas/{id}/chat/{equipo}
-     */
-    @MessageMapping("/partidas/{id_partida}/chat")
-    public void enviarMensaje(
-            @DestinationVariable("id_partida") Integer idPartida,
-            @Payload EnviarMensajeDTO dto,
-            Principal principal) {
-        dto.setIdPartida(idPartida);
-        ChatMessageDTO mensaje = chatService.procesarMensaje(dto, principal.getName());
-        messagingTemplate.convertAndSend(
-                "/topic/partidas/" + idPartida + "/chat/" + mensaje.getEquipo().toLowerCase(),
-                mensaje);
-    }
+    // /**
+    //  * /app/partidas/{id_partida}/chat
+    //  * Payload: { "mensaje": "creo que es el gato" }
+    //  *
+    //  * El backend:
+    //  *  1. Filtra el mensaje
+    //  *  2. Guarda en CHAT
+    //  *  3. Emite a /topic/partidas/{id}/chat/{equipo}
+    //  */
+    // @MessageMapping("/partidas/{id_partida}/chat")
+    // public void enviarMensaje(
+    //         @DestinationVariable("id_partida") Integer idPartida,
+    //         @Payload EnviarMensajeDTO dto,
+    //         Principal principal) {
+    //     dto.setIdPartida(idPartida);
+    //     ChatMessageDTO mensaje = chatService.procesarMensaje(dto, principal.getName());
+    //     messagingTemplate.convertAndSend(
+    //             "/topic/partidas/" + idPartida + "/chat/" + mensaje.getEquipo().toLowerCase(),
+    //             mensaje);
+    // }
 
     // ─── Payloads ─────────────────────────────────────────────────────────────
 
