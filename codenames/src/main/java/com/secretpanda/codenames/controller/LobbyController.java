@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
 import com.secretpanda.codenames.service.LobbyService;
-import com.secretpanda.codenames.service.LobbyService.PartidaPublicaDTO;
+import com.secretpanda.codenames.dto.partida.PartidaPublicaDTO;
 
 /**
  * REST:
@@ -48,6 +48,12 @@ public class LobbyController {
     public ResponseEntity<LobbyStatusDTO> getLobby(
             @PathVariable("id_partida") Integer idPartida) {
         return ResponseEntity.ok(lobbyService.getLobby(idPartida));
+    }
+
+    /** Obtener todas las partidas públicas en estado 'esperando'. */
+    @GetMapping("/api/partidas/publicas")
+    public ResponseEntity<List<PartidaPublicaDTO>> obtenerPartidasPublicas() {
+        return ResponseEntity.ok(lobbyService.listarPartidasPublicas());
     }
 
     /** Iniciar partida (PUT, solo el creador). */
