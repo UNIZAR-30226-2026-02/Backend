@@ -141,7 +141,7 @@ public class PartidaService {
 
     @Transactional
     public void abandonar(Integer idPartida, String idGoogle) {
-        Partida partida = partidaRepository.findById(idPartida)
+        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
         JugadorPartida jp = jugadorPartidaRepository

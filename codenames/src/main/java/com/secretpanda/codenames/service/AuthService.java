@@ -11,11 +11,15 @@ import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
+import com.secretpanda.codenames.model.InventarioTema;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.model.Tema;
+import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
+import com.secretpanda.codenames.repository.TemaRepository;
 import com.secretpanda.codenames.security.GoogleAuthService;
 import com.secretpanda.codenames.security.JwtService;
 import com.secretpanda.codenames.util.EstadisticasCalculator;
@@ -28,17 +32,23 @@ public class AuthService {
     private final JugadorRepository jugadorRepository;
     private final JugadorPartidaRepository jugadorPartidaRepository;
     private final EstadisticasCalculator calculator;
+    private final TemaRepository temaRepository;
+    private final InventarioTemaRepository inventarioTemaRepository;
 
     public AuthService(GoogleAuthService googleAuthService,
-                       JwtService jwtService,
-                       JugadorRepository jugadorRepository,
-                       JugadorPartidaRepository jugadorPartidaRepository,
-                       EstadisticasCalculator calculator) {
+                    JwtService jwtService,
+                    JugadorRepository jugadorRepository,
+                    JugadorPartidaRepository jugadorPartidaRepository,
+                    EstadisticasCalculator calculator,
+                    TemaRepository temaRepository,
+                    InventarioTemaRepository inventarioTemaRepository) {
         this.googleAuthService = googleAuthService;
         this.jwtService = jwtService;
         this.jugadorRepository = jugadorRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.calculator = calculator;
+        this.temaRepository = temaRepository; // <-- Nuevo
+        this.inventarioTemaRepository = inventarioTemaRepository; // <-- Nuevo
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
@@ -75,12 +85,12 @@ public class AuthService {
      */
     @Transactional
     public AuthResponseDTO registro(String idTokenGoogle, String tag) {
-        
-        // 1. EXTRAER EL ID REAL (añadimos esto igual que en el login)
+
+        // 1. EXTRAER EL ID REAL
         GoogleAuthService.DatosGoogle datos = googleAuthService.verificarToken(idTokenGoogle);
         String idGoogleReal = datos.idGoogle();
 
-        // 2. Validar que el idGoogleReal aún no tiene cuenta (doble seguro)
+        // 2. Validar que el idGoogleReal aún no tiene cuenta
         if (jugadorRepository.existsById(idGoogleReal)) {
             throw new BadRequestException("Este usuario ya está registrado. Usa /login.");
         }
@@ -99,6 +109,15 @@ public class AuthService {
         nuevo.setTag(tag.trim());
         nuevo.setBalas(0);
         jugadorRepository.save(nuevo);
+
+        // 5. ASIGNAR TEMA POR DEFECTO 'Basico'
+        Optional<Tema> temaBasicoOpt = temaRepository.findByNombre("Basico");
+        if (temaBasicoOpt.isPresent()) {
+            Tema temaBasico = temaBasicoOpt.get();
+            // InventarioTema tiene un constructor que acepta (Jugador, Tema)
+            InventarioTema inventario = new InventarioTema(nuevo, temaBasico); 
+            inventarioTemaRepository.save(inventario);
+        }
 
         return construirRespuestaExistente(nuevo);
     }

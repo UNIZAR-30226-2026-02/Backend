@@ -5,11 +5,14 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.secretpanda.codenames.model.Partida;
+
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface PartidaRepository extends JpaRepository<Partida, Integer> {
@@ -43,4 +46,8 @@ public interface PartidaRepository extends JpaRepository<Partida, Integer> {
     
     // Listar partidas creadas por un jugador
     List<Partida> findByCreador_IdGoogle(String idGoogle);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Partida p WHERE p.idPartida = :idPartida")
+    Optional<Partida> findByIdForUpdate(@Param("idPartida") Integer idPartida);
 }

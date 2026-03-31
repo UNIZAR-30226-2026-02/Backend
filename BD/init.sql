@@ -197,3 +197,25 @@ CREATE TABLE chat (
     mensaje              TEXT          NOT NULL,
     fecha                TIMESTAMP     NOT NULL DEFAULT NOW()
 );
+
+-- ============================================================
+-- DATOS INICIALES POR DEFECTO
+-- ============================================================
+
+-- 1. Insertar el nuevo tema llamado 'Basico'
+INSERT INTO tema (nombre, descripcion, precio_balas, activo) 
+VALUES ('Basico', 'Tema clásico con palabras comunes', 0, true);
+
+-- 2. Insertar palabras para el tema 'Basico' (Mínimo 25 para rellenar el tablero)
+INSERT INTO palabra_tema (id_tema, valor)
+SELECT t.id_tema, palabra 
+FROM tema t
+CROSS JOIN unnest(ARRAY[
+    'AGUA', 'ANILLO', 'ARBOL', 'BANCO', 'BATERIA', 
+    'BOMBA', 'BOSQUE', 'BOTA', 'CABALLO', 'CABEZA',
+    'CAMARA', 'CAMPANA', 'CARTA', 'CASINO', 'CENTRO', 
+    'CHILE', 'CIELO', 'CINTA', 'CLAVO', 'COCHE',
+    'COCO', 'COLUMNA', 'CORAZON', 'CORONA', 'CUADRO', 
+    'CUERNO', 'CURA', 'DADO', 'DIENTE', 'ESCALA'
+]) AS palabra
+WHERE t.nombre = 'Basico';
