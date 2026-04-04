@@ -123,7 +123,6 @@ public class LobbyService {
         List<JugadorPartida> jugadores = jugadorPartidaRepository
                 .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
 
-        // Validar mínimo 2 jugadores por equipo
         long rojos = jugadores.stream()
                 .filter(jp -> JugadorPartida.Equipo.rojo.equals(jp.getEquipo())).count();
         long azules = jugadores.stream()
@@ -133,22 +132,29 @@ public class LobbyService {
             throw new GameLogicException("Cada equipo necesita al menos 2 jugadores.");
         }
 
-        // Asignar roles automáticamente (1 líder por equipo, resto agentes)
         asignarRoles(jugadores);
 
-        // Cambiar estado
         partida.setEstado(Partida.EstadoPartida.en_curso);
         partidaRepository.save(partida);
 
-        // Generar tablero e inicializar el primer turno
         juegoService.inicializarPartida(partida, jugadores);
 
-        // Notificar lobby actualizado (para que el frontend sepa que está en_curso)
         broadcastLobby(partida);
     }
 
     // ─── Abandonar lobby ───────────────────────────────────────────────────────
 
+    /**
+     * Cuando el creador abandona el lobby, se elimina también su registro
+     * de JUGADOR_PARTIDA (antes quedaba huérfano en BD). Además, el broadcastLobby
+     * al final envía el estado con estado: "finalizada", que es la señal que el
+     * frontend debe usar para cerrar el lobby y redirigir a los demás jugadores.
+     *
+     * Contrato WebSocket tras este cambio:
+     *   - El topic /topic/partidas/{id}/lobby recibe un LobbyStatusDTO con
+     *     estado: "finalizada" cuando el creador abandona.
+     *   - El frontend debe manejar estado === "finalizada" como señal de cierre.
+     */
     @Transactional
     public void abandonarLobby(Integer idPartida, String idGoogle) {
         Partida partida = findPartidaEsperando(idPartida);
@@ -157,16 +163,27 @@ public class LobbyService {
         boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
 
         if (esCreador) {
-            // Si el creador sale, se aborta la partida
+            // Marcar partida como finalizada
             partida.setEstado(Partida.EstadoPartida.finalizada);
             partida.setFechaFin(LocalDateTime.now());
             partidaRepository.save(partida);
+
+            // Eliminar el registro del creador en JUGADOR_PARTIDA
+            // Antes este delete no existía, dejando al creador como participante
+            // de una partida finalizada, lo que podía bloquear la creación de
+            // nuevas partidas (validarSinPartidaActiva en PartidaService).
+            jugadorPartidaRepository.delete(jp);
+
+            // Actualizar lista de partidas públicas (si era pública, desaparece)
             broadcastPartidasPublicas();
         } else {
-            // Simplemente lo quitamos
+            // Jugador normal: simplemente lo eliminamos del lobby
             jugadorPartidaRepository.delete(jp);
         }
 
+        // Broadcast del estado actualizado a todos los suscritos al lobby.
+        // Si el creador abandonó, el DTO lleva estado: "finalizada" → señal de cierre.
+        // Si fue otro jugador, el DTO lleva la lista actualizada sin él.
         broadcastLobby(partida);
     }
 
@@ -215,7 +232,6 @@ public class LobbyService {
     }
 
     private void asignarRoles(List<JugadorPartida> jugadores) {
-        // 1 líder por equipo (el primero de cada equipo), el resto agentes
         boolean lidRojoAsignado = false;
         boolean lidAzulAsignado = false;
 
@@ -283,5 +299,4 @@ public class LobbyService {
                 partida.getMaxJugadores(),
                 (int) actuales);
     }
-    
 }

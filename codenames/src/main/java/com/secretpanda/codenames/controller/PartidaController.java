@@ -9,17 +9,19 @@ import org.springframework.web.bind.annotation.*;
 import com.secretpanda.codenames.dto.partida.CrearPartidaDTO;
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
 import com.secretpanda.codenames.dto.partida.RolPartidaDTO;
+import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.model.Partida;
 import com.secretpanda.codenames.repository.PartidaRepository;
 import com.secretpanda.codenames.service.LobbyService;
 import com.secretpanda.codenames.service.PartidaService;
 
 /**
- * POST /api/partidas/                         → crear partida
- * POST /api/partidas/{id}/unirse/privada      → unirse con código
- * POST /api/partidas/{id}/unirse/publica      → unirse a pública
- * DELETE /api/partidas/{id}/participantes     → abandonar
- * GET  /api/partidas/{id}/participantes/rol   → rol y equipo del jugador
+ * POST /api/partidas/                              → crear partida
+ * POST /api/partidas/{id}/unirse/privada           → unirse con código (mantiene compatibilidad)
+ * POST /api/partidas/{id}/unirse/publica           → unirse a pública
+ * POST /api/partidas/codigo/{codigo}/unirse/privada → FIX B4: unirse privada solo con código
+ * DELETE /api/partidas/{id}/participantes          → abandonar
+ * GET  /api/partidas/{id}/participantes/rol        → rol y equipo del jugador
  */
 @RestController
 @RequestMapping("/api/partidas")
@@ -50,8 +52,13 @@ public class PartidaController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    // ─── Unirse a privada ──────────────────────────────────────────────────────
+    // ─── Unirse a privada (endpoint original — mantener para compatibilidad Android) ──
 
+    /**
+     * Endpoint original: recibe idPartida en el path y codigoPartida en el body.
+     * Se mantiene para no romper clientes Android que ya lo usan.
+     * El frontend web puede usar el nuevo endpoint por código (abajo).
+     */
     @PostMapping("/{id_partida}/unirse/privada")
     public ResponseEntity<Void> unirsePrivada(
             @PathVariable("id_partida") Integer idPartida,
@@ -60,6 +67,47 @@ public class PartidaController {
         partidaService.unirsePartidaPrivada(idPartida, body.codigoPartida(), principal.getName());
         Partida p = requirePartida(idPartida);
         lobbyService.broadcastLobby(p);
+        return ResponseEntity.ok().build();
+    }
+
+    // Unirse a privada por código (sin necesidad de conocer el id) ──
+
+    /**
+     * Endpoint que acepta únicamente el código de partida en el path.
+     * El jugador solo necesita el código que le comparte el creador, sin necesitar
+     * el idPartida interno, que no conoce.
+     *
+     * Endpoint: POST /api/partidas/codigo/{codigo_partida}/unirse/privada
+     *
+     * El backend resuelve el idPartida a partir del código y delega en la misma
+     * lógica de PartidaService.unirsePartidaPrivada que el endpoint original.
+     *
+     * Nota: la ruta /codigo/{...}/unirse/privada evita colisiones con
+     * /{id_partida}/unirse/privada porque "codigo" es literal (no un entero).
+     */
+    @PostMapping("/codigo/{codigo_partida}/unirse/privada")
+    public ResponseEntity<Void> unirsePrivadaPorCodigo(
+            @PathVariable("codigo_partida") String codigoPartida,
+            Principal principal) {
+
+        // Resolver la partida por su código (el jugador no conoce el id interno)
+        Partida partida = partidaRepository.findByCodigoPartida(codigoPartida)
+                .orElseThrow(() -> new NotFoundException(
+                        "No existe ninguna partida con el código: " + codigoPartida));
+
+        // Validar que sea privada (aunque PartidaService también lo valida, mejor fallar pronto)
+        if (partida.isEsPublica()) {
+            throw new com.secretpanda.codenames.exception.GameLogicException(
+                    "Esta partida es pública. Usa el endpoint de unirse a pública.");
+        }
+
+        // Delegar en el servicio existente, pasando código para validación cruzada
+        partidaService.unirsePartidaPrivada(
+                partida.getIdPartida(), codigoPartida, principal.getName());
+
+        // Notificar a todos los del lobby
+        lobbyService.broadcastLobby(partida);
+
         return ResponseEntity.ok().build();
     }
 
@@ -99,7 +147,7 @@ public class PartidaController {
 
     private Partida requirePartida(Integer idPartida) {
         return partidaRepository.findById(idPartida)
-                .orElseThrow(() -> new com.secretpanda.codenames.exception.NotFoundException("Partida no encontrada."));
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
     }
 
     public record UnirseConCodigoRequest(String codigoPartida) {}
