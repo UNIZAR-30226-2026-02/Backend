@@ -19,6 +19,9 @@ public interface InventarioPersonalizacionRepository extends JpaRepository<Inven
     // Obtener todo lo que el jugador tiene equipado actualmente (Tableros, cartas, etc.)
     List<InventarioPersonalizacion> findById_IdJugadorAndEquipadoTrue(String idJugador);
 
+    // Obtener un ítem específico del inventario de un jugador, usando el ID de la personalización (no el ID del inventario)
+    Optional<InventarioPersonalizacion> findById_IdJugadorAndId_IdPersonalizacion(String idJugador, Integer idPersonalizacion);
+
     // Obtener el elemento equipado de un TIPO específico
     Optional<InventarioPersonalizacion> findById_IdJugadorAndPersonalizacion_TipoAndEquipadoTrue(String idJugador, Personalizacion.TipoPersonalizacion tipo);
 }

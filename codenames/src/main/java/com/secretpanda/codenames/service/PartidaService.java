@@ -99,17 +99,14 @@ public class PartidaService {
     // ─── Unirse a privada ──────────────────────────────────────────────────────
 
     @Transactional
-    public void unirsePartidaPrivada(Integer idPartida, String codigoPartida, String idGoogle) {
+    public void unirsePartidaPrivada(String codigoPartida, String idGoogle) {
         validarSinPartidaActiva(idGoogle);
 
-        Partida partida = partidaRepository.findById(idPartida)
+        Partida partida = partidaRepository.findByCodigoPartida(codigoPartida.toUpperCase().trim())
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
         if (partida.isEsPublica()) {
             throw new GameLogicException("Esta partida es pública. Usa el endpoint de unirse a pública.");
-        }
-        if (!partida.getCodigoPartida().equalsIgnoreCase(codigoPartida)) {
-            throw new BadRequestException("Código de partida incorrecto.");
         }
 
         unirseValidado(partida, idGoogle);

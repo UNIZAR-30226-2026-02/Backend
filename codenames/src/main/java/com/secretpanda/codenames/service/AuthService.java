@@ -15,7 +15,6 @@ import com.secretpanda.codenames.model.InventarioTema;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
-import com.secretpanda.codenames.model.Tema;
 import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
@@ -71,7 +70,8 @@ public class AuthService {
 
         Jugador jugador = opt.get();
         if (!jugador.isActivo()) {
-            throw new BadRequestException("Esta cuenta está desactivada.");
+            // Cuenta desactivada como si no existiera
+            return AuthResponseDTO.nuevo();
         }
 
         return construirRespuestaExistente(jugador);
@@ -85,17 +85,19 @@ public class AuthService {
      */
     @Transactional
     public AuthResponseDTO registro(String idTokenGoogle, String tag) {
-
-        // 1. EXTRAER EL ID REAL
+        // 1. EXTRAER EL ID REAL DESDE GOOGLE
         GoogleAuthService.DatosGoogle datos = googleAuthService.verificarToken(idTokenGoogle);
         String idGoogleReal = datos.idGoogle();
 
-        // 2. Validar que el idGoogleReal aún no tiene cuenta
-        if (jugadorRepository.existsById(idGoogleReal)) {
-            throw new BadRequestException("Este usuario ya está registrado. Usa /login.");
+        // 2. BUSCAR SI YA EXISTE (ACTIVO O INACTIVO)
+        Optional<Jugador> jugadorOpt = jugadorRepository.findById(idGoogleReal);
+
+        // 3. VALIDAR: Si existe y YA ESTÁ ACTIVO, no puede registrarse otra vez
+        if (jugadorOpt.isPresent() && jugadorOpt.get().isActivo()) {
+            throw new BadRequestException("Este usuario ya está registrado y activo. Usa /login.");
         }
 
-        // 3. Validar unicidad del tag
+        // 4. VALIDAR UNICIDAD DEL TAG (Solo entre usuarios activos)
         if (tag == null || tag.isBlank()) {
             throw new BadRequestException("El tag no puede estar vacío.");
         }
@@ -103,23 +105,37 @@ public class AuthService {
             throw new BadRequestException("Ese nombre de usuario ya está en uso.");
         }
 
-        // 4. Guardar con el ID corto
-        Jugador nuevo = new Jugador();
-        nuevo.setIdGoogle(idGoogleReal);
-        nuevo.setTag(tag.trim());
-        nuevo.setBalas(0);
-        jugadorRepository.save(nuevo);
-
-        // 5. ASIGNAR TEMA POR DEFECTO 'Basico'
-        Optional<Tema> temaBasicoOpt = temaRepository.findByNombre("Basico");
-        if (temaBasicoOpt.isPresent()) {
-            Tema temaBasico = temaBasicoOpt.get();
-            // InventarioTema tiene un constructor que acepta (Jugador, Tema)
-            InventarioTema inventario = new InventarioTema(nuevo, temaBasico); 
-            inventarioTemaRepository.save(inventario);
+        Jugador jugador;
+        if (jugadorOpt.isPresent()) {
+            // CASO A: REACTIVACIÓN (El usuario existía pero estaba desactivado)
+            jugador = jugadorOpt.get();
+            jugador.setActivo(true);
+            jugador.setTag(tag.trim());
+            jugador.setBalas(0); // Empezar de cero
+            // Reset de estadísticas por si no se hizo al desactivar
+            jugador.setPartidasJugadas(0);
+            jugador.setVictorias(0);
+            jugador.setNumAciertos(0);
+            jugador.setNumFallos(0);
+        } else {
+            // CASO B: REGISTRO TOTALMENTE NUEVO
+            jugador = new Jugador();
+            jugador.setIdGoogle(idGoogleReal);
+            jugador.setTag(tag.trim());
+            jugador.setBalas(0);
         }
 
-        return construirRespuestaExistente(nuevo);
+        jugadorRepository.save(jugador);
+
+        // 5. ASIGNAR TEMA POR DEFECTO (Si no lo tiene ya)
+        boolean yaTieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(jugador.getIdGoogle(), 1); // Asumiendo ID 1 es Basico
+        if (!yaTieneTema) {
+            temaRepository.findByNombre("Basico").ifPresent(tema -> {
+                inventarioTemaRepository.save(new InventarioTema(jugador, tema));
+            });
+        }
+
+        return construirRespuestaExistente(jugador);
     }
 
     // ─── Desactivar cuenta ────────────────────────────────────────────────────

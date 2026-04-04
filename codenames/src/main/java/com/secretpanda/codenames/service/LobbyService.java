@@ -14,10 +14,10 @@ import com.secretpanda.codenames.dto.partida.PartidaPublicaDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
-import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
 import com.secretpanda.codenames.model.Tema;
+import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
 import com.secretpanda.codenames.repository.PartidaRepository;
@@ -32,20 +32,24 @@ public class LobbyService {
     private final TemaRepository temaRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final JuegoService juegoService;
+    private final InventarioTemaRepository inventarioTemaRepository;
 
-    public LobbyService(PartidaRepository partidaRepository,
+public LobbyService(PartidaRepository partidaRepository,
                         JugadorRepository jugadorRepository,
                         JugadorPartidaRepository jugadorPartidaRepository,
                         TemaRepository temaRepository,
+                        InventarioTemaRepository inventarioTemaRepository,
                         SimpMessagingTemplate messagingTemplate,
                         JuegoService juegoService) {
         this.partidaRepository = partidaRepository;
         this.jugadorRepository = jugadorRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.temaRepository = temaRepository;
+        this.inventarioTemaRepository = inventarioTemaRepository;
         this.messagingTemplate = messagingTemplate;
         this.juegoService = juegoService;
     }
+
 
     // ─── GET Lobby ─────────────────────────────────────────────────────────────
 
@@ -91,6 +95,7 @@ public class LobbyService {
 
         partida.setTema(tema);
         partidaRepository.save(partida);
+
         broadcastLobby(partida);
     }
 
@@ -110,6 +115,7 @@ public class LobbyService {
 
         partida.setTiempoEspera(tiempoEspera);
         partidaRepository.save(partida);
+
         broadcastLobby(partida);
     }
 
@@ -197,15 +203,35 @@ public class LobbyService {
 
     // ─── Lista de partidas públicas ────────────────────────────────────────────
 
-    public List<PartidaPublicaDTO> listarPartidasPublicas() {
-        List<Partida> partidas = partidaRepository
+   @Transactional(readOnly = true)
+    public List<PartidaPublicaDTO> listarPartidasPublicas(String idGoogle) {
+        // 1. Obtenemos los IDs de los temas que el jugador SÍ tiene en su inventario
+        List<Integer> misTemasIds = inventarioTemaRepository.findById_IdJugador(idGoogle)
+                .stream()
+                .map(inv -> inv.getTema().getIdTema())
+                .collect(Collectors.toList());
+
+        // 2. Obtenemos todas las partidas públicas en estado 'esperando'
+        List<Partida> partidasDisponibles = partidaRepository
                 .findPartidasPublicasDisponibles(Partida.EstadoPartida.esperando);
 
-        return partidas.stream().map(this::buildPartidaPublicaDTO).collect(Collectors.toList());
+        // 3. Filtramos la lista de partidas:
+        // Solo se quedan aquellas cuyo tema_id esté dentro de la lista 'misTemasIds'
+        return partidasDisponibles.stream()
+                .filter(p -> misTemasIds.contains(p.getTema().getIdTema()))
+                .map(this::buildPartidaPublicaDTO)
+                .collect(Collectors.toList());
     }
 
     public void broadcastPartidasPublicas() {
-        messagingTemplate.convertAndSend("/topic/partidas/publicas", listarPartidasPublicas());
+        List<Partida> partidas = partidaRepository
+                .findPartidasPublicasDisponibles(Partida.EstadoPartida.esperando);
+        
+        List<PartidaPublicaDTO> listaCompleta = partidas.stream()
+                .map(this::buildPartidaPublicaDTO)
+                .collect(Collectors.toList());
+
+        messagingTemplate.convertAndSend("/topic/partidas/publicas", listaCompleta);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
