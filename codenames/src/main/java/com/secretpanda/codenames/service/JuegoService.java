@@ -285,7 +285,8 @@ public class JuegoService {
 
         actualizarEstadisticasAgentes(votos, equipoVotante, cartaGanadora);
 
-        votoCartaRepository.deleteAll(votos);
+        votoCartaRepository.deleteAllInBatch(votos);
+        votoCartaRepository.flush();
 
         temporizadorService.cancelarTemporizador(partida.getIdPartida());
 
@@ -295,14 +296,39 @@ public class JuegoService {
             boolean esAciertoPropio = esCartaDelEquipo(cartaGanadora.getTipo(), equipoVotante);
 
             if (!esAciertoPropio) {
-                broadcastEstado(partida.getIdPartida());
+                prepararTurnoRival(partida, equipoVotante);
             } else {
                 temporizadorService.iniciarTemporizador(partida.getIdPartida(),
                         partida.getTiempoEspera(), () -> forzarFinTurno(partida.getIdPartida()));
-                
-                broadcastEstado(partida.getIdPartida());
             }
+            broadcastEstado(partida.getIdPartida());
+
         }
+    }
+
+    private void prepararTurnoRival(Partida partida, Equipo equipoActual) {
+        Equipo rival = (equipoActual == Equipo.rojo) ? Equipo.azul : Equipo.rojo;
+        
+        // Buscamos al Líder del equipo rival
+        JugadorPartida liderRival = jugadorPartidaRepository.findByPartida_IdPartida(partida.getIdPartida())
+                .stream()
+                .filter(jp -> jp.getEquipo().equals(rival) && jp.getRol().equals(Rol.lider))
+                .findFirst()
+                .orElseThrow(() -> new GameLogicException("No hay líder en el equipo rival."));
+
+        // Creamos un turno vacío (sin palabra_pista). 
+        // El GameStateMapper verá palabraPista=null y dirá "Fase: esperando_pista".
+        Turno turnoVacio = new Turno();
+        turnoVacio.setPartida(partida);
+        turnoVacio.setJugadorPartida(liderRival);
+        turnoVacio.setNumTurno(turnoRepository.findByPartida_IdPartidaOrderByNumTurnoAsc(partida.getIdPartida()).size() + 1);
+        turnoVacio.setPalabraPista(null); // <--- Clave para el cambio de fase visual
+        turnoVacio.setPistaNumero(0);
+        turnoRepository.save(turnoVacio);
+        
+        // Iniciamos el temporizador para el líder rival
+        temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
+                () -> forzarFinTurno(partida.getIdPartida()));
     }
 
     // ─── GameState broadcast ──────────────────────────────────────────────────
