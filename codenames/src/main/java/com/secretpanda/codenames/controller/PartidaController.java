@@ -65,12 +65,12 @@ public class PartidaController {
      * el idPartida interno, que no conoce.
      */
     @PostMapping("/{codigo_partida}/unirse/privada")
-    public ResponseEntity<Void> unirsePrivada(
+    public ResponseEntity<Integer> unirsePrivada(
             @PathVariable("codigo_partida") String codigoPartida,
             Principal principal) {
         
         // 1. Ejecutar la unión en el servicio (busca por código)
-        partidaService.unirsePartidaPrivada(codigoPartida, principal.getName());
+        Integer idPartida = partidaService.unirsePartidaPrivada(codigoPartida, principal.getName());
 
         // 2. Resolver la partida para poder notificar al lobby por WebSocket
         Partida partida = partidaRepository.findByCodigoPartida(codigoPartida.toUpperCase().trim())
@@ -80,7 +80,7 @@ public class PartidaController {
         // 3. Notificar a todos los del lobby
         lobbyService.broadcastLobby(partida);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(idPartida);
     }
 
     // ─── Unirse a pública ──────────────────────────────────────────────────────

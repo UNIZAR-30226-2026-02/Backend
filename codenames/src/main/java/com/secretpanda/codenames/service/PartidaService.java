@@ -99,7 +99,7 @@ public class PartidaService {
     // ─── Unirse a privada ──────────────────────────────────────────────────────
 
     @Transactional
-    public void unirsePartidaPrivada(String codigoPartida, String idGoogle) {
+    public Integer unirsePartidaPrivada(String codigoPartida, String idGoogle) {
         validarSinPartidaActiva(idGoogle);
 
         Partida partida = partidaRepository.findByCodigoPartida(codigoPartida.toUpperCase().trim())
@@ -110,6 +110,8 @@ public class PartidaService {
         }
 
         unirseValidado(partida, idGoogle);
+
+        return partida.getIdPartida();
     }
 
     // ─── Unirse a pública ──────────────────────────────────────────────────────
