@@ -1,31 +1,53 @@
 package com.secretpanda.codenames.service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.secretpanda.codenames.dto.juego.*;
-import com.secretpanda.codenames.exception.*;
-import com.secretpanda.codenames.mapper.juego.*;
-import com.secretpanda.codenames.model.*;
-import com.secretpanda.codenames.model.TableroCarta.*;
-import com.secretpanda.codenames.model.JugadorPartida.*;
-import com.secretpanda.codenames.repository.*;
+import com.secretpanda.codenames.dto.juego.GameStateDTO;
+import com.secretpanda.codenames.dto.juego.PistaDTO;
+import com.secretpanda.codenames.dto.juego.VotoRecibidoDTO;
+import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.GameLogicException;
+import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.mapper.juego.GameStateMapper;
+import com.secretpanda.codenames.model.JugadorPartida;
+import com.secretpanda.codenames.model.JugadorPartida.Equipo;
+import com.secretpanda.codenames.model.JugadorPartida.Rol;
+import com.secretpanda.codenames.model.PalabraTema;
+import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.model.TableroCarta;
+import com.secretpanda.codenames.model.TableroCarta.EstadoCarta;
+import com.secretpanda.codenames.model.TableroCarta.TipoCarta;
+import com.secretpanda.codenames.model.Turno;
+import com.secretpanda.codenames.model.VotoCarta;
+import com.secretpanda.codenames.repository.JugadorPartidaRepository;
+import com.secretpanda.codenames.repository.JugadorRepository;
+import com.secretpanda.codenames.repository.PalabraTemaRepository;
+import com.secretpanda.codenames.repository.PartidaRepository;
+import com.secretpanda.codenames.repository.TableroCartaRepository;
+import com.secretpanda.codenames.repository.TurnoRepository;
+import com.secretpanda.codenames.repository.VotoCartaRepository;
 
 @Service
 public class JuegoService {
 
     // Distribución estándar de Codenames en tablero 4×5 (20 cartas)
-    // El equipo que empieza tiene 9 cartas, el otro 8, 1 asesino, 2 civiles
-    private static final int CARTAS_ROJO_EMPIEZA   = 9;
-    private static final int CARTAS_AZUL_EMPIEZA   = 8;
-    private static final int CARTAS_ASESINO        = 1;
-    private static final int CARTAS_CIVIL          = 20 - CARTAS_ROJO_EMPIEZA - CARTAS_AZUL_EMPIEZA - CARTAS_ASESINO;
     private static final int TOTAL_CARTAS          = 20; // 4 filas × 5 columnas
+    // El equipo que empieza tiene 9 cartas, el otro 8, 1 asesino, 2 civiles
+    private static final int CARTAS_EQUIPO_QUE_INICIA = 9;
+    private static final int CARTAS_EQUIPO_SEGUNDO = 8;
+    private static final int CARTAS_ASESINO        = 1;
+    private static final int CARTAS_CIVIL          = TOTAL_CARTAS - CARTAS_EQUIPO_QUE_INICIA - CARTAS_EQUIPO_SEGUNDO - CARTAS_ASESINO;
 
     private final PartidaRepository          partidaRepository;
     private final JugadorPartidaRepository   jugadorPartidaRepository;
@@ -64,8 +86,8 @@ public class JuegoService {
     public void inicializarPartida(Partida partida, List<JugadorPartida> jugadores) {
         boolean rojoEmpieza = new Random().nextBoolean();
 
-        int cartasEquipoA = rojoEmpieza ? CARTAS_ROJO_EMPIEZA : CARTAS_AZUL_EMPIEZA;
-        int cartasEquipoB = rojoEmpieza ? CARTAS_AZUL_EMPIEZA : CARTAS_ROJO_EMPIEZA;
+        int totalRojas = rojoEmpieza ? CARTAS_EQUIPO_QUE_INICIA : CARTAS_EQUIPO_SEGUNDO;
+        int totalAzules = rojoEmpieza ? CARTAS_EQUIPO_SEGUNDO : CARTAS_EQUIPO_QUE_INICIA;
 
         List<PalabraTema> palabras = palabraTemaRepository
                 .findPalabrasAleatoriasPorTema(partida.getTema().getIdTema(), TOTAL_CARTAS);
@@ -76,11 +98,11 @@ public class JuegoService {
         }
 
         List<TipoCarta> tipos = new ArrayList<>();
-        for (int i = 0; i < cartasEquipoA;      i++) tipos.add(rojoEmpieza ? TipoCarta.rojo : TipoCarta.azul);
-        for (int i = 0; i < cartasEquipoB;      i++) tipos.add(rojoEmpieza ? TipoCarta.azul : TipoCarta.rojo);
-        for (int i = 0; i < CARTAS_ASESINO;     i++) tipos.add(TipoCarta.asesino);
-        for (int i = 0; i < CARTAS_CIVIL;       i++) tipos.add(TipoCarta.civil);
-        Collections.shuffle(tipos);
+        for (int i = 0; i < totalRojas; i++) tipos.add(rojoEmpieza ? TipoCarta.rojo : TipoCarta.azul);
+        for (int i = 0; i < totalAzules; i++) tipos.add(rojoEmpieza ? TipoCarta.azul : TipoCarta.rojo);
+        for (int i = 0; i < CARTAS_ASESINO; i++) tipos.add(TipoCarta.asesino);
+        for (int i = 0; i < CARTAS_CIVIL; i++) tipos.add(TipoCarta.civil);
+        Collections.shuffle(tipos); // Mezclar tipos para que no estén agrupados
 
         List<TableroCarta> cartas = new ArrayList<>();
         int idx = 0;
@@ -105,8 +127,7 @@ public class JuegoService {
     // ─── Dar pista (Jefe) ─────────────────────────────────────────────────────
 
     @Transactional
-    public void darPista(Integer idPartida, String palabraPista,
-                          int pistaNumero, String idGoogle) {
+    public void darPista(Integer idPartida, String palabraPista, int pistaNumero, String idGoogle) {
         Partida partida = requireEnCurso(idPartida);
         JugadorPartida jp = requireJugadorEnPartida(idGoogle, idPartida);
 
@@ -243,37 +264,36 @@ public class JuegoService {
     public void resolverVotacion(Partida partida, Turno turno, Equipo equipoVotante) {
         List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
 
+        if (votos.isEmpty()) return;
+
         TableroCarta cartaGanadora = votos.stream()
                 .collect(Collectors.groupingBy(v -> v.getCartaTablero().getIdCartaTablero(),
                         Collectors.counting()))
                 .entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(e -> tableroCartaRepository.findById(e.getKey()).orElseThrow())
-                .orElseThrow(() -> new GameLogicException("No hay votos para resolver."));
+                .orElseThrow(() -> new GameLogicException("Error al procesar la votación."));
 
         cartaGanadora.setEstado(EstadoCarta.revelada);
         tableroCartaRepository.save(cartaGanadora);
 
         actualizarEstadisticasAgentes(votos, equipoVotante, cartaGanadora);
 
+        votoCartaRepository.deleteAll(votos);
+
         temporizadorService.cancelarTemporizador(partida.getIdPartida());
 
-        boolean continua = comprobarCondicionFin(partida, cartaGanadora, equipoVotante, turno);
+        boolean continuaPartida = comprobarCondicionFin(partida, cartaGanadora, equipoVotante, turno);
 
-        if (continua) {
-            long cartasReveladasEsteTurno = votos.stream()
-                    .map(v -> v.getCartaTablero().getIdCartaTablero())
-                    .distinct().count();
+        if (continuaPartida) {
+            boolean esAciertoPropio = esCartaDelEquipo(cartaGanadora.getTipo(), equipoVotante);
 
-            boolean cartaCorrecta = esCartaDelEquipo(cartaGanadora.getTipo(), equipoVotante);
-            boolean puedeVotarMas = cartaCorrecta &&
-                    cartasReveladasEsteTurno < turno.getPistaNumero();
-
-            if (!cartaCorrecta || !puedeVotarMas) {
+            if (!esAciertoPropio) {
                 broadcastEstado(partida.getIdPartida());
             } else {
                 temporizadorService.iniciarTemporizador(partida.getIdPartida(),
                         partida.getTiempoEspera(), () -> forzarFinTurno(partida.getIdPartida()));
+                
                 broadcastEstado(partida.getIdPartida());
             }
         }
@@ -295,6 +315,7 @@ public class JuegoService {
      *   /user/queue/partidas/{id}/estado
      * (Spring añade el prefijo /user/{sessionId} automáticamente al enviar)
      */
+    @Transactional(readOnly = true)
     public void broadcastEstado(Integer idPartida) {
         Partida partida = partidaRepository.findById(idPartida).orElseThrow();
         List<TableroCarta> cartas = tableroCartaRepository.findByPartida_IdPartida(idPartida);
@@ -342,8 +363,17 @@ public class JuegoService {
     public void forzarFinTurno(Integer idPartida) {
         try {
             Partida partida = partidaRepository.findById(idPartida).orElse(null);
-            if (partida == null) return;
-            if (!Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
+            if (partida == null || !Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
+
+            Turno turnoActual = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
+
+            if (turnoActual != null) {
+                List<VotoCarta> votosAMedias = votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno());
+                if (!votosAMedias.isEmpty()) {
+                    votoCartaRepository.deleteAll(votosAMedias);
+                }
+            }
+            
             broadcastEstado(idPartida);
         } catch (Exception e) {
             // Log implícito desde TemporizadorService; no relanzar para no matar el hilo
@@ -437,7 +467,9 @@ public class JuegoService {
                     partida.getIdPartida(), TipoCarta.rojo, EstadoCarta.oculta);
             long cartasAzul = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
                     partida.getIdPartida(), TipoCarta.azul, EstadoCarta.oculta);
+
             Equipo equipoInicial = (cartasRojo >= cartasAzul) ? Equipo.rojo : Equipo.azul;
+
             if (!equipoJugador.equals(equipoInicial)) {
                 throw new GameLogicException("No es el turno de tu equipo.");
             }
@@ -448,7 +480,8 @@ public class JuegoService {
         Equipo equipoUltimoTurno = ultimo.getJugadorPartida().getEquipo();
 
         if (equipoJugador.equals(equipoUltimoTurno)) {
-            // Puede que aún tenga derecho a votar más cartas; se gestiona en resolverVotacion
+            // El mismo equipo no puede dar dos pistas seguidas
+            throw new GameLogicException("Tu equipo ya ha dado una pista. Debes esperar al turno del rival.");
         }
     }
 

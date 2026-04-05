@@ -9,12 +9,16 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
-import com.secretpanda.codenames.service.LobbyService;
 import com.secretpanda.codenames.dto.partida.PartidaPublicaDTO;
+import com.secretpanda.codenames.service.LobbyService;
 
 /**
  * REST:
@@ -58,8 +62,8 @@ public class LobbyController {
 
     /** Obtener todas las partidas públicas en estado 'esperando'. */
     @GetMapping("/api/partidas/publicas")
-    public ResponseEntity<List<PartidaPublicaDTO>> obtenerPartidasPublicas() {
-        return ResponseEntity.ok(lobbyService.listarPartidasPublicas());
+    public ResponseEntity<List<PartidaPublicaDTO>> obtenerPartidasPublicas(Principal principal) {
+        return ResponseEntity.ok(lobbyService.listarPartidasPublicas(principal.getName()));
     }
 
     /** Iniciar partida (PUT, solo el creador). */
@@ -78,8 +82,8 @@ public class LobbyController {
      * Después el servidor empuja actualizaciones via broadcastPartidasPublicas().
      */
     @SubscribeMapping("/partidas/publicas")
-    public List<PartidaPublicaDTO> subscribePartidasPublicas() {
-        return lobbyService.listarPartidasPublicas();
+    public List<PartidaPublicaDTO> subscribePartidasPublicas(Principal principal) {
+        return lobbyService.listarPartidasPublicas(principal.getName());
     }
 
     // ─── STOMP PUB ────────────────────────────────────────────────────────────

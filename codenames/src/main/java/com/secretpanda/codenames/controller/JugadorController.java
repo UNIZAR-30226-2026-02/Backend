@@ -4,11 +4,16 @@ import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.secretpanda.codenames.dto.jugador.ActualizarPerfilDTO;
 import com.secretpanda.codenames.dto.jugador.HistorialDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
+import com.secretpanda.codenames.dto.jugador.PersonalizacionInventarioDTO;
 import com.secretpanda.codenames.dto.jugador.TemaInventarioDTO;
 import com.secretpanda.codenames.dto.tienda.LogroDTO;
 import com.secretpanda.codenames.service.JugadorService;
@@ -61,4 +66,20 @@ public class JugadorController {
     public ResponseEntity<List<LogroDTO>> getLogros(Principal principal) {
         return ResponseEntity.ok(jugadorService.getLogros(principal.getName()));
     }
+
+    @GetMapping("/personalizaciones")
+    public ResponseEntity<List<PersonalizacionInventarioDTO>> getPersonalizaciones(Principal principal) {
+        return ResponseEntity.ok(jugadorService.getPersonalizacionesAdquiridas(principal.getName()));
+    }
+
+    @PutMapping("/equipar")
+    public ResponseEntity<Void> equiparItem(
+            @RequestBody EquiparItemRequest request,
+            Principal principal) {
+        jugadorService.equiparItem(request.idPersonalizacion(), request.equipado(), principal.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    // Payload para la operación de equipar
+    public record EquiparItemRequest(Integer idPersonalizacion, boolean equipado) {}
 }

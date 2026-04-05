@@ -35,7 +35,7 @@ public class TemporizadorService {
     // Mapa: idPartida → ScheduledFuture del contador tick
     private final Map<Integer, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
     // Mapa: idPartida → segundos restantes (para el broadcast)
-    private final Map<Integer, AtomicInteger>              segundos = new ConcurrentHashMap<>();
+    private final Map<Integer, AtomicInteger> segundos = new ConcurrentHashMap<>();
 
     public TemporizadorService(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;

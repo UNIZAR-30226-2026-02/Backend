@@ -142,8 +142,8 @@ public class JuegoController {
     // VotarPayload:   { "id_carta_tablero": 15 }  o  { "id_carta_tablero": 15, "id_turno": 3 }
 
     public record PistaPayload(
-            @JsonProperty("palabraPista") String palabraPista,
-            @JsonProperty("pistaNumero") int pistaNumero) {}
+            @JsonProperty("palabra_pista") String palabraPista,
+            @JsonProperty("pista_numero") int pistaNumero) {}
 
     public record VotarPayload(
             @JsonProperty("id_carta_tablero") Integer idCartaTablero,
