@@ -27,21 +27,21 @@ services:
   # ──────────────────────────────────────────────
   #  Spring Boot 
   # ──────────────────────────────────────────────
-  # app:
-  #   build: .                         # o image: tu-imagen:latest
-  #   container_name: codenames_app
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   environment:
-  #     # Credenciales corregidas para coincidir con la BD de arriba:
-  #     SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/clasified_files
-  #     SPRING_DATASOURCE_USERNAME: red_panda_us
-  #     SPRING_DATASOURCE_PASSWORD: red_panda_passw
-  #     SPRING_JPA_HIBERNATE_DDL_AUTO: validate   # 'none' en producción
-  #   ports:
-  #     - "8080:8080"
+   app:
+     build: .                         # o image: tu-imagen:latest
+     container_name: codenames_app
+     restart: unless-stopped
+     depends_on:
+       postgres:
+         condition: service_healthy
+     environment:
+       # Credenciales corregidas para coincidir con la BD de arriba:
+       SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/clasified_files
+       SPRING_DATASOURCE_USERNAME: red_panda_us
+       SPRING_DATASOURCE_PASSWORD: red_panda_passw
+       SPRING_JPA_HIBERNATE_DDL_AUTO: validate   # 'none' en producción
+     ports:
+       - "8080:8080"
 
 volumes:
   postgres_data:
