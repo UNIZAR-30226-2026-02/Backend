@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
 import com.secretpanda.codenames.dto.juego.PistaDTO;
@@ -164,10 +166,16 @@ public class JuegoService {
         temporizadorService.iniciarTemporizador(idPartida, partida.getTiempoEspera(),
                 () -> forzarFinTurno(idPartida));
 
-        PistaDTO pistaDTO = new PistaDTO(turno);
-        messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/pista", pistaDTO);
-
-        broadcastEstado(idPartida);
+        
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+            // Enviamos la pista y el estado general solo tras confirmar el Turno en BD
+            PistaDTO pistaDTO = new PistaDTO(turno);
+            messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/pista", pistaDTO);
+            broadcastEstado(idPartida);
+        }
+    });
     }
 
     // ─── Votar carta (Agente) ─────────────────────────────────────────────────
@@ -257,8 +265,12 @@ public class JuegoService {
             System.out.println("Misifu misufu, todos votaron, resolviendo votación ");
             resolverVotacion(partida, turno, jp.getEquipo());
         } else {
-            // Broadcast parcial de votos en tiempo real sin resolver todavía
-            broadcastEstado(idPartida);
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcastEstado(idPartida);
+                }
+            });
         }
 
         return buildVotoRecibidoDTO(turno.getIdTurno(), todosVotos);
@@ -301,8 +313,15 @@ public class JuegoService {
                 temporizadorService.iniciarTemporizador(partida.getIdPartida(),
                         partida.getTiempoEspera(), () -> forzarFinTurno(partida.getIdPartida()));
             }
-            broadcastEstado(partida.getIdPartida());
-
+            
+            Integer idPartida = partida.getIdPartida();
+            // Registrar un TransactionSynchronization para asegurar que el broadcast se ejecute después de que la transacción actual se haya comprometido, garantizando que el estado en la base
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcastEstado(idPartida);
+                }
+            });
         }
     }
 

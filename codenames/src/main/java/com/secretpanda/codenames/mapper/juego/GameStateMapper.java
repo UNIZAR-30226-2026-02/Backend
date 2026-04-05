@@ -1,12 +1,12 @@
 package com.secretpanda.codenames.mapper.juego;
 
+import java.util.List;
+
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
 import com.secretpanda.codenames.model.Partida;
 import com.secretpanda.codenames.model.TableroCarta;
 import com.secretpanda.codenames.model.Turno;
 import com.secretpanda.codenames.model.VotoCarta;
-
-import java.util.List;
 
 public class GameStateMapper {
 
@@ -39,13 +39,15 @@ public class GameStateMapper {
 
         // Turno actual
         if (turnoActual != null) {
-            String equipoLider = turnoActual.getJugadorPartida().getEquipo().name();
-            dto.setEquipoTurnoActual(equipoLider);
-            dto.setPistaActual(PistaMapper.toDTO(turnoActual));
+            dto.setEquipoTurnoActual(turnoActual.getJugadorPartida().getEquipo().name());
 
-            // Fase: si hay pista → "votando", si no → "esperando_pista"
-            dto.setFaseTurno(turnoActual.getPalabraPista() != null
-                    ? "votando" : "esperando_pista");
+            if (turnoActual.getPalabraPista() == null) {
+                dto.setFaseTurno("esperando_pista");
+                dto.setPistaActual(null); // Forzamos pista nula en el DTO
+            } else {
+                dto.setFaseTurno("votando");
+                dto.setPistaActual(PistaMapper.toDTO(turnoActual));
+            }
         } else {
             // Sin ningún turno aún: el equipo que empieza es el que tiene más cartas
             dto.setEquipoTurnoActual(rojas >= azules ? "rojo" : "azul");
