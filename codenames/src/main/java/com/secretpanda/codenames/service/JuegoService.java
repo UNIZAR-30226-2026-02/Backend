@@ -218,17 +218,18 @@ public class JuegoService {
         // Cambio de voto: borrar el anterior si existe
         votoCartaRepository.findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartida(
                         turno.getIdTurno(), jp.getIdJugadorPartida())
-                .ifPresent(votoCartaRepository::delete);
+                .ifPresent(v -> {
+                    votoCartaRepository.delete(v);
+                    votoCartaRepository.flush();
+                });
 
         VotoCarta voto = new VotoCarta();
         voto.setTurno(turno);
         voto.setJugadorPartida(jp);
         voto.setCartaTablero(carta);
-        votoCartaRepository.save(voto);
+        votoCartaRepository.saveAndFlush(voto);
 
         List<VotoCarta> todosVotos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
-
-        VotoRecibidoDTO respuesta = buildVotoRecibidoDTO(turno.getIdTurno(), todosVotos);
 
         // Eliminar el broadcast general a /topic que enviaba el estado
         // de un solo jugador a todos. El broadcastEstado personalizado se
@@ -243,19 +244,24 @@ public class JuegoService {
                           && a.getEquipo().equals(jp.getEquipo()))
                 .collect(Collectors.toList());
 
+        System.out.println("Votación Partida " + idPartida + " [" + jp.getEquipo() + "]");
+        System.out.println("Agentes que DEBEN votar: " + agentesActivos.size());
+        System.out.println("Votos registrados AHORA: " + todosVotos.size());
+
         boolean todosVotaron = agentesActivos.stream()
                 .allMatch(a -> todosVotos.stream()
                         .anyMatch(v -> v.getJugadorPartida().getIdJugadorPartida()
                                 .equals(a.getIdJugadorPartida())));
 
         if (todosVotaron) {
+            System.out.println("Misifu misufu, todos votaron, resolviendo votación ");
             resolverVotacion(partida, turno, jp.getEquipo());
         } else {
             // Broadcast parcial de votos en tiempo real sin resolver todavía
             broadcastEstado(idPartida);
         }
 
-        return respuesta;
+        return buildVotoRecibidoDTO(turno.getIdTurno(), todosVotos);
     }
 
     // ─── Resolver votación ────────────────────────────────────────────────────
