@@ -7,6 +7,7 @@ public class PistaDTO {
     private String palabraPista;
     private int pistaNumero;
     private String equipoLider;
+    private int aciertosTurno;
 
     // Constructor vacío
     public PistaDTO() {}
@@ -27,4 +28,7 @@ public class PistaDTO {
 
     public String getEquipoLider() { return equipoLider; }
     public void setEquipoLider(String equipoLider) { this.equipoLider = equipoLider; }
+
+    public int getAciertosTurno() { return aciertosTurno; }
+    public void setAciertosTurno(int aciertosTurno) { this.aciertosTurno = aciertosTurno; }
 }

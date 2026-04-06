@@ -16,9 +16,9 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
+import com.secretpanda.codenames.dto.juego.PartidaFinDTO;
 import com.secretpanda.codenames.dto.juego.PistaDTO;
 import com.secretpanda.codenames.dto.juego.VotoRecibidoDTO;
-import com.secretpanda.codenames.dto.juego.PartidaFinDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
@@ -424,23 +424,36 @@ public class JuegoService {
      */
     @Transactional
     public void forzarFinTurno(Integer idPartida) {
-        try {
-            Partida partida = partidaRepository.findById(idPartida).orElse(null);
-            if (partida == null || !Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
+        Partida partida = partidaRepository.findById(idPartida).orElse(null);
+        if (partida == null || !Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
 
-            Turno turnoActual = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
+        Turno turnoActual = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
+        if (turnoActual == null) return;
 
-            if (turnoActual != null) {
-                List<VotoCarta> votosAMedias = votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno());
-                if (!votosAMedias.isEmpty()) {
-                    votoCartaRepository.deleteAll(votosAMedias);
-                }
+        List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno());
+
+        if (!votos.isEmpty()) {
+            // Contamos votos
+            Map<Integer, Long> conteo = votos.stream()
+                .collect(Collectors.groupingBy(v -> v.getCartaTablero().getIdCartaTablero(), Collectors.counting()));
+
+            long maxVotos = Collections.max(conteo.values());
+            List<Integer> ganadores = conteo.entrySet().stream()
+                .filter(e -> e.getValue() == maxVotos)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+            // Si hay un ganador único (mayoría clara), resolvemos esa carta
+            if (ganadores.size() == 1) {
+                resolverVotacion(partida, turnoActual, turnoActual.getJugadorPartida().getEquipo());
+                return; // resolverVotacion ya hace el broadcast y cambia el turno si falla
             }
-            
-            broadcastEstado(idPartida);
-        } catch (Exception e) {
-            // Log implícito desde TemporizadorService; no relanzar para no matar el hilo
         }
+
+        // Si llegamos aquí es porque no hay votos o hay empate (indecisión)
+        // El equipo pierde el turno por falta de decisión.
+        prepararTurnoRival(partida, turnoActual.getJugadorPartida().getEquipo());
+        broadcastEstado(idPartida);
     }
 
     // ─── GameState para un jugador concreto ───────────────────────────────────

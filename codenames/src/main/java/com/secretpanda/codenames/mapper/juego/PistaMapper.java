@@ -15,6 +15,7 @@ public class PistaMapper {
         dto.setPistaNumero(turno.getPistaNumero());
         // Extraemos el equipo del jugador que creó el turno
         dto.setEquipoLider(turno.getJugadorPartida().getEquipo().name());
+        dto.setAciertosTurno(turno.getAciertosTurno());
 
         return dto;
     }

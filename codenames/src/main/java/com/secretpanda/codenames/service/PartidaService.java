@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,8 @@ import com.secretpanda.codenames.util.CodigoPartidaGenerator;
 @Service
 public class PartidaService {
 
+    private static final int BALAS_PENALIZACION_ABANDONO = 10;
+
     private final PartidaRepository partidaRepository;
     private final JugadorRepository jugadorRepository;
     private final TemaRepository temaRepository;
@@ -36,6 +39,7 @@ public class PartidaService {
     private final InventarioTemaRepository inventarioTemaRepository;
     private final TableroCartaRepository tableroCartaRepository;
     private final CodigoPartidaGenerator codigoGenerator;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public PartidaService(PartidaRepository partidaRepository,
                           JugadorRepository jugadorRepository,
@@ -43,7 +47,8 @@ public class PartidaService {
                           JugadorPartidaRepository jugadorPartidaRepository,
                           InventarioTemaRepository inventarioTemaRepository,
                           TableroCartaRepository tableroCartaRepository,
-                          CodigoPartidaGenerator codigoGenerator) {
+                          CodigoPartidaGenerator codigoGenerator,
+                          SimpMessagingTemplate messagingTemplate) {
         this.partidaRepository = partidaRepository;
         this.jugadorRepository = jugadorRepository;
         this.temaRepository = temaRepository;
@@ -51,6 +56,7 @@ public class PartidaService {
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.tableroCartaRepository = tableroCartaRepository;
         this.codigoGenerator = codigoGenerator;
+        this.messagingTemplate = messagingTemplate;
     }
 
     // ─── Crear partida ─────────────────────────────────────────────────────────
@@ -140,6 +146,7 @@ public class PartidaService {
 
     @Transactional
     public void abandonar(Integer idPartida, String idGoogle) {
+        // 1. Bloqueamos la fila de la partida para evitar que dos abandonos simultáneos corrompan el estado
         Partida partida = partidaRepository.findByIdForUpdate(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
@@ -147,29 +154,51 @@ public class PartidaService {
                 .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
                 .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
 
+        // CASO A: LA PARTIDA ESTÁ EN JUEGO
         if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-            // Penalizar: restar balas
+            // 1. Penalizar al jugador que se va (Restar 10 balas)
             Jugador jugador = findJugador(idGoogle);
-            jugador.setBalas(Math.max(0, jugador.getBalas() - 5));
+            jugador.setBalas(Math.max(0, jugador.getBalas() - 10)); 
             jugadorRepository.save(jugador);
 
-            // Marcar abandono
+            // 2. Marcar que el jugador ha abandonado
             jp.setAbandono(true);
             jugadorPartidaRepository.save(jp);
 
-            // Si era jefe de espías → derrota automática para su equipo (RF-27)
-            if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
-                finalizarPorAbandonoLider(partida, jp.getEquipo());
-            }
+            // 3. Chequeo de fin de partida por falta de personal operativo
+            // Obtenemos todos los que NO han abandonado en esta partida
+            List<JugadorPartida> activos = jugadorPartidaRepository
+                    .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
+            
+            JugadorPartida.Equipo miEquipo = jp.getEquipo();
+            
+            // Contamos cuántos Líderes y Agentes quedan en el equipo del que se acaba de ir
+            long lideresEnMiEquipo = activos.stream()
+                    .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.lider))
+                    .count();
+            long agentesEnMiEquipo = activos.stream()
+                    .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.agente))
+                    .count();
 
-        } else {
-            // En lobby: eliminar la fila
+            // Si mi equipo se queda sin Líder (RF-27) O sin Agentes (nadie para votar)
+            if (lideresEnMiEquipo == 0 || agentesEnMiEquipo == 0) {
+                // El equipo rival gana automáticamente
+                boolean ganaRojo = !miEquipo.equals(JugadorPartida.Equipo.rojo);
+                finalizarPartidaManual(partida, ganaRojo);
+            }
+            // Si aún quedan jugadores suficientes, la partida continúa normalmente.
+
+        } 
+        // CASO B: LA PARTIDA ESTÁ EN EL LOBBY
+        else {
             boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
             if (esCreador) {
+                // Si el creador se va del lobby, la partida se cancela para todos
                 partida.setEstado(Partida.EstadoPartida.finalizada);
                 partida.setFechaFin(LocalDateTime.now());
                 partidaRepository.save(partida);
             }
+            // Eliminamos físicamente el registro del jugador del lobby
             jugadorPartidaRepository.delete(jp);
         }
     }
@@ -248,6 +277,16 @@ public class PartidaService {
         partida.setFechaFin(LocalDateTime.now());
         partida.setRojoGana(!JugadorPartida.Equipo.rojo.equals(equipoPerdedor));
         partidaRepository.save(partida);
+    }
+
+    private void finalizarPartidaManual(Partida partida, boolean rojoGana) {
+        partida.setEstado(Partida.EstadoPartida.finalizada);
+        partida.setFechaFin(LocalDateTime.now());
+        partida.setRojoGana(rojoGana);
+        partidaRepository.save(partida);
+
+        // Notificar al canal de la partida que ha terminado
+        messagingTemplate.convertAndSend("/topic/partidas/" + partida.getIdPartida() + "/estado", "FINALIZADA");
     }
 
     private Jugador findJugador(String idGoogle) {
