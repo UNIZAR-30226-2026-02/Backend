@@ -18,6 +18,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
 import com.secretpanda.codenames.dto.juego.PistaDTO;
 import com.secretpanda.codenames.dto.juego.VotoRecibidoDTO;
+import com.secretpanda.codenames.dto.juego.PartidaFinDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
@@ -621,6 +622,33 @@ public class JuegoService {
         VotoRecibidoDTO dto = new VotoRecibidoDTO();
         dto.setIdTurno(idTurno);
         dto.setVotosPorCarta(votosPorCarta);
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public PartidaFinDTO getFinPartida(Integer idPartida, String idGoogle) {
+        Partida partida = partidaRepository.findById(idPartida)
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+
+        if (!Partida.EstadoPartida.finalizada.equals(partida.getEstado())) {
+            throw new GameLogicException("La partida aún no ha finalizado.");
+        }
+        
+        // Verificamos que el jugador pertenezca a la partida
+        requireJugadorEnPartida(idGoogle, idPartida);
+
+        long aciertosRojo = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
+                idPartida, TipoCarta.rojo, EstadoCarta.revelada);
+        long aciertosAzul = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
+                idPartida, TipoCarta.azul, EstadoCarta.revelada);
+
+        String equipoGanador = (partida.getRojoGana() != null && partida.getRojoGana()) ? "Rojo" : "Azul";
+
+        PartidaFinDTO dto = new PartidaFinDTO();
+        dto.setEquipoGanador(equipoGanador);
+        dto.setAciertosRojo((int) aciertosRojo);
+        dto.setAciertosAzul((int) aciertosAzul);
+
         return dto;
     }
 }

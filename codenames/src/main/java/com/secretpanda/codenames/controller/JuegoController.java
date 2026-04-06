@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
+import com.secretpanda.codenames.dto.juego.PartidaFinDTO;
 import com.secretpanda.codenames.service.ChatService;
 import com.secretpanda.codenames.service.JuegoService;
 
@@ -128,6 +129,13 @@ public class JuegoController {
                 payload.idTurno(),       // puede ser null → el service lo resuelve
                 principal.getName());
     }
+
+    @GetMapping("/api/partida/{id_partida}/fin")
+        public ResponseEntity<PartidaFinDTO> getFinPartida(
+                @PathVariable("id_partida") Integer idPartida,
+                Principal principal) {
+        return ResponseEntity.ok(juegoService.getFinPartida(idPartida, principal.getName()));
+        }
 
     // ─── Payloads ─────────────────────────────────────────────────────────────
     //
