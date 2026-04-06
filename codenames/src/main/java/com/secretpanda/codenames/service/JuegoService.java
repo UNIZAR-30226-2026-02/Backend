@@ -310,8 +310,18 @@ public class JuegoService {
             if (!esAciertoPropio) {
                 prepararTurnoRival(partida, equipoVotante);
             } else {
-                temporizadorService.iniciarTemporizador(partida.getIdPartida(),
-                        partida.getTiempoEspera(), () -> forzarFinTurno(partida.getIdPartida()));
+                // Registrar acierto válido
+                turno.setAciertosTurno(turno.getAciertosTurno() + 1);
+                turnoRepository.save(turno);
+
+                // Si ha acertado N cartas, el turno finaliza forzosamente
+                if (turno.getPistaNumero() != null && turno.getAciertosTurno() >= turno.getPistaNumero()) {
+                    prepararTurnoRival(partida, equipoVotante);
+                } else {
+                    // Si aún no ha llegado al límite, se reinicia el contador para que sigan votando otra ronda
+                    temporizadorService.iniciarTemporizador(partida.getIdPartida(),
+                            partida.getTiempoEspera(), () -> forzarFinTurno(partida.getIdPartida()));
+                }
             }
             
             Integer idPartida = partida.getIdPartida();
@@ -342,7 +352,8 @@ public class JuegoService {
         turnoVacio.setJugadorPartida(liderRival);
         turnoVacio.setNumTurno(turnoRepository.findByPartida_IdPartidaOrderByNumTurnoAsc(partida.getIdPartida()).size() + 1);
         turnoVacio.setPalabraPista(null); // <--- Clave para el cambio de fase visual
-        turnoVacio.setPistaNumero(0);
+        turnoVacio.setPistaNumero(null);
+        turnoVacio.setAciertosTurno(0);
         turnoRepository.save(turnoVacio);
         
         // Iniciamos el temporizador para el líder rival
@@ -531,8 +542,12 @@ public class JuegoService {
         Equipo equipoUltimoTurno = ultimo.getJugadorPartida().getEquipo();
 
         if (equipoJugador.equals(equipoUltimoTurno)) {
-            // El mismo equipo no puede dar dos pistas seguidas
-            throw new GameLogicException("Tu equipo ya ha dado una pista. Debes esperar al turno del rival.");
+            // Corrección 4 (Bug 4): si el último turno está vacío (palabraPista == null) es el
+            // turno placeholder creado por prepararTurnoRival. El jefe SÍ puede dar su pista.
+            if (ultimo.getPalabraPista() != null) {
+                throw new GameLogicException("Tu equipo ya ha dado una pista. Debes esperar al turno del rival.");
+            }
+            // palabraPista == null → es el placeholder → se permite continuar.
         }
     }
 

@@ -8,18 +8,18 @@ services:
     container_name: files
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       clasified_files
-      POSTGRES_USER:     red_panda_us
+      POSTGRES_DB: clasified_files
+      POSTGRES_USER: red_panda_us
       POSTGRES_PASSWORD: red_panda_passw
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data          # persistencia
+      - postgres_data:/var/lib/postgresql/data # persistencia
       # Mapeamos tus archivos locales y forzamos el orden de ejecución (01 y 02):
-      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql 
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ./triggers.sql:/docker-entrypoint-initdb.d/02-triggers.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U red_panda_us -d clasified_files"]
+      test: [ "CMD-SHELL", "pg_isready -U red_panda_us -d clasified_files" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,21 +27,21 @@ services:
   # ──────────────────────────────────────────────
   #  Spring Boot 
   # ──────────────────────────────────────────────
-   app:
-     build: .                         # o image: tu-imagen:latest
-     container_name: codenames_app
-     restart: unless-stopped
-     depends_on:
-       postgres:
-         condition: service_healthy
-     environment:
-       # Credenciales corregidas para coincidir con la BD de arriba:
-       SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/clasified_files
-       SPRING_DATASOURCE_USERNAME: red_panda_us
-       SPRING_DATASOURCE_PASSWORD: red_panda_passw
-       SPRING_JPA_HIBERNATE_DDL_AUTO: validate   # 'none' en producción
-     ports:
-       - "8080:8080"
+  app:
+    build: . # o image: tu-imagen:latest
+    container_name: codenames_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Credenciales corregidas para coincidir con la BD de arriba:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/clasified_files
+      SPRING_DATASOURCE_USERNAME: red_panda_us
+      SPRING_DATASOURCE_PASSWORD: red_panda_passw
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate # 'none' en producción
+    ports:
+      - "8080:8080"
 
 volumes:
   postgres_data:

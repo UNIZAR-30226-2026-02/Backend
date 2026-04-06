@@ -223,6 +223,7 @@ public LobbyService(PartidaRepository partidaRepository,
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public void broadcastPartidasPublicas() {
         List<Partida> partidas = partidaRepository
                 .findPartidasPublicasDisponibles(Partida.EstadoPartida.esperando);

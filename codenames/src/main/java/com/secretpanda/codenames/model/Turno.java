@@ -38,11 +38,14 @@ public class Turno {
     @Column(name = "num_turno", nullable = false)
     private int numTurno;
 
-    @Column(name = "palabra_pista", nullable = false, length = 256)
+    @Column(name = "palabra_pista", nullable = true, length = 256)
     private String palabraPista;
 
-    @Column(name = "pista_numero", nullable = false)
-    private int pistaNumero;
+    @Column(name = "pista_numero", nullable = true)
+    private Integer pistaNumero;
+
+    @Column(name = "aciertos_turno", nullable = false)
+    private int aciertosTurno = 0;
 
     // NUEVO: Relación para el RF-16 (Contabilizar votos en tiempo real)
     @OneToMany(mappedBy = "turno", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -97,12 +100,20 @@ public class Turno {
         this.palabraPista = palabraPista; 
     }
 
-    public int getPistaNumero() { 
-        return pistaNumero;
+    public Integer getPistaNumero() { 
+        return pistaNumero; 
     }
 
-    public void setPistaNumero(int pistaNumero) { 
+    public void setPistaNumero(Integer pistaNumero) { 
         this.pistaNumero = pistaNumero; 
+    }
+
+    public int getAciertosTurno() {
+        return aciertosTurno;
+    }
+
+    public void setAciertosTurno(int aciertosTurno) {
+        this.aciertosTurno = aciertosTurno;
     }
 
     public List<VotoCarta> getVotos() { 
