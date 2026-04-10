@@ -156,6 +156,7 @@ erDiagram
         int num_turno
         string palabra_pista
         int pista_numero
+        int aciertos_turno
     }
 
     VOTO_CARTA {
