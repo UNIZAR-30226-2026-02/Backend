@@ -61,6 +61,7 @@ public class JuegoService {
     private final JugadorRepository          jugadorRepository;
     private final SimpMessagingTemplate      messagingTemplate;
     private final TemporizadorService        temporizadorService;
+    private final LeaderboardService leaderboardService;
 
     public JuegoService(PartidaRepository partidaRepository,
                         JugadorPartidaRepository jugadorPartidaRepository,
@@ -70,7 +71,8 @@ public class JuegoService {
                         PalabraTemaRepository palabraTemaRepository,
                         JugadorRepository jugadorRepository,
                         SimpMessagingTemplate messagingTemplate,
-                        TemporizadorService temporizadorService) {
+                        TemporizadorService temporizadorService,
+                        LeaderboardService leaderboardService) {
         this.partidaRepository        = partidaRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.tableroCartaRepository   = tableroCartaRepository;
@@ -80,6 +82,7 @@ public class JuegoService {
         this.jugadorRepository        = jugadorRepository;
         this.messagingTemplate        = messagingTemplate;
         this.temporizadorService      = temporizadorService;
+        this.leaderboardService       = leaderboardService;
     }
 
     // ─── Inicializar partida ──────────────────────────────────────────────────
@@ -596,6 +599,9 @@ public class JuegoService {
         partida.setFechaFin(LocalDateTime.now());
         partida.setRojoGana(rojoGana);
         partidaRepository.save(partida);
+
+        // Actualizar el ranking global al finalizar la partida
+        leaderboardService.broadcastGlobalRanking(); 
 
         broadcastEstado(partida.getIdPartida());
     }
