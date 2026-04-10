@@ -15,7 +15,6 @@ import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
 import com.secretpanda.codenames.dto.tienda.LogroDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
-import com.secretpanda.codenames.mapper.jugador.JugadorLogroMapper;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
 import com.secretpanda.codenames.mapper.jugador.PersonalizacionInventarioMapper;
 import com.secretpanda.codenames.mapper.jugador.TemaInventarioMapper;
@@ -24,12 +23,14 @@ import com.secretpanda.codenames.model.InventarioPersonalizacion;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorLogro;
 import com.secretpanda.codenames.model.JugadorPartida;
+import com.secretpanda.codenames.model.Logro;
 import com.secretpanda.codenames.model.Personalizacion;
 import com.secretpanda.codenames.repository.InventarioPersonalizacionRepository;
 import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorLogroRepository;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
+import com.secretpanda.codenames.repository.LogroRepository;
 import com.secretpanda.codenames.util.EstadisticasCalculator;
 
 @Service
@@ -43,19 +44,22 @@ public class JugadorService {
     private final JugadorPartidaRepository jugadorPartidaRepository;
     private final JugadorLogroRepository jugadorLogroRepository;
     private final EstadisticasCalculator calculator;
+    private final LogroRepository logroRepository;
 
     public JugadorService(JugadorRepository jugadorRepository,
                           InventarioTemaRepository inventarioTemaRepository,
                           InventarioPersonalizacionRepository inventarioPersonalizacionRepository,
                           JugadorPartidaRepository jugadorPartidaRepository,
                           JugadorLogroRepository jugadorLogroRepository,
-                          EstadisticasCalculator calculator) {
+                          EstadisticasCalculator calculator, 
+                          LogroRepository logroRepository) {
         this.jugadorRepository = jugadorRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.inventarioPersonalizacionRepository = inventarioPersonalizacionRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.jugadorLogroRepository = jugadorLogroRepository;
         this.calculator = calculator;
+        this.logroRepository = logroRepository;
     }
 
     // ─── Perfil ───────────────────────────────────────────────────────────────
@@ -152,8 +156,42 @@ public class JugadorService {
 
     @Transactional(readOnly = true)
     public List<LogroDTO> getLogros(String idGoogle) {
-        List<JugadorLogro> jugadorLogros = jugadorLogroRepository.findById_IdJugador(idGoogle);
-        return JugadorLogroMapper.toEnrichedDTOList(jugadorLogros);
+        // Obtener todos los logros que están activos en el juego (Catálogo)
+        List<Logro> todosLosLogros = logroRepository.findByActivoTrue();
+        
+        // Obtener solo el progreso específico de este jugador
+        List<JugadorLogro> progresosJugador = jugadorLogroRepository.findById_IdJugador(idGoogle);
+
+        // xCruzamos los datos para construir la respuesta de la API
+        return todosLosLogros.stream().map(logroBase -> {
+            LogroDTO dto = new LogroDTO();
+            
+            // Datos estáticos del logro
+            dto.setIdLogro(logroBase.getIdLogro());
+            dto.setNombre(logroBase.getNombre());
+            dto.setDescripcion(logroBase.getDescripcion());
+            dto.setBalasRecompensa(logroBase.getBalasRecompensa());
+            dto.setProgresoMax(logroBase.getValorObjetivo());
+            
+            // Lógica es_logro: true si el tipo es 'logro', false si es 'medalla'
+            dto.setEsLogro("logro".equalsIgnoreCase(logroBase.getTipo().name()));
+
+            // Buscamos si hay progreso registrado
+            progresosJugador.stream()
+                .filter(pj -> pj.getLogro().getIdLogro().equals(logroBase.getIdLogro()))
+                .findFirst()
+                .ifPresentOrElse(pj -> {
+                    // Si hay progreso en la BD, lo ponemos
+                    dto.setProgresoActual(pj.getProgresoActual());
+                    dto.setCompletado(pj.isCompletado());
+                }, () -> {
+                    // Si no hay progreso registrado aún, devolvemos valores por defecto
+                    dto.setProgresoActual(0);
+                    dto.setCompletado(false);
+                });
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────────
