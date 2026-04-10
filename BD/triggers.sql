@@ -50,51 +50,7 @@ BEFORE INSERT ON AMISTAD
 FOR EACH ROW EXECUTE FUNCTION fn_amistad_bidireccional();
 
 
--- Para controlar las votaciones
-CREATE OR REPLACE FUNCTION fn_validacion_voto() RETURNS TRIGGER AS $$
-DECLARE
-    v_partida_turno INT;
-    v_partida_carta INT;
-    v_estado_carta VARCHAR;
-    v_estado_partida VARCHAR;
-    v_jugador_partida_real INT;
-    v_rol_jugador VARCHAR;
-BEGIN
-    SELECT id_partida INTO v_partida_turno FROM TURNO WHERE id_turno = NEW.id_turno;
-    SELECT id_partida, estado INTO v_partida_carta, v_estado_carta FROM TABLERO_CARTA WHERE id_carta_tablero = NEW.id_carta_tablero;
-    
-    IF v_partida_turno != v_partida_carta THEN
-        RAISE EXCEPTION 'Error: El turno y la carta pertenecen a partidas distintas.';
-    END IF;
 
-    IF v_estado_carta != 'oculta' THEN
-        RAISE EXCEPTION 'Error: Voto nulo. La carta seleccionada ya ha sido revelada (Estado: %).', v_estado_carta;
-    END IF;
-
-    SELECT estado INTO v_estado_partida FROM PARTIDA WHERE id_partida = v_partida_turno;
-    IF v_estado_partida IN ('esperando', 'finalizada') THEN
-        RAISE EXCEPTION 'Error: Voto nulo. La partida está %.', v_estado_partida;
-    END IF;
-
-    SELECT id_partida, rol INTO v_jugador_partida_real, v_rol_jugador 
-    FROM JUGADOR_PARTIDA 
-    WHERE id_jugador_partida = NEW.id_jugador_partida;
-
-    IF v_jugador_partida_real != v_partida_turno THEN
-        RAISE EXCEPTION 'Error: El jugador que emite el voto no pertenece a esta partida.';
-    END IF;
-
-    IF v_rol_jugador != 'agente' THEN
-        RAISE EXCEPTION 'Error: Voto nulo. Solo los jugadores con rol "agente" pueden destapar cartas.';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_validacion_voto
-BEFORE INSERT ON VOTO_CARTA
-FOR EACH ROW EXECUTE FUNCTION fn_validacion_voto();
 
 
 -- Cuando se cambia la personalización, la modificamos directamente para que aparezca solo una
@@ -140,9 +96,9 @@ BEFORE INSERT OR UPDATE ON CHAT
 FOR EACH ROW EXECUTE FUNCTION fn_control_chat_equivocado();
 
 
---   esperando  → en_curso   : no dispara (correcto, la partida acaba de empezar)
---   en_curso   → finalizada : SÍ dispara (correcto, partida jugada y terminada)
---   esperando  → finalizada : NO dispara (correcto, creador abandonó el lobby)
+--   esperando  → en_curso   : no dispara (la partida acaba de empezar)
+--   en_curso   → finalizada : SÍ dispara (partida jugada y terminada)
+--   esperando  → finalizada : NO dispara (creador abandonó el lobby)
 CREATE OR REPLACE FUNCTION fn_estadisticas_globales() RETURNS TRIGGER AS $$
 BEGIN   
     UPDATE jugador j
@@ -181,38 +137,3 @@ FOR EACH ROW WHEN (NEW.estado = 'finalizada' AND OLD.estado = 'en_curso')
 EXECUTE FUNCTION fn_estadisticas_globales();
 
 
--- Validación para la integridad del turno
-CREATE OR REPLACE FUNCTION fn_control_turno() RETURNS TRIGGER AS $$
-DECLARE
-    v_rol VARCHAR;
-    v_estado_partida VARCHAR;
-    v_id_partida_real INT;
-BEGIN
-    SELECT jp.rol, p.estado, jp.id_partida INTO v_rol, v_estado_partida, v_id_partida_real 
-    FROM JUGADOR_PARTIDA jp
-    JOIN PARTIDA p ON p.id_partida = jp.id_partida
-    WHERE jp.id_jugador_partida = NEW.id_jugador_partida;
-
-    IF v_rol IS NULL THEN
-        RAISE EXCEPTION 'Error: El jugador no forma parte de ninguna partida.';
-    END IF;
-
-    IF v_id_partida_real != NEW.id_partida THEN
-        RAISE EXCEPTION 'Error: Inconsistencia en turno. El jugador no forma parte de la partida %.', NEW.id_partida;
-    END IF;
-
-    IF v_rol != 'lider' THEN
-        RAISE EXCEPTION 'Error: Solo el jugador con rol "lider" puede iniciar un turno y dar pistas.';
-    END IF;
-
-    IF v_estado_partida != 'en_curso' THEN
-        RAISE EXCEPTION 'Error: No se pueden crear turnos porque la partida está %.', v_estado_partida;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_control_turno
-BEFORE INSERT ON TURNO
-FOR EACH ROW EXECUTE FUNCTION fn_control_turno();
