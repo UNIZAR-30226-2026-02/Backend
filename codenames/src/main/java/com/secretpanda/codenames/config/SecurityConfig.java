@@ -42,6 +42,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/temas/activos").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/logros/activos").permitAll()
                 .requestMatchers("/api/leaderboard/**").authenticated()
+                .requestMatchers("/api/amigos/**").authenticated()
+                .requestMatchers("/api/jugadores/buscar").authenticated()
                 .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated()
             )

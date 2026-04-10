@@ -2,29 +2,22 @@ package com.secretpanda.codenames.dto.social;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO para transferir el estado de una amistad junto con 
- * los datos visuales de los jugadores involucrados.
- */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class AmistadDTO {
 
-    // Datos de quien envía la solicitud
     private String idSolicitante; 
     private String tagSolicitante;
-    private String fotoSolicitante;
+    private String fotoPerfilSolicitante;
 
-    // Datos de quien recibe la solicitud
-    private String idReceptor; 
-    private String tagReceptor;
-    private String fotoReceptor;
-
-    // Estado y metadatos de la amistad
-    private String estado; // "pendiente" o "aceptada"
+    @JsonProperty("fecha_solicitud")
     private LocalDateTime fechaSolicitud; 
 
-    public AmistadDTO() {
-    }
+    private String estado; // "pendiente" o "aceptada"
 
+    public AmistadDTO() {}
+
+    // Getters y Setters
     public String getIdSolicitante() { 
         return idSolicitante; 
     }
@@ -33,59 +26,35 @@ public class AmistadDTO {
         this.idSolicitante = idSolicitante; 
     }
 
-    public String getTagSolicitante() {
-        return tagSolicitante;
+    public String getTagSolicitante() { 
+        return tagSolicitante; 
     }
-
-    public void setTagSolicitante(String tagSolicitante) {
-        this.tagSolicitante = tagSolicitante;
+    
+    public void setTagSolicitante(String tagSolicitante) { 
+        this.tagSolicitante = tagSolicitante; 
     }
-
-    public String getFotoSolicitante() {
-        return fotoSolicitante;
+    
+    public String getFotoPerfilSolicitante() { 
+        return fotoPerfilSolicitante; 
     }
-
-    public void setFotoSolicitante(String fotoSolicitante) {
-        this.fotoSolicitante = fotoSolicitante;
+    
+    public void setFotoPerfilSolicitante(String foto) { 
+        this.fotoPerfilSolicitante = foto; 
     }
-
-    public String getIdReceptor() { 
-        return idReceptor; 
-    }
-
-    public void setIdReceptor(String idReceptor) { 
-        this.idReceptor = idReceptor; 
-    }
-
-    public String getTagReceptor() {
-        return tagReceptor;
-    }
-
-    public void setTagReceptor(String tagReceptor) {
-        this.tagReceptor = tagReceptor;
-    }
-
-    public String getFotoReceptor() {
-        return fotoReceptor;
-    }
-
-    public void setFotoReceptor(String fotoReceptor) {
-        this.fotoReceptor = fotoReceptor;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
+    
     public LocalDateTime getFechaSolicitud() { 
         return fechaSolicitud; 
     }
-
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { 
-        this.fechaSolicitud = fechaSolicitud; 
+    
+    public void setFechaSolicitud(LocalDateTime fecha) { 
+        this.fechaSolicitud = fecha; 
+    }
+    
+    public String getEstado() { 
+        return estado; 
+    }
+    
+    public void setEstado(String estado) { 
+        this.estado = estado; 
     }
 }

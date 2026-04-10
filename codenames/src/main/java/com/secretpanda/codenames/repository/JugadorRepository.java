@@ -53,4 +53,7 @@ public interface JugadorRepository extends JpaRepository<Jugador, String> {
 
     // Comprobar si un tag ya está en uso por un jugador activo
     boolean existsByTagAndActivoTrue(String tag);
+
+    // Buscar un jugador activo por su tag
+    Optional<Jugador> findByTagAndActivoTrue(String tag);
 }
