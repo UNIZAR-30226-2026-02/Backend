@@ -38,6 +38,7 @@ public class SecurityConfig {
             .sessionManagement(session -> 
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/api/hello").permitAll() // <-- NUEVA LÍNEA PARA EL TEST
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/temas/activos").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/logros/activos").permitAll()

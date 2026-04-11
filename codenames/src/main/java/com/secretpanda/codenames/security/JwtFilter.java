@@ -21,11 +21,11 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * Busca el JWT en dos sitios por orden de prioridad:
  *
- *   1. Cookie "token_sesion" (HttpOnly) → React web.
- *      El navegador la adjunta automáticamente con credentials:"include".
+ * 1. Cookie "token_sesion" (HttpOnly) → React web.
+ * El navegador la adjunta automáticamente con credentials:"include".
  *
- *   2. Header "Authorization: Bearer <token>" → Android.
- *      La app lo añade manualmente en cada petición.
+ * 2. Header "Authorization: Bearer <token>" → Android.
+ * La app lo añade manualmente en cada petición.
  */
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -40,6 +40,12 @@ public class JwtFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+
+        // --- NUEVO: Dejar pasar la ruta pública de prueba directamente ---
+        if ("/api/hello".equals(request.getServletPath())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String token = extraerToken(request);
 
