@@ -23,6 +23,7 @@ jobs:
         cache: 'maven'
 
     - name: Compilar proyecto con Maven
+      working-directory: ./codenames
       run: mvn clean package -DskipTests
 
     - name: Desplegar en Azure Web App
