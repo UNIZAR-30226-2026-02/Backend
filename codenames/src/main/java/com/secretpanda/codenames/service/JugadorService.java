@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.secretpanda.codenames.dto.jugador.ActualizarPerfilDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 import com.secretpanda.codenames.dto.jugador.PersonalizacionInventarioDTO;
+import com.secretpanda.codenames.dto.jugador.PersonalizacionWS;
 import com.secretpanda.codenames.dto.jugador.TemaInventarioDTO;
 import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
 import com.secretpanda.codenames.dto.social.NotificacionDTO;
@@ -73,7 +74,15 @@ public class JugadorService {
 
     @Transactional(readOnly = true)
     public JugadorDTO getPerfil(String idGoogle) {
-        Jugador jugador = findJugador(idGoogle);
+        // 1. Buscamos el jugador
+        Jugador jugador = jugadorRepository.findById(idGoogle)
+                .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
+        
+        // Al acceder al .size(), la colección se llena y el mapper ya no la verá vacía.
+        if (jugador.getInventario() != null) {
+            jugador.getInventario().size();
+        }
+
         return JugadorMapper.toDTO(jugador, calculator);
     }
 
@@ -126,15 +135,15 @@ public class JugadorService {
         itemAEquipar.setEquipado(equipado);
         inventarioPersonalizacionRepository.save(itemAEquipar);
 
-        // NOTIFICACIÓN EN DIRECTO (WS)
-        // Enviamos al usuario un objeto con su nueva configuración visual
-        Map<String, String> nuevaConfig = Map.of(
-            "tipo", itemAEquipar.getPersonalizacion().getTipo().name(),
-            "valor", itemAEquipar.getPersonalizacion().getValorVisual(),
-            "equipado", String.valueOf(equipado)
+        // Notificar al cliente por WebSocket con el nuevo estado del item equipado
+        PersonalizacionWS dto = new PersonalizacionWS(
+            itemAEquipar.getPersonalizacion().getTipo().name(),
+            itemAEquipar.getPersonalizacion().getValorVisual(),
+            equipado
         );
-        
-        messagingTemplate.convertAndSendToUser(idGoogle, "/queue/personalizacion", nuevaConfig);
+    
+        // Ahora Jackson usará el DTO y respetará el snake_case del properties
+        messagingTemplate.convertAndSendToUser(idGoogle, "/queue/personalizacion", dto);
     }
 
     // ─── Temas ────────────────────────────────────────────────────────────────

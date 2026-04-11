@@ -52,6 +52,8 @@ public class JuegoService {
     private static final int CARTAS_EQUIPO_SEGUNDO = 8;
     private static final int CARTAS_ASESINO        = 1;
     private static final int CARTAS_CIVIL          = TOTAL_CARTAS - CARTAS_EQUIPO_QUE_INICIA - CARTAS_EQUIPO_SEGUNDO - CARTAS_ASESINO;
+    private static final int BALAS_GANADOR         = 20;
+    private static final int BALAS_DERROTA         = 10;
 
     private final PartidaRepository          partidaRepository;
     private final JugadorPartidaRepository   jugadorPartidaRepository;
@@ -633,11 +635,14 @@ public class JuegoService {
             if (gano) {
                 j.setVictorias(j.getVictorias() + 1);
             }
+            j.setNumAciertos(j.getNumAciertos() + jp.getNumAciertos());
+            j.setNumFallos(j.getNumFallos() + jp.getNumFallos());
+            
             // Guardamos las estadísticas primero
             jugadorRepository.save(j);
 
             // ASIGNAR BALAS mediante el método seguro
-            int premio = gano ? 20 : 10;
+            int premio = gano ? BALAS_GANADOR : BALAS_DERROTA;
             jugadorService.modificarBalas(j.getIdGoogle(), premio);
 
             // ACTUALIZAR LOGROS
