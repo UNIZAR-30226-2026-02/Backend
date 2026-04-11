@@ -131,6 +131,24 @@ public class JuegoService {
         }
         tableroCartaRepository.saveAll(cartas);
 
+        Equipo equipoInicial = rojoEmpieza ? Equipo.rojo : Equipo.azul;
+        JugadorPartida liderInicial = jugadores.stream()
+                .filter(jp -> jp.getEquipo().equals(equipoInicial) && jp.getRol().equals(Rol.lider))
+                .findFirst()
+                .orElseThrow(() -> new GameLogicException("No hay líder en el equipo inicial."));
+
+        Turno turnoInicial = new Turno();
+        turnoInicial.setPartida(partida);
+        turnoInicial.setJugadorPartida(liderInicial);
+        turnoInicial.setNumTurno(1);
+        turnoInicial.setPalabraPista(null);
+        turnoInicial.setPistaNumero(null);
+        turnoInicial.setAciertosTurno(0);
+        turnoRepository.save(turnoInicial);
+
+        temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
+                () -> forzarFinTurno(partida.getIdPartida()));
+
         broadcastEstado(partida.getIdPartida());
     }
 
@@ -155,15 +173,14 @@ public class JuegoService {
             throw new BadRequestException("El número de la pista debe estar entre 1 y 8.");
         }
 
-        int numTurno = turnoRepository
+        Turno turno = turnoRepository
                 .findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida)
-                .map(t -> t.getNumTurno() + 1)
-                .orElse(1);
+                .orElseThrow(() -> new GameLogicException("No hay turno activo para dar la pista."));
 
-        Turno turno = new Turno();
-        turno.setPartida(partida);
-        turno.setJugadorPartida(jp);
-        turno.setNumTurno(numTurno);
+        if (turno.getPalabraPista() != null) {
+            throw new GameLogicException("El turno activo ya tiene una pista dada.");
+        }
+
         turno.setPalabraPista(pistaLimpia);
         turno.setPistaNumero(pistaNumero);
         turnoRepository.save(turno);
