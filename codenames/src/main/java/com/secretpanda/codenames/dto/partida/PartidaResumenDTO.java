@@ -2,89 +2,101 @@ package com.secretpanda.codenames.dto.partida;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO para mostrar un resumen de una partida finalizada, 
- * ideal para el historial de partidas de un jugador.
- */
 public class PartidaResumenDTO {
 
-    private Integer idPartida; 
-    private String nombreTema;
-    private LocalDateTime fechaFin; 
-    
-    // Datos específicos de lo que hizo el jugador en esta partida
-    private String equipoJugador; // "rojo" o "azul"
-    private String rolJugador;    // "lider" o "agente"
-    private boolean victoria;      
-    
-    // Estadísticas del jugador en esa partida concreta
-    private int numAciertos; 
-    private int numFallos; 
+    private Integer idPartida;
+    private String codigoPartida;
+    private LocalDateTime fechaFin;
+    private String estado;
+    private Boolean rojoGana;
+    private String equipo;
+    private String rol;
+    private boolean abandono;
+    private int numAciertos;
+    private int numFallos;
 
     public PartidaResumenDTO() {
     }
 
-    public Integer getIdPartida() { 
-        return idPartida; 
+    // --- GETTERS Y SETTERS ---
+
+    public Integer getIdPartida() {
+        return idPartida;
     }
 
-    public void setIdPartida(Integer idPartida) { 
-        this.idPartida = idPartida; 
+    public void setIdPartida(Integer idPartida) {
+        this.idPartida = idPartida;
     }
 
-    public String getNombreTema() {
-        return nombreTema;
+    public String getCodigoPartida() {
+        return codigoPartida;
     }
 
-    public void setNombreTema(String nombreTema) {
-        this.nombreTema = nombreTema;
+    public void setCodigoPartida(String codigoPartida) {
+        this.codigoPartida = codigoPartida;
     }
 
-    public LocalDateTime getFechaFin() { 
-        return fechaFin; 
+    public LocalDateTime getFechaFin() {
+        return fechaFin;
     }
 
-    public void setFechaFin(LocalDateTime fechaFin) { 
-        this.fechaFin = fechaFin; 
+    public void setFechaFin(LocalDateTime fechaFin) {
+        this.fechaFin = fechaFin;
     }
 
-    public String getEquipoJugador() {
-        return equipoJugador;
+    public String getEstado() {
+        return estado;
     }
 
-    public void setEquipoJugador(String equipoJugador) {
-        this.equipoJugador = equipoJugador;
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
-    public String getRolJugador() {
-        return rolJugador;
+    public Boolean getRojoGana() {
+        return rojoGana;
     }
 
-    public void setRolJugador(String rolJugador) {
-        this.rolJugador = rolJugador;
+    public void setRojoGana(Boolean rojoGana) {
+        this.rojoGana = rojoGana;
     }
 
-    public boolean isVictoria() {
-        return victoria;
+    public String getEquipo() {
+        return equipo;
     }
 
-    public void setVictoria(boolean victoria) {
-        this.victoria = victoria;
+    public void setEquipo(String equipo) {
+        this.equipo = equipo;
     }
 
-    public int getNumAciertos() { 
-        return numAciertos; 
+    public String getRol() {
+        return rol;
     }
 
-    public void setNumAciertos(int numAciertos) { 
-        this.numAciertos = numAciertos; 
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 
-    public int getNumFallos() { 
-        return numFallos; 
+    public boolean isAbandono() {
+        return abandono;
     }
 
-    public void setNumFallos(int numFallos) { 
-        this.numFallos = numFallos; 
+    public void setAbandono(boolean abandono) {
+        this.abandono = abandono;
+    }
+
+    public int getNumAciertos() {
+        return numAciertos;
+    }
+
+    public void setNumAciertos(int numAciertos) {
+        this.numAciertos = numAciertos;
+    }
+
+    public int getNumFallos() {
+        return numFallos;
+    }
+
+    public void setNumFallos(int numFallos) {
+        this.numFallos = numFallos;
     }
 }

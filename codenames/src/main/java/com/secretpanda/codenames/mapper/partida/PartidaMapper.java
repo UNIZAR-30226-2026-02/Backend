@@ -43,26 +43,19 @@ public class PartidaMapper {
 
         PartidaResumenDTO dto = new PartidaResumenDTO();
         
-        // Adaptado a snake_case
+        // Datos de la Partida
         dto.setIdPartida(partida.getIdPartida());
+        dto.setCodigoPartida(partida.getCodigoPartida());
         dto.setFechaFin(partida.getFechaFin());
-        dto.setNombreTema(partida.getTema().getNombre());
+        dto.setEstado(partida.getEstado().name());
+        dto.setRojoGana(partida.getRojoGana());
 
-        // Datos del jugador en snake_case
-        dto.setEquipoJugador(jpDelJugador.getEquipo().name());
-        dto.setRolJugador(jpDelJugador.getRol().name());
+        // Datos del Jugador en esa partida
+        dto.setEquipo(jpDelJugador.getEquipo().name());
+        dto.setRol(jpDelJugador.getRol().name());
+        dto.setAbandono(jpDelJugador.isAbandono());
         dto.setNumAciertos(jpDelJugador.getNumAciertos());
         dto.setNumFallos(jpDelJugador.getNumFallos());
-
-        // Calculamos si el jugador ha ganado o perdido
-        if (partida.getRojoGana() != null) {
-            boolean jugadorEsRojo = "rojo".equalsIgnoreCase(jpDelJugador.getEquipo().name());
-            boolean victoria = (partida.getRojoGana() && jugadorEsRojo)
-                             || (!partida.getRojoGana() && !jugadorEsRojo);
-            dto.setVictoria(victoria);
-        } else {
-            dto.setVictoria(false); // Si la partida aún no ha terminado
-        }
 
         return dto;
     }

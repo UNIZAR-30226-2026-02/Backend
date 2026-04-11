@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.PageRequest;
@@ -147,7 +148,7 @@ public class AmistadService {
     }
 
     private void enviarNotificacionGeneralWS(String idGoogle, String tipo, String mensaje) {
-        NotificacionDTO notif = new NotificacionDTO(tipo, mensaje);
+        NotificacionDTO notif = new NotificacionDTO(tipo, Map.of("mensaje", mensaje));
         messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
     }
 }

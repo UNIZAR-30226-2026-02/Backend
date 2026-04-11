@@ -23,6 +23,7 @@ import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.mapper.juego.GameStateMapper;
+import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.JugadorPartida.Equipo;
 import com.secretpanda.codenames.model.JugadorPartida.Rol;
@@ -62,6 +63,7 @@ public class JuegoService {
     private final SimpMessagingTemplate      messagingTemplate;
     private final TemporizadorService        temporizadorService;
     private final LeaderboardService leaderboardService;
+    private final JugadorService jugadorService;
 
     public JuegoService(PartidaRepository partidaRepository,
                         JugadorPartidaRepository jugadorPartidaRepository,
@@ -72,7 +74,8 @@ public class JuegoService {
                         JugadorRepository jugadorRepository,
                         SimpMessagingTemplate messagingTemplate,
                         TemporizadorService temporizadorService,
-                        LeaderboardService leaderboardService) {
+                        LeaderboardService leaderboardService,
+                        JugadorService jugadorService) {
         this.partidaRepository        = partidaRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.tableroCartaRepository   = tableroCartaRepository;
@@ -83,6 +86,7 @@ public class JuegoService {
         this.messagingTemplate        = messagingTemplate;
         this.temporizadorService      = temporizadorService;
         this.leaderboardService       = leaderboardService;
+        this.jugadorService           = jugadorService;
     }
 
     // ─── Inicializar partida ──────────────────────────────────────────────────
@@ -599,6 +603,29 @@ public class JuegoService {
         partida.setFechaFin(LocalDateTime.now());
         partida.setRojoGana(rojoGana);
         partidaRepository.save(partida);
+
+        for (JugadorPartida jp : partida.getJugadores()) {
+            Jugador j = jp.getJugador();
+            
+            // Determinar si ha ganado
+            boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
+            boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
+            
+            // ACTUALIZAR ESTADÍSTICAS GLOBALES (Necesario para los logros)
+            j.setPartidasJugadas(j.getPartidasJugadas() + 1);
+            if (gano) {
+                j.setVictorias(j.getVictorias() + 1);
+            }
+            // Guardamos las estadísticas primero
+            jugadorRepository.save(j);
+
+            // ASIGNAR BALAS mediante el método seguro
+            int premio = gano ? 20 : 10;
+            jugadorService.modificarBalas(j.getIdGoogle(), premio);
+
+            // ACTUALIZAR LOGROS
+            jugadorService.actualizarProgresoLogros(j.getIdGoogle());
+        }
 
         // Actualizar el ranking global al finalizar la partida
         leaderboardService.broadcastGlobalRanking(); 

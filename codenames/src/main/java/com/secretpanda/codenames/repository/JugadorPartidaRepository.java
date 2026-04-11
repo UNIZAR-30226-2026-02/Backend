@@ -22,8 +22,8 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
     // Obtener todos los jugadores de un equipo concreto en una partida concreta
     List<JugadorPartida> findByPartida_IdPartidaAndEquipo(Integer idPartida, Equipo equipo);
     
-    // Historial de partidas en las que ha estado un jugador (Ordenadas de más reciente a más antigua)
-    List<JugadorPartida> findByJugador_IdGoogleOrderByPartida_FechaCreacionDesc(String idGoogle);
+    // Obtener el historial de partidas de un jugador ordenado por fecha de finalización (más reciente primero)
+    List<JugadorPartida> findByJugador_IdGoogleOrderByPartida_FechaFinDesc(String idGoogle);
     
     // Buscar el registro exacto de un jugador en una partida
     Optional<JugadorPartida> findByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);

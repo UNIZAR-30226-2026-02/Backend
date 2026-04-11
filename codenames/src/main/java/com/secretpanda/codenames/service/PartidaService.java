@@ -40,6 +40,7 @@ public class PartidaService {
     private final TableroCartaRepository tableroCartaRepository;
     private final CodigoPartidaGenerator codigoGenerator;
     private final SimpMessagingTemplate messagingTemplate;
+    private final JugadorService jugadorService;
 
     public PartidaService(PartidaRepository partidaRepository,
                           JugadorRepository jugadorRepository,
@@ -48,7 +49,8 @@ public class PartidaService {
                           InventarioTemaRepository inventarioTemaRepository,
                           TableroCartaRepository tableroCartaRepository,
                           CodigoPartidaGenerator codigoGenerator,
-                          SimpMessagingTemplate messagingTemplate) {
+                          SimpMessagingTemplate messagingTemplate,
+                          JugadorService jugadorService) {
         this.partidaRepository = partidaRepository;
         this.jugadorRepository = jugadorRepository;
         this.temaRepository = temaRepository;
@@ -57,6 +59,7 @@ public class PartidaService {
         this.tableroCartaRepository = tableroCartaRepository;
         this.codigoGenerator = codigoGenerator;
         this.messagingTemplate = messagingTemplate;
+        this.jugadorService = jugadorService;
     }
 
     // ─── Crear partida ─────────────────────────────────────────────────────────
@@ -156,16 +159,13 @@ public class PartidaService {
 
         // CASO A: LA PARTIDA ESTÁ EN JUEGO
         if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-            // 1. Penalizar al jugador que se va (Restar 10 balas)
-            Jugador jugador = findJugador(idGoogle);
-            jugador.setBalas(Math.max(0, jugador.getBalas() - 10)); 
-            jugadorRepository.save(jugador);
+            jugadorService.modificarBalas(idGoogle, -10);
 
-            // 2. Marcar que el jugador ha abandonado
+            // Marcar que el jugador ha abandonado
             jp.setAbandono(true);
             jugadorPartidaRepository.save(jp);
 
-            // 3. Chequeo de fin de partida por falta de personal operativo
+            // Chequeo de fin de partida por falta de personal operativo
             // Obtenemos todos los que NO han abandonado en esta partida
             List<JugadorPartida> activos = jugadorPartidaRepository
                     .findByPartida_IdPartidaAndAbandonoFalse(idPartida);

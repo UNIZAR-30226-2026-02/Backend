@@ -1,17 +1,20 @@
 package com.secretpanda.codenames.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.secretpanda.codenames.dto.jugador.ActualizarPerfilDTO;
-import com.secretpanda.codenames.dto.jugador.HistorialDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 import com.secretpanda.codenames.dto.jugador.PersonalizacionInventarioDTO;
 import com.secretpanda.codenames.dto.jugador.TemaInventarioDTO;
 import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
+import com.secretpanda.codenames.dto.social.NotificacionDTO;
 import com.secretpanda.codenames.dto.tienda.LogroDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
@@ -45,6 +48,8 @@ public class JugadorService {
     private final JugadorLogroRepository jugadorLogroRepository;
     private final EstadisticasCalculator calculator;
     private final LogroRepository logroRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
 
     public JugadorService(JugadorRepository jugadorRepository,
                           InventarioTemaRepository inventarioTemaRepository,
@@ -52,7 +57,8 @@ public class JugadorService {
                           JugadorPartidaRepository jugadorPartidaRepository,
                           JugadorLogroRepository jugadorLogroRepository,
                           EstadisticasCalculator calculator, 
-                          LogroRepository logroRepository) {
+                          LogroRepository logroRepository, 
+                          SimpMessagingTemplate messagingTemplate) {
         this.jugadorRepository = jugadorRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.inventarioPersonalizacionRepository = inventarioPersonalizacionRepository;
@@ -60,6 +66,7 @@ public class JugadorService {
         this.jugadorLogroRepository = jugadorLogroRepository;
         this.calculator = calculator;
         this.logroRepository = logroRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     // ─── Perfil ───────────────────────────────────────────────────────────────
@@ -100,25 +107,34 @@ public class JugadorService {
      */
     @Transactional
     public void equiparItem(Integer idPersonalizacion, boolean equipado, String idGoogle) {
+        // Lógica de base de datos (Ya la tienes, pero asegúrate de que sea así)
         InventarioPersonalizacion itemAEquipar = inventarioPersonalizacionRepository
                 .findById_IdJugadorAndId_IdPersonalizacion(idGoogle, idPersonalizacion)
-                .orElseThrow(() -> new NotFoundException("No posees este artículo en tu inventario (ID: " + idPersonalizacion + ")."));
+                .orElseThrow(() -> new NotFoundException("No posees este artículo."));
 
         if (equipado) {
-            // Obtenemos el TIPO (TABLERO o CARTA) del ítem que el usuario ha elegido
-            Personalizacion.TipoPersonalizacion tipoActual = itemAEquipar.getPersonalizacion().getTipo();
-
+            // Desequipar el anterior del mismo tipo
+            Personalizacion.TipoPersonalizacion tipo = itemAEquipar.getPersonalizacion().getTipo();
             inventarioPersonalizacionRepository
-                .findById_IdJugadorAndPersonalizacion_TipoAndEquipadoTrue(idGoogle, tipoActual)
-                .ifPresent(itemAntiguo -> {
-                    // Si encontramos uno, lo desequipamos antes de activar el nuevo
-                    itemAntiguo.setEquipado(false);
-                    inventarioPersonalizacionRepository.save(itemAntiguo);
+                .findById_IdJugadorAndPersonalizacion_TipoAndEquipadoTrue(idGoogle, tipo)
+                .ifPresent(antiguo -> {
+                    antiguo.setEquipado(false);
+                    inventarioPersonalizacionRepository.save(antiguo);
                 });
         }
 
         itemAEquipar.setEquipado(equipado);
         inventarioPersonalizacionRepository.save(itemAEquipar);
+
+        // NOTIFICACIÓN EN DIRECTO (WS)
+        // Enviamos al usuario un objeto con su nueva configuración visual
+        Map<String, String> nuevaConfig = Map.of(
+            "tipo", itemAEquipar.getPersonalizacion().getTipo().name(),
+            "valor", itemAEquipar.getPersonalizacion().getValorVisual(),
+            "equipado", String.valueOf(equipado)
+        );
+        
+        messagingTemplate.convertAndSendToUser(idGoogle, "/queue/personalizacion", nuevaConfig);
     }
 
     // ─── Temas ────────────────────────────────────────────────────────────────
@@ -132,24 +148,16 @@ public class JugadorService {
     // ─── Historial ────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public HistorialDTO getHistorial(String idGoogle) {
-        // Las últimas MAX_HISTORIAL partidas del jugador
-        List<JugadorPartida> participaciones =
-                jugadorPartidaRepository.findByJugador_IdGoogleOrderByPartida_FechaCreacionDesc(idGoogle);
+    public List<PartidaResumenDTO> getHistorial(String idGoogle) {
+        // Buscamos las participaciones ordenadas por fecha descendente
+        List<JugadorPartida> participaciones = 
+            jugadorPartidaRepository.findByJugador_IdGoogleOrderByPartida_FechaFinDesc(idGoogle);
 
-        // Limitamos a 30
-        List<JugadorPartida> limitadas = participaciones.stream()
+        // Limitamos a las últimas 30 y mapeamos
+        return participaciones.stream()
                 .limit(MAX_HISTORIAL)
+                .map(jp -> PartidaMapper.toResumenDTO(jp.getPartida(), jp))
                 .collect(Collectors.toList());
-
-        List<PartidaResumenDTO> resumen = PartidaMapper.toResumenDTOList(limitadas);
-
-        HistorialDTO dto = new HistorialDTO();
-        dto.setPartidas(resumen);
-        dto.setPaginaActual(0);
-        dto.setTotalPaginas(1);
-        dto.setTotalPartidas(resumen.size());
-        return dto;
     }
 
     // ─── Logros ───────────────────────────────────────────────────────────────
@@ -194,10 +202,70 @@ public class JugadorService {
         }).collect(Collectors.toList());
     }
 
+    // ─── Balas y Notificaciones ───────────────────────────────────────────────
+    @Transactional
+    public void modificarBalas(String idGoogle, int cantidadAModificar) {
+        // Buscamos con bloqueo para que nadie más toque este jugador hasta que terminemos
+        Jugador jugador = jugadorRepository.findByIdForUpdate(idGoogle)
+                .orElseThrow(() -> new NotFoundException("Jugador no encontrado"));
+
+        jugador.setBalas(jugador.getBalas() + cantidadAModificar);
+        if (jugador.getBalas() < 0) jugador.setBalas(0); // Seguro contra negativos
+
+        jugadorRepository.save(jugador);
+        
+        // Notificamos por WebSocket inmediatamente
+        notificarActualizacionBalas(idGoogle, jugador.getBalas());
+    }
+
+    // ─── Progreso de Logros ───────────────────────────────────────────────────────
+    @Transactional
+    public void actualizarProgresoLogros(String idGoogle) {
+        Jugador jugador = jugadorRepository.findById(idGoogle).orElseThrow();
+        // Traemos solo los logros activos que el jugador aún no ha completado
+        List<JugadorLogro> pendientes = jugadorLogroRepository.findById_IdJugadorAndCompletadoFalse(idGoogle);
+
+        for (JugadorLogro jl : pendientes) {
+            Logro logro = jl.getLogro();
+            int valorActual = 0;
+
+            // Mapeo dinámico de la estadística clave definida en BD
+            switch (logro.getEstadisticaClave()) {
+                case "partidas_jugadas" -> valorActual = jugador.getPartidasJugadas();
+                case "victorias" -> valorActual = jugador.getVictorias();
+                case "num_aciertos" -> valorActual = jugador.getNumAciertos();
+                case "num_fallos" -> valorActual = jugador.getNumFallos();
+            }
+
+            jl.setProgresoActual(valorActual);
+
+            if (valorActual >= logro.getValorObjetivo()) {
+                jl.setCompletado(true);
+                jl.setFechaDesbloqueo(LocalDateTime.now());
+                
+                // Entregar recompensa usando el método seguro del Punto 1
+                modificarBalas(idGoogle, logro.getBalasRecompensa());
+                
+                // Notificar desbloqueo por WebSocket
+                NotificacionDTO notif = new NotificacionDTO("logro_desbloqueado", 
+                    Map.of("mensaje", "¡Logro desbloqueado: " + logro.getNombre() + "!", 
+                        "recompensa", logro.getBalasRecompensa()));
+                messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
+            }
+        }
+        jugadorLogroRepository.saveAll(pendientes);
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────────
 
     private Jugador findJugador(String idGoogle) {
         return jugadorRepository.findById(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
+    }
+
+    public void notificarActualizacionBalas(String idGoogle, int nuevasBalas) {
+        // Enviamos el nuevo saldo a la cola privada del usuario
+        // El frontend escuchará en /user/queue/balas
+        messagingTemplate.convertAndSendToUser(idGoogle, "/queue/balas", nuevasBalas);
     }
 }
