@@ -34,6 +34,10 @@ public class VotoCarta {
     @JoinColumn(name = "id_carta_tablero", nullable = false)
     private TableroCarta cartaTablero;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_carta_revelada")
+    private TableroCarta cartaRevelada;
+
     public VotoCarta() {}
 
     public Integer getIdVoto() { 
@@ -66,5 +70,13 @@ public class VotoCarta {
 
     public void setCartaTablero(TableroCarta cartaTablero) { 
         this.cartaTablero = cartaTablero; 
+    }
+
+    public TableroCarta getCartaRevelada() {
+        return cartaRevelada;
+    }
+
+    public void setCartaRevelada(TableroCarta cartaRevelada) {
+        this.cartaRevelada = cartaRevelada;
     }
 }

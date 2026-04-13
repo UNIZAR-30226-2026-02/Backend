@@ -192,14 +192,22 @@ public class JuegoService {
         temporizadorService.iniciarTemporizador(idPartida, partida.getTiempoEspera(),
                 () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(idPartida));
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                PistaDTO pistaDTO = new PistaDTO(turno);
-                messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/pista", pistaDTO);
-                broadcastEstado(idPartida);
-            }
-        });
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    enviarNotificacionPista(idPartida, turno);
+                }
+            });
+        } else {
+            enviarNotificacionPista(idPartida, turno);
+        }
+    }
+
+    private void enviarNotificacionPista(Integer idPartida, Turno turno) {
+        PistaDTO pistaDTO = new PistaDTO(turno);
+        messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/pista", pistaDTO);
+        broadcastEstado(idPartida);
     }
 
     // ─── Votar carta (Agente) ─────────────────────────────────────────────────
@@ -301,7 +309,8 @@ public class JuegoService {
 
         actualizarEstadisticasAgentes(votos, equipoVotante, cartaGanadora);
 
-        votoCartaRepository.deleteAllInBatch(votos);
+        votos.forEach(v -> v.setCartaRevelada(cartaGanadora));
+        votoCartaRepository.saveAll(votos);
         votoCartaRepository.flush();
 
         temporizadorService.cancelarTemporizador(partida.getIdPartida());
