@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -212,6 +213,40 @@ public class JugadorService {
     }
 
     // ─── Balas y Notificaciones ───────────────────────────────────────────────
+    
+    @Value("${game.balas-ganador:20}")
+    private int balasGanador;
+
+    @Value("${game.balas-derrota:10}")
+    private int balasDerrota;
+
+    @Transactional
+    public void procesarFinPartida(String idGoogle, boolean gano, int aciertos, int fallos) {
+        // Buscamos con bloqueo para asegurar la atomicidad de las estadísticas
+        Jugador j = jugadorRepository.findByIdForUpdate(idGoogle)
+                .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
+
+        // 1. Actualizar estadísticas globales
+        j.setPartidasJugadas(j.getPartidasJugadas() + 1);
+        if (gano) {
+            j.setVictorias(j.getVictorias() + 1);
+        }
+        j.setNumAciertos(j.getNumAciertos() + aciertos);
+        j.setNumFallos(j.getNumFallos() + fallos);
+
+        // 2. Asignar balas según resultado (usando valores configurados)
+        int premio = gano ? balasGanador : balasDerrota;
+        j.setBalas(j.getBalas() + premio);
+
+        jugadorRepository.save(j);
+
+        // 3. Notificar actualización de balas por WS
+        notificarActualizacionBalas(idGoogle, j.getBalas());
+
+        // 4. Actualizar progreso de logros
+        actualizarProgresoLogros(idGoogle);
+    }
+
     @Transactional
     public void modificarBalas(String idGoogle, int cantidadAModificar) {
         // Buscamos con bloqueo para que nadie más toque este jugador hasta que terminemos

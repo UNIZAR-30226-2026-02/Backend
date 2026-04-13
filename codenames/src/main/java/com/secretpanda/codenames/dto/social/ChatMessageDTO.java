@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.social;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 /**
@@ -8,15 +9,23 @@ import java.time.LocalDateTime;
  */
 public class ChatMessageDTO {
 
+    @JsonProperty("id_mensaje")
     private Integer idMensaje;
+    @JsonProperty("id_partida")
     private Integer idPartida;
 
+    @JsonProperty("id_jugador")
     private String idJugador;
+    @JsonProperty("tag")
     private String tag;
+    @JsonProperty("equipo")
     private String equipo;     // "rojo" o "azul" — define a qué topic se enruta
 
+    @JsonProperty("mensaje")
     private String mensaje;
+    @JsonProperty("fecha")
     private LocalDateTime fecha;
+    @JsonProperty("es_valido")
     private boolean esValido;  // true = mensaje limpio, false = fue censurado
 
     public ChatMessageDTO() {}

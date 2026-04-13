@@ -45,20 +45,20 @@ public class TableroCarta {
 
     @Min(0)
     @Max(3)
-    @Column(nullable = false)
+    @Column(name = "fila", nullable = false)
     private int fila;
 
     @Min(0)
     @Max(4)
-    @Column(nullable = false)
+    @Column(name = "columna", nullable = false)
     private int columna;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
+    @Column(name = "estado", nullable = false, length = 32)
     private EstadoCarta estado;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "tipo", nullable = false, length = 20)
     private TipoCarta tipo;
 
     public TableroCarta() {}

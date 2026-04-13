@@ -31,7 +31,7 @@ public class JugadorLogro {
     @Column(name = "progreso_actual", nullable = false)
     private int progresoActual = 0;
 
-    @Column(nullable = false)
+    @Column(name = "completado", nullable = false)
     private boolean completado = false;
 
     @Column(name = "fecha_desbloqueo")

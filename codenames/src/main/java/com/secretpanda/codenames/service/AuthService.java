@@ -3,6 +3,7 @@ package com.secretpanda.codenames.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
 import com.secretpanda.codenames.model.InventarioTema;
+import com.secretpanda.codenames.model.InventarioTemaId;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
@@ -34,6 +36,9 @@ public class AuthService {
     private final TemaRepository temaRepository;
     private final InventarioTemaRepository inventarioTemaRepository;
 
+    @Value("${game.tema-basico-id:1}")
+    private Integer temaBasicoId;
+
     public AuthService(GoogleAuthService googleAuthService,
                     JwtService jwtService,
                     JugadorRepository jugadorRepository,
@@ -46,8 +51,8 @@ public class AuthService {
         this.jugadorRepository = jugadorRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.calculator = calculator;
-        this.temaRepository = temaRepository; // <-- Nuevo
-        this.inventarioTemaRepository = inventarioTemaRepository; // <-- Nuevo
+        this.temaRepository = temaRepository;
+        this.inventarioTemaRepository = inventarioTemaRepository;
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
@@ -128,10 +133,17 @@ public class AuthService {
         jugadorRepository.save(jugador);
 
         // 5. ASIGNAR TEMA POR DEFECTO (Si no lo tiene ya)
-        boolean yaTieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(jugador.getIdGoogle(), 1); // Asumiendo ID 1 es Basico
+        boolean yaTieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(jugador.getIdGoogle(), temaBasicoId); 
         if (!yaTieneTema) {
-            temaRepository.findByNombre("Basico").ifPresent(tema -> {
-                inventarioTemaRepository.save(new InventarioTema(jugador, tema));
+            temaRepository.findById(temaBasicoId).ifPresent(tema -> {
+                InventarioTema inv = new InventarioTema();
+                InventarioTemaId invId = new InventarioTemaId();
+                invId.setIdJugador(jugador.getIdGoogle());
+                invId.setIdTema(tema.getIdTema());
+                inv.setId(invId);
+                inv.setJugador(jugador);
+                inv.setTema(tema);
+                inventarioTemaRepository.save(inv);
             });
         }
 
@@ -171,14 +183,10 @@ public class AuthService {
      * y no ha abandonado. Null si no hay ninguna.
      */
     private Integer buscarPartidaActiva(String idGoogle) {
-        List<JugadorPartida> participaciones =
-                jugadorPartidaRepository.findByJugador_IdGoogle(idGoogle);
-
-        return participaciones.stream()
-                .filter(jp -> !jp.isAbandono())
-                .filter(jp -> Partida.EstadoPartida.en_curso.equals(jp.getPartida().getEstado()))
+        return jugadorPartidaRepository
+                .findFirstByJugador_IdGoogleAndPartida_EstadoAndAbandonoFalse(
+                        idGoogle, Partida.EstadoPartida.en_curso)
                 .map(jp -> jp.getPartida().getIdPartida())
-                .findFirst()
                 .orElse(null);
     }
 }

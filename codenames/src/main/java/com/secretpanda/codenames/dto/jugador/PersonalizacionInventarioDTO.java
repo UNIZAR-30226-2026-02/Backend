@@ -1,5 +1,7 @@
 package com.secretpanda.codenames.dto.jugador;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO de inventario para Personalización.
  * Representa un cosmético que el jugador ya posee, incluyendo su estado de equipamiento.
@@ -8,12 +10,17 @@ package com.secretpanda.codenames.dto.jugador;
 public class PersonalizacionInventarioDTO {
 
     // Datos del ítem necesarios para renderizarlo en la UI
+    @JsonProperty("id_personalizacion")
     private Integer idPersonalizacion;
+    @JsonProperty("nombre")
     private String nombre;
+    @JsonProperty("tipo")
     private String tipo;        // "carta" o "tablero"
+    @JsonProperty("valor_visual")
     private String valorVisual; // URL del asset
 
     // Estado de posesión (exclusivo de este DTO)
+    @JsonProperty("equipado")
     private boolean equipado;
 
     public PersonalizacionInventarioDTO() {}

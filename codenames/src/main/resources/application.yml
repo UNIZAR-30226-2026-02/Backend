@@ -35,3 +35,13 @@ jwt:
 
 server:
   port: 8080
+
+game:
+  profanity-blacklist: tonto,tontito,caraculo,botijo,mierda,puto,puta,cabron,gilipollas
+  tema-basico-id: 1
+  ranking-global-size: 10
+  ranking-amigos-size: 100
+  timer-pool-size: 4
+  penalizacion-abandono: 10
+  balas-ganador: 20
+  balas-derrota: 10

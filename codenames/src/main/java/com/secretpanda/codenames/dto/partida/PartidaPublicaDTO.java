@@ -1,12 +1,20 @@
 package com.secretpanda.codenames.dto.partida;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PartidaPublicaDTO {
     
+    @JsonProperty("id_partida")
     private Integer idPartida;
+    @JsonProperty("tag")
     private String tag;            // tag del creador
+    @JsonProperty("nombre")
     private String nombre;         // nombre del tema
+    @JsonProperty("tiempo_espera")
     private int tiempoEspera;
+    @JsonProperty("max_jugadores")
     private int maxJugadores;
+    @JsonProperty("jugadores_actuales")
     private int jugadoresActuales;
 
     public PartidaPublicaDTO(Integer idPartida, String tag, String nombre,

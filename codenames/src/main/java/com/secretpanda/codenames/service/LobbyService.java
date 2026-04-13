@@ -109,8 +109,11 @@ public LobbyService(PartidaRepository partidaRepository,
         if (partida.isEsPublica()) {
             throw new GameLogicException("No se puede cambiar el tiempo en partidas públicas.");
         }
-        if (tiempoEspera != 30 && tiempoEspera != 60 && tiempoEspera != 90 && tiempoEspera != 120) {
-            throw new BadRequestException("Tiempo de turno debe ser 30, 60, 90 o 120 segundos.");
+        
+        // Validación explícita de valores permitidos
+        List<Integer> tiemposValidos = List.of(30, 60, 90, 120);
+        if (!tiemposValidos.contains(tiempoEspera)) {
+            throw new BadRequestException("Tiempo de turno no válido. Debe ser 30, 60, 90 o 120 segundos.");
         }
 
         partida.setTiempoEspera(tiempoEspera);

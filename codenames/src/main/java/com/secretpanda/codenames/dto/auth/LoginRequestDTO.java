@@ -1,5 +1,7 @@
 package com.secretpanda.codenames.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Body que envía el cliente al endpoint POST /api/auth/login.
  *
@@ -11,6 +13,7 @@ package com.secretpanda.codenames.dto.auth;
  */
 public class LoginRequestDTO {
 
+    @JsonProperty("id_google")
     private String idGoogle;
 
     public LoginRequestDTO() {}

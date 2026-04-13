@@ -6,12 +6,16 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.secretpanda.codenames.dto.tienda.PersonalizacionDTO;
 import com.secretpanda.codenames.dto.tienda.TemaDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.mapper.tienda.PersonalizacionMapper;
 import com.secretpanda.codenames.mapper.tienda.TemaMapper;
 import com.secretpanda.codenames.model.InventarioPersonalizacion;
 import com.secretpanda.codenames.model.InventarioPersonalizacionId;
+import com.secretpanda.codenames.model.InventarioTema;
+import com.secretpanda.codenames.model.InventarioTemaId;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.Personalizacion;
 import com.secretpanda.codenames.model.Tema;
@@ -59,6 +63,20 @@ public class TiendaService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<PersonalizacionDTO> getPersonalizacionesTienda(String idGoogle) {
+        List<Personalizacion> todas = personalizacionRepository.findByActivoTrue();
+
+        List<Integer> misPersosIds = inventarioPersoRepository.findById_IdJugador(idGoogle)
+                .stream()
+                .map(ip -> ip.getPersonalizacion().getIdPersonalizacion())
+                .collect(Collectors.toList());
+
+        return todas.stream()
+                .map(p -> PersonalizacionMapper.toDTO(p, misPersosIds.contains(p.getIdPersonalizacion())))
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public int comprarTema(String idGoogle, Integer idTema) {
         Jugador j = jugadorRepository.findById(idGoogle)
@@ -76,6 +94,16 @@ public class TiendaService {
         }
 
         jugadorService.modificarBalas(idGoogle, -t.getPrecioBalas());
+
+        // Registro en inventario mediante setters
+        InventarioTema it = new InventarioTema();
+        InventarioTemaId itid = new InventarioTemaId();
+        itid.setIdJugador(idGoogle);
+        itid.setIdTema(idTema);
+        it.setId(itid);
+        it.setJugador(j);
+        it.setTema(t);
+        inventarioTemaRepository.save(it);
 
         return j.getBalas();
     }
@@ -99,7 +127,10 @@ public class TiendaService {
         jugadorService.modificarBalas(idGoogle, -p.getPrecioBala());
 
         InventarioPersonalizacion ip = new InventarioPersonalizacion();
-        ip.setId(new InventarioPersonalizacionId(idGoogle, idPerso));
+        InventarioPersonalizacionId ipid = new InventarioPersonalizacionId();
+        ipid.setIdJugador(idGoogle);
+        ipid.setIdPersonalizacion(idPerso);
+        ip.setId(ipid);
         ip.setJugador(j);
         ip.setPersonalizacion(p);
         ip.setEquipado(false);

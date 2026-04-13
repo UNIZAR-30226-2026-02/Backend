@@ -66,7 +66,7 @@ public class Partida {
     private LocalDateTime fechaFin;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
+    @Column(name = "estado", nullable = false, length = 32)
     private EstadoPartida estado;
 
     @Column(name = "rojo_gana")
@@ -90,9 +90,6 @@ public class Partida {
     protected void onCreate() {
         if (this.estado == null) {
             this.estado = EstadoPartida.esperando;
-        }
-        if (this.tiempoEspera != 30 && this.tiempoEspera != 60 && this.tiempoEspera != 90 && this.tiempoEspera != 120) {
-            throw new IllegalStateException("El tiempo de espera debe ser 30, 60, 90 o 120 segundos");
         }
     }
 

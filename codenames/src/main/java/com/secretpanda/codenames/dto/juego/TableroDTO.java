@@ -1,9 +1,11 @@
 package com.secretpanda.codenames.dto.juego;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class TableroDTO {
     // Listas de las cartas del tablero
+    @JsonProperty("cartas")
     private List<CartaDTO> cartas;
 
     // Constructor vacío

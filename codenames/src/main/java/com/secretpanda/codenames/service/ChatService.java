@@ -1,8 +1,5 @@
 package com.secretpanda.codenames.service;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,22 +18,19 @@ import com.secretpanda.codenames.repository.PartidaRepository;
 @Service
 public class ChatService {
 
-    // Lista básica de palabras prohibidas — en producción reemplazar por una librería (e.g. better-profanity)
-    private static final List<String> PALABRAS_PROHIBIDAS = Arrays.asList(
-            "tonto", "tontito", "cara culo", "botijo"
-            // Ampliar con términos reales
-    );
-
     private final ChatRepository             chatRepository;
     private final PartidaRepository          partidaRepository;
     private final JugadorPartidaRepository   jugadorPartidaRepository;
+    private final ProfanityFilterService     profanityFilterService;
 
     public ChatService(ChatRepository chatRepository,
                        PartidaRepository partidaRepository,
-                       JugadorPartidaRepository jugadorPartidaRepository) {
+                       JugadorPartidaRepository jugadorPartidaRepository,
+                       ProfanityFilterService profanityFilterService) {
         this.chatRepository           = chatRepository;
         this.partidaRepository        = partidaRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
+        this.profanityFilterService   = profanityFilterService;
     }
 
     @Transactional
@@ -57,9 +51,9 @@ public class ChatService {
             throw new GameLogicException("El jefe de espías no puede escribir en el chat.");
         }
 
-        // Aplicar filtro
-        boolean[] censurado = { false };
-        String mensajeFiltrado = aplicarFiltro(dto.getMensaje(), censurado);
+        // Aplicar filtro profesional
+        ProfanityFilterService.FilterResult result = profanityFilterService.filter(dto.getMensaje());
+        String mensajeFiltrado = result.filteredText();
 
         // Guardar en BD
         Chat chat = new Chat();
@@ -77,20 +71,8 @@ public class ChatService {
         respuesta.setEquipo(jp.getEquipo().name());
         respuesta.setMensaje(mensajeFiltrado);
         respuesta.setFecha(chat.getFecha());
-        respuesta.setEsValido(!censurado[0]);
+        respuesta.setEsValido(!result.wasCensored());
 
         return respuesta;
-    }
-
-    private String aplicarFiltro(String mensaje, boolean[] censurado) {
-        String resultado = mensaje;
-        for (String palabra : PALABRAS_PROHIBIDAS) {
-            String nuevo = resultado.replaceAll("(?i)" + java.util.regex.Pattern.quote(palabra), "***");
-            if (!nuevo.equals(resultado)) {
-                censurado[0] = true;
-            }
-            resultado = nuevo;
-        }
-        return resultado;
     }
 }

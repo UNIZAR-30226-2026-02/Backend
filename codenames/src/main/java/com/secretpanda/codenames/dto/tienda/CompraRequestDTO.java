@@ -1,5 +1,7 @@
 package com.secretpanda.codenames.dto.tienda;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO para la solicitud de compra de un ítem de la tienda.
  * Solo uno de los dos campos debe venir informado por petición:
@@ -9,7 +11,9 @@ package com.secretpanda.codenames.dto.tienda;
  */
 public class CompraRequestDTO {
 
+    @JsonProperty("id_tema")
     private Integer idTema;
+    @JsonProperty("id_personalizacion")
     private Integer idPersonalizacion;
 
     public CompraRequestDTO() {}

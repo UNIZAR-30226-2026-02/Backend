@@ -23,10 +23,10 @@ public class PalabraTema {
     @JoinColumn(name = "id_tema", nullable = false)
     private Tema tema;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "valor", nullable = false, columnDefinition = "TEXT")
     private String valor;
 
-    @Column(nullable = false)
+    @Column(name = "activo", nullable = false)
     private boolean activo = true;
 
     public PalabraTema() {

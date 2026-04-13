@@ -1,23 +1,34 @@
 package com.secretpanda.codenames.dto.partida;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO para transferir la información de un jugador dentro de una partida específica,
  * incluyendo su equipo, rol y estadísticas de esa partida.
  */
 public class JugadorPartidaDTO {
 
+    @JsonProperty("id_jugador_partida")
     private Integer idJugadorPartida;
     
     // Datos básicos del Jugador
+    @JsonProperty("id_jugador")
     private String idJugador;
+    @JsonProperty("tag")
     private String tag;
+    @JsonProperty("foto_perfil")
     private String fotoPerfil;
 
     // Estado del jugador en la partida
+    @JsonProperty("equipo")
     private String equipo; // "rojo" o "azul"
+    @JsonProperty("rol")
     private String rol;    // "lider" o "agente"
+    @JsonProperty("num_aciertos")
     private int numAciertos;
+    @JsonProperty("num_fallos")
     private int numFallos;
+    @JsonProperty("abandono")
     private boolean abandono;
 
     public JugadorPartidaDTO() {

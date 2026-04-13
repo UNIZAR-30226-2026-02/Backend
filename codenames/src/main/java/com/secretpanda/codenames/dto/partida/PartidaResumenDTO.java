@@ -1,18 +1,29 @@
 package com.secretpanda.codenames.dto.partida;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 public class PartidaResumenDTO {
 
+    @JsonProperty("id_partida")
     private Integer idPartida;
+    @JsonProperty("codigo_partida")
     private String codigoPartida;
+    @JsonProperty("fecha_fin")
     private LocalDateTime fechaFin;
+    @JsonProperty("estado")
     private String estado;
+    @JsonProperty("rojo_gana")
     private Boolean rojoGana;
+    @JsonProperty("equipo")
     private String equipo;
+    @JsonProperty("rol")
     private String rol;
+    @JsonProperty("abandono")
     private boolean abandono;
+    @JsonProperty("num_aciertos")
     private int numAciertos;
+    @JsonProperty("num_fallos")
     private int numFallos;
 
     public PartidaResumenDTO() {

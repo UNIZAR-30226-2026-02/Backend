@@ -17,11 +17,6 @@ public class AmistadId implements Serializable {
 
     public AmistadId() {}
 
-    public AmistadId(String idSolicitante, String idReceptor) {
-        this.idSolicitante = idSolicitante;
-        this.idReceptor = idReceptor;
-    }
-
     public String getIdSolicitante() { 
         return idSolicitante; 
     }

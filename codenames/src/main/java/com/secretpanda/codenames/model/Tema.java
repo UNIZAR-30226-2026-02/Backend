@@ -21,16 +21,16 @@ public class Tema {
     @Column(name = "id_tema")
     private Integer idTema;
 
-    @Column(nullable = false, unique = true, length = 128)
+    @Column(name = "nombre", nullable = false, unique = true, length = 128)
     private String nombre;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(name = "precio_balas", nullable = false)
     private int precioBalas = 0;
 
-    @Column(nullable = false)
+    @Column(name = "activo", nullable = false)
     private boolean activo = true;
 
     @OneToMany(mappedBy = "tema", cascade = CascadeType.ALL, orphanRemoval = true)

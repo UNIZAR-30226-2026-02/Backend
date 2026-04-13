@@ -1,11 +1,15 @@
 package com.secretpanda.codenames.dto.juego;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Emitido cada segundo a /topic/partidas/{id}/temporizador
  */
 public class TemporizadorDTO {
 
+    @JsonProperty("id_partida")
     private Integer idPartida;
+    @JsonProperty("segundos_restantes")
     private int segundosRestantes;
 
     public TemporizadorDTO() {}

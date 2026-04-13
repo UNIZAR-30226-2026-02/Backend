@@ -17,11 +17,6 @@ public class InventarioPersonalizacionId implements Serializable {
 
     public InventarioPersonalizacionId() {}
 
-    public InventarioPersonalizacionId(String idJugador, Integer idPersonalizacion) {
-        this.idJugador = idJugador;
-        this.idPersonalizacion = idPersonalizacion;
-    }
-
     public String getIdJugador() { 
         return idJugador; 
     }

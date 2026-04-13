@@ -17,11 +17,6 @@ public class InventarioTemaId implements Serializable {
 
     public InventarioTemaId() {}
 
-    public InventarioTemaId(String idJugador, Integer idTema) {
-        this.idJugador = idJugador;
-        this.idTema = idTema;
-    }
-
     public String getIdJugador() {
         return idJugador;
     }

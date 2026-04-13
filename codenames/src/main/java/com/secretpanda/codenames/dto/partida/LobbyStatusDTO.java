@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.partida;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
@@ -12,17 +13,28 @@ import java.util.List;
  */
 public class LobbyStatusDTO {
 
+    @JsonProperty("id_partida")
     private Integer idPartida;
+    @JsonProperty("codigo_partida")
     private String codigoPartida;
+    @JsonProperty("estado")
     private String estado;           // "esperando", "en_curso", "finalizada"
+    @JsonProperty("max_jugadores")
     private int maxJugadores;
+    @JsonProperty("es_publica")
     private boolean esPublica;
+    @JsonProperty("id_tema")
     private Integer idTema;
+    @JsonProperty("nombre_tema")
     private String nombreTema;
+    @JsonProperty("tiempo_espera")
     private int tiempoEspera;
+    @JsonProperty("tag_creador")
     private String tagCreador;       // NUEVO
+    @JsonProperty("hay_minimo")
     private boolean hayMinimo;       // NUEVO: ambos equipos tienen >= 2 jugadores
 
+    @JsonProperty("jugadores")
     private List<JugadorLobbyDTO> jugadores;  // Simplificado para el lobby
 
     public LobbyStatusDTO() {}

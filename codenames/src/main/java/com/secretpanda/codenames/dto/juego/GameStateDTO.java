@@ -1,24 +1,40 @@
 package com.secretpanda.codenames.dto.juego;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class GameStateDTO {
-    
+
+    @JsonProperty("id_partida")
     private Integer idPartida;
+
+    @JsonProperty("estado")
     private String estado; // "esperando", "en_curso" o "finalizada"
     
     // Estado del Turno Actual
+    @JsonProperty("equipo_turno_actual")
     private String equipoTurnoActual; // "rojo" ó "azul"
+
+    @JsonProperty("fase_turno")
     private String faseTurno; // "esperando_pista" (le toca al lider) o "votando" (le toca a los agentes)
     
+    @JsonProperty("cartas_rojas_restantes")
     private int cartasRojasRestantes;
+
+    @JsonProperty("cartas_azules_restantes")
     private int cartasAzulesRestantes;
     
+    @JsonProperty("rojo_gana")
     private Boolean rojoGana;
 
     // Componentes del juego
+    @JsonProperty("pista_actual")
     private PistaDTO pistaActual; // Puede ser null si el líder aún no la ha introducido
+
+    @JsonProperty("tablero")
     private TableroDTO tablero;
+
+    @JsonProperty("votos_turno_actual")
     private List<VotoDTO> votosTurnoActual; // Votos emitidos en el turno actual
 
     // Constructor vacío

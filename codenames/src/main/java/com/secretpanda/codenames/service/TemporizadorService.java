@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,6 @@ public class TemporizadorService {
     private static final Logger log = LoggerFactory.getLogger(TemporizadorService.class);
 
     private final SimpMessagingTemplate messagingTemplate;
-    // Un scheduler dedicado con pool de 4 hilos (suficiente para 100 partidas concurrentes)
     private final ThreadPoolTaskScheduler scheduler;
 
     // Mapa: idPartida → ScheduledFuture del contador tick
@@ -37,10 +37,11 @@ public class TemporizadorService {
     // Mapa: idPartida → segundos restantes (para el broadcast)
     private final Map<Integer, AtomicInteger> segundos = new ConcurrentHashMap<>();
 
-    public TemporizadorService(SimpMessagingTemplate messagingTemplate) {
+    public TemporizadorService(SimpMessagingTemplate messagingTemplate, 
+                              @Value("${game.timer-pool-size:4}") int poolSize) {
         this.messagingTemplate = messagingTemplate;
         this.scheduler = new ThreadPoolTaskScheduler();
-        this.scheduler.setPoolSize(4);
+        this.scheduler.setPoolSize(poolSize);
         this.scheduler.setThreadNamePrefix("timer-");
         this.scheduler.initialize();
     }

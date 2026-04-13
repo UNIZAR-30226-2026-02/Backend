@@ -1,13 +1,18 @@
 package com.secretpanda.codenames.dto.partida;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Respuesta de GET /api/partidas/{id}/participantes/rol
  * Informa al frontend del rol del jugador logueado en esa partida.
  */
 public class RolPartidaDTO {
 
+    @JsonProperty("rol")
     private String rol;            // "lider" o "agente"
+    @JsonProperty("equipo")
     private String equipo;         // "rojo" o "azul"
+    @JsonProperty("equipo_inicial")
     private String equipoInicial;  // equipo que inicia la partida (el que tiene más cartas)
 
     public RolPartidaDTO() {}

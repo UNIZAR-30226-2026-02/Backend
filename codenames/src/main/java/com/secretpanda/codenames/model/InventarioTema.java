@@ -27,12 +27,6 @@ public class InventarioTema {
 
     public InventarioTema() {}
 
-    public InventarioTema(Jugador jugador, Tema tema) {
-        this.jugador = jugador;
-        this.tema = tema;
-        this.id = new InventarioTemaId(jugador.getIdGoogle(), tema.getIdTema());
-    }
-
     public InventarioTemaId getId() {
         return id;
     }

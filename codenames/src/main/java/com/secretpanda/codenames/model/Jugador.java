@@ -2,6 +2,7 @@ package com.secretpanda.codenames.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,34 +14,34 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-@Entity 
-@Table(name = "jugador") 
+@Entity
+@Table(name = "jugador")
 public class Jugador {
 
-    @Id 
+    @Id
     @Column(name = "id_google", length = 255)
     private String idGoogle;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "tag", nullable = false, length = 50)
     private String tag;
 
     @Column(name = "foto_perfil", columnDefinition = "TEXT")
     private String fotoPerfil;
 
-    @Column(nullable = false)
+    @Column(name = "balas", nullable = false)
     private int balas = 0;
 
     @CreationTimestamp
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
-    @Column(nullable = false)
+    @Column(name = "activo", nullable = false)
     private boolean activo = true;
 
     @Column(name = "partidas_jugadas", nullable = false)
     private int partidasJugadas = 0;
 
-    @Column(nullable = false)
+    @Column(name = "victorias", nullable = false)
     private int victorias = 0;
 
     @Column(name = "num_aciertos", nullable = false)
@@ -213,7 +214,7 @@ public class Jugador {
     }
 
     public List<JugadorPartida> getHistorialPartidas() { 
-        return historialPartidas; 
+        return Collections.unmodifiableList(historialPartidas); 
     }
 
     public void setHistorialPartidas(List<JugadorPartida> historialPartidas) { 

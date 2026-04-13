@@ -3,6 +3,7 @@ package com.secretpanda.codenames.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,11 @@ import com.secretpanda.codenames.repository.JugadorRepository;
 @Service
 public class LeaderboardService {
 
-    private final int NUMERO_LISTAR_RANKING_GLOBAL = 10;
-    private final int NUMERO_LISTAR_RANKING_AMIGOS = 100;
+    @Value("${game.ranking-global-size:10}")
+    private int rankingGlobalSize;
+
+    @Value("${game.ranking-amigos-size:100}")
+    private int rankingAmigosSize;
 
     private final JugadorRepository jugadorRepository;
     private final AmistadRepository amistadRepository;
@@ -45,7 +49,7 @@ public class LeaderboardService {
     public List<RankingDTO> getGlobalRanking() {
         // Solicitamos los 10 primeros registros con el ordenamiento compuesto
         List<Jugador> topJugadores = jugadorRepository
-                .findByActivoTrueOrderByVictoriasDescNumAciertosDesc(PageRequest.of(0, NUMERO_LISTAR_RANKING_GLOBAL));
+                .findByActivoTrueOrderByVictoriasDescNumAciertosDesc(PageRequest.of(0, rankingGlobalSize));
         
         return JugadorMapper.toRankingDTOList(topJugadores);
     }
@@ -72,7 +76,7 @@ public class LeaderboardService {
 
         // Recuperamos los perfiles ordenados por el criterio de competición
         List<Jugador> amigos = jugadorRepository
-                .findByIdGoogleInAndActivoTrueOrderByVictoriasDescNumAciertosDesc(idsAmigos, PageRequest.of(0, NUMERO_LISTAR_RANKING_AMIGOS));
+                .findByIdGoogleInAndActivoTrueOrderByVictoriasDescNumAciertosDesc(idsAmigos, PageRequest.of(0, rankingAmigosSize));
         
         return JugadorMapper.toRankingDTOList(amigos);
     }

@@ -1,5 +1,7 @@
 package com.secretpanda.codenames.dto.jugador;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO de inventario para Tema.
  * Representa un pack de palabras que el jugador ya ha adquirido.
@@ -7,8 +9,11 @@ package com.secretpanda.codenames.dto.jugador;
  */
 public class TemaInventarioDTO {
 
+    @JsonProperty("id_tema")
     private Integer idTema;
+    @JsonProperty("nombre")
     private String nombre;
+    @JsonProperty("descripcion")
     private String descripcion;
 
     public TemaInventarioDTO() {}

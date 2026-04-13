@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.jugador;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
@@ -9,9 +10,13 @@ import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
  */
 public class HistorialDTO {
 
+    @JsonProperty("partidas")
     private List<PartidaResumenDTO> partidas;
+    @JsonProperty("pagina_actual")
     private int paginaActual;
+    @JsonProperty("total_paginas")
     private int totalPaginas;
+    @JsonProperty("total_partidas")
     private long totalPartidas;
 
     public HistorialDTO() {

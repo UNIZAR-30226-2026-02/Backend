@@ -1,12 +1,17 @@
 package com.secretpanda.codenames.dto.social;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO para mostrar a un jugador en la tabla de clasificación.
  */
 public class RankingDTO {
 
+    @JsonProperty("tag")
     private String tag;
+    @JsonProperty("foto_perfil")
     private String fotoPerfil; 
+    @JsonProperty("victorias")
     private int victorias;
 
     public RankingDTO() {

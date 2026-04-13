@@ -1,12 +1,20 @@
 package com.secretpanda.codenames.dto.juego;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.secretpanda.codenames.model.Turno;
 
 public class PistaDTO {
-    
+
+    @JsonProperty("palabra_pista")
     private String palabraPista;
+
+    @JsonProperty("pista_numero")
     private int pistaNumero;
+
+    @JsonProperty("equipo_lider")
     private String equipoLider;
+
+    @JsonProperty("aciertos_turno")
     private int aciertosTurno;
 
     // Constructor vacío

@@ -26,7 +26,7 @@ public class InventarioPersonalizacion {
     @JoinColumn(name = "id_personalizacion")
     private Personalizacion personalizacion;
 
-    @Column(nullable = false)
+    @Column(name = "equipado", nullable = false)
     private boolean equipado = false;
 
     public InventarioPersonalizacion() {}

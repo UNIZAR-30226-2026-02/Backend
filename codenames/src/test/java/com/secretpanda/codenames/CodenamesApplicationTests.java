@@ -54,7 +54,10 @@ class CodenamesApplicationTests {
         System.out.println("✅ Jugadores creados.");
 
         // 2. SISTEMA SOCIAL (Amistad)
-        AmistadId idAmistad = new AmistadId(p1.getIdGoogle(), p2.getIdGoogle());
+        AmistadId idAmistad = new AmistadId();
+        idAmistad.setIdSolicitante(p1.getIdGoogle());
+        idAmistad.setIdReceptor(p2.getIdGoogle());
+        
         Amistad relacion = new Amistad();
         relacion.setId(idAmistad);
         relacion.setSolicitante(p1);

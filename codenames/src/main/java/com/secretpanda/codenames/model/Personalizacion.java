@@ -22,23 +22,23 @@ public class Personalizacion {
     @Column(name = "id_personalizacion")
     private Integer idPersonalizacion;
 
-    @Column(nullable = false, unique = true, length = 128)
+    @Column(name = "nombre", nullable = false, unique = true, length = 128)
     private String nombre;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(name = "precio_bala", nullable = false)
     private int precioBala = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 64)
+    @Column(name = "tipo", nullable = false, length = 64)
     private TipoPersonalizacion tipo;
 
     @Column(name = "valor_visual", columnDefinition = "TEXT")
     private String valorVisual;
 
-    @Column(nullable = false)
+    @Column(name = "activo", nullable = false)
     private boolean activo = true;
 
     public Personalizacion() {}

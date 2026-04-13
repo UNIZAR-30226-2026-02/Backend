@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 
 /**
@@ -11,13 +12,18 @@ import com.secretpanda.codenames.dto.jugador.JugadorDTO;
  */
 public class AuthResponseDTO {
 
+    @JsonProperty("es_nuevo")
     private boolean esNuevo;
 
     // Null cuando esNuevo = true
+    @JsonProperty("token")
     private String token;
+
+    @JsonProperty("jugador")
     private JugadorDTO jugador;
 
     // Id de la partida EN CURSO a la que pertenece el jugador (null si no hay)
+    @JsonProperty("partida_activa_id")
     private Integer partidaActivaId;
 
     public AuthResponseDTO() {}

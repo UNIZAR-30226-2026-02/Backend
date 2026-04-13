@@ -1,13 +1,22 @@
 package com.secretpanda.codenames.dto.tienda;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PersonalizacionDTO {
 
+    @JsonProperty("id_personalizacion")
     private Integer idPersonalizacion;
+    @JsonProperty("nombre")
     private String nombre;
+    @JsonProperty("descripcion")
     private String descripcion;
+    @JsonProperty("precio_bala")
     private int precioBala;
+    @JsonProperty("tipo")
     private String tipo;
+    @JsonProperty("valor_visual")
     private String valorVisual;
+    @JsonProperty("comprado")
     private boolean comprado;
 
     public PersonalizacionDTO() {

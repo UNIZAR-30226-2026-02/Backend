@@ -17,11 +17,6 @@ public class JugadorLogroId implements Serializable {
 
     public JugadorLogroId() {}
 
-    public JugadorLogroId(String idJugador, Integer idLogro) {
-        this.idJugador = idJugador;
-        this.idLogro = idLogro;
-    }
-
     public String getIdJugador() { 
         return idJugador; 
     }

@@ -31,11 +31,11 @@ public class Chat {
     @JoinColumn(name = "id_jugador_partida", nullable = false)
     private JugadorPartida jugadorPartida;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "mensaje", nullable = false, columnDefinition = "TEXT")
     private String mensaje;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "fecha", nullable = false, updatable = false)
     private LocalDateTime fecha;
 
     public Chat() {}

@@ -1,9 +1,13 @@
 package com.secretpanda.codenames.dto.jugador;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ActualizarPerfilDTO {
     
     // Solo necesitamos los campos que se pueden modificar
+    @JsonProperty("tag")
     private String tag;
+    @JsonProperty("foto_perfil")
     private String fotoPerfil;
 
     // Constructor vacío

@@ -1,3 +1,8 @@
 package com.secretpanda.codenames.dto.social;
 
-public record NotificacionDTO(String tipo, Object payload) {}
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record NotificacionDTO(
+    @JsonProperty("tipo") String tipo, 
+    @JsonProperty("payload") Object payload
+) {}

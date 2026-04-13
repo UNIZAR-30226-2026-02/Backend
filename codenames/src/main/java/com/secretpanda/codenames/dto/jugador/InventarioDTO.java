@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.jugador;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
@@ -9,7 +10,9 @@ import java.util.List;
  */
 public class InventarioDTO {
 
+    @JsonProperty("personalizaciones")
     private List<PersonalizacionInventarioDTO> personalizaciones;
+    @JsonProperty("temas")
     private List<TemaInventarioDTO> temas;
 
     public InventarioDTO() {}

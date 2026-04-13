@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,8 +53,6 @@ public class JuegoService {
     private static final int CARTAS_EQUIPO_SEGUNDO = 8;
     private static final int CARTAS_ASESINO        = 1;
     private static final int CARTAS_CIVIL          = TOTAL_CARTAS - CARTAS_EQUIPO_QUE_INICIA - CARTAS_EQUIPO_SEGUNDO - CARTAS_ASESINO;
-    private static final int BALAS_GANADOR         = 20;
-    private static final int BALAS_DERROTA         = 10;
 
     private final PartidaRepository          partidaRepository;
     private final JugadorPartidaRepository   jugadorPartidaRepository;
@@ -66,6 +65,7 @@ public class JuegoService {
     private final TemporizadorService        temporizadorService;
     private final LeaderboardService leaderboardService;
     private final JugadorService jugadorService;
+    private final ApplicationContext applicationContext;
 
     public JuegoService(PartidaRepository partidaRepository,
                         JugadorPartidaRepository jugadorPartidaRepository,
@@ -77,7 +77,8 @@ public class JuegoService {
                         SimpMessagingTemplate messagingTemplate,
                         TemporizadorService temporizadorService,
                         LeaderboardService leaderboardService,
-                        JugadorService jugadorService) {
+                        JugadorService jugadorService,
+                        ApplicationContext applicationContext) {
         this.partidaRepository        = partidaRepository;
         this.jugadorPartidaRepository = jugadorPartidaRepository;
         this.tableroCartaRepository   = tableroCartaRepository;
@@ -89,10 +90,10 @@ public class JuegoService {
         this.temporizadorService      = temporizadorService;
         this.leaderboardService       = leaderboardService;
         this.jugadorService           = jugadorService;
+        this.applicationContext       = applicationContext;
     }
 
     // ─── Inicializar partida ──────────────────────────────────────────────────
-    // Llamado desde LobbyService al iniciar la partida.
 
     @Transactional
     public void inicializarPartida(Partida partida, List<JugadorPartida> jugadores) {
@@ -114,7 +115,7 @@ public class JuegoService {
         for (int i = 0; i < totalAzules; i++) tipos.add(rojoEmpieza ? TipoCarta.azul : TipoCarta.rojo);
         for (int i = 0; i < CARTAS_ASESINO; i++) tipos.add(TipoCarta.asesino);
         for (int i = 0; i < CARTAS_CIVIL; i++) tipos.add(TipoCarta.civil);
-        Collections.shuffle(tipos); // Mezclar tipos para que no estén agrupados
+        Collections.shuffle(tipos);
 
         List<TableroCarta> cartas = new ArrayList<>();
         int idx = 0;
@@ -148,8 +149,9 @@ public class JuegoService {
         turnoInicial.setAciertosTurno(0);
         turnoRepository.save(turnoInicial);
 
+        // Uso del Bean a través de ApplicationContext para asegurar transaccionalidad en el hilo del timer
         temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
-                () -> forzarFinTurno(partida.getIdPartida()));
+                () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
 
         broadcastEstado(partida.getIdPartida());
     }
@@ -187,32 +189,21 @@ public class JuegoService {
         turno.setPistaNumero(pistaNumero);
         turnoRepository.save(turno);
 
-        // Pasar idPartida al temporizador para que use
-        // juegoService.forzarFinTurno(idPartida) directamente en lugar de un
-        // lambda que puede perder el contexto transaccional de Spring.
         temporizadorService.iniciarTemporizador(idPartida, partida.getTiempoEspera(),
-                () -> forzarFinTurno(idPartida));
+                () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(idPartida));
 
-        
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-        @Override
-        public void afterCommit() {
-            // Enviamos la pista y el estado general solo tras confirmar el Turno en BD
-            PistaDTO pistaDTO = new PistaDTO(turno);
-            messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/pista", pistaDTO);
-            broadcastEstado(idPartida);
-        }
-    });
+            @Override
+            public void afterCommit() {
+                PistaDTO pistaDTO = new PistaDTO(turno);
+                messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/pista", pistaDTO);
+                broadcastEstado(idPartida);
+            }
+        });
     }
 
     // ─── Votar carta (Agente) ─────────────────────────────────────────────────
 
-    /**
-     * idTurno es ahora nullable (Integer).
-     * Si el frontend no lo envía (null), el backend resuelve el turno activo
-     * automáticamente usando el último turno de la partida.
-     * Esto evita el NPE/NotFoundException que provocaba el error del log.
-     */
     @Transactional
     public VotoRecibidoDTO votar(Integer idPartida, Integer idCartaTablero,
                                   Integer idTurno, String idGoogle) {
@@ -223,7 +214,6 @@ public class JuegoService {
             throw new GameLogicException("Solo los agentes pueden votar.");
         }
 
-        // resolver turno activo si no hay idTurno
         Turno turno;
         if (idTurno != null) {
             turno = turnoRepository.findById(idTurno)
@@ -250,7 +240,6 @@ public class JuegoService {
             throw new GameLogicException("Esa carta ya ha sido revelada.");
         }
 
-        // Cambio de voto: borrar el anterior si existe
         votoCartaRepository.findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartida(
                         turno.getIdTurno(), jp.getIdJugadorPartida())
                 .ifPresent(v -> {
@@ -266,22 +255,11 @@ public class JuegoService {
 
         List<VotoCarta> todosVotos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
 
-        // Eliminar el broadcast general a /topic que enviaba el estado
-        // de un solo jugador a todos. El broadcastEstado personalizado se
-        // encarga de enviar a cada jugador su versión correcta según su rol.
-        // La línea eliminada era (la pongo aquí por si acaso):
-        //   messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/estado",
-        //           buildGameState(partida, idGoogle));
-
         List<JugadorPartida> agentesActivos = jugadorPartidaRepository
                 .findByPartida_IdPartidaAndAbandonoFalse(idPartida).stream()
                 .filter(a -> Rol.agente.equals(a.getRol())
                           && a.getEquipo().equals(jp.getEquipo()))
                 .collect(Collectors.toList());
-
-        System.out.println("Votación Partida " + idPartida + " [" + jp.getEquipo() + "]");
-        System.out.println("Agentes que DEBEN votar: " + agentesActivos.size());
-        System.out.println("Votos registrados AHORA: " + todosVotos.size());
 
         boolean todosVotaron = agentesActivos.stream()
                 .allMatch(a -> todosVotos.stream()
@@ -289,7 +267,6 @@ public class JuegoService {
                                 .equals(a.getIdJugadorPartida())));
 
         if (todosVotaron) {
-            System.out.println("Misifu misufu, todos votaron, resolviendo votación ");
             resolverVotacion(partida, turno, jp.getEquipo());
         } else {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -337,22 +314,18 @@ public class JuegoService {
             if (!esAciertoPropio) {
                 prepararTurnoRival(partida, equipoVotante);
             } else {
-                // Registrar acierto válido
                 turno.setAciertosTurno(turno.getAciertosTurno() + 1);
                 turnoRepository.save(turno);
 
-                // Si ha acertado N cartas, el turno finaliza forzosamente
                 if (turno.getPistaNumero() != null && turno.getAciertosTurno() >= turno.getPistaNumero()) {
                     prepararTurnoRival(partida, equipoVotante);
                 } else {
-                    // Si aún no ha llegado al límite, se reinicia el contador para que sigan votando otra ronda
                     temporizadorService.iniciarTemporizador(partida.getIdPartida(),
-                            partida.getTiempoEspera(), () -> forzarFinTurno(partida.getIdPartida()));
+                            partida.getTiempoEspera(), () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
                 }
             }
             
             Integer idPartida = partida.getIdPartida();
-            // Registrar un TransactionSynchronization para asegurar que el broadcast se ejecute después de que la transacción actual se haya comprometido, garantizando que el estado en la base
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
@@ -365,45 +338,27 @@ public class JuegoService {
     private void prepararTurnoRival(Partida partida, Equipo equipoActual) {
         Equipo rival = (equipoActual == Equipo.rojo) ? Equipo.azul : Equipo.rojo;
         
-        // Buscamos al Líder del equipo rival
         JugadorPartida liderRival = jugadorPartidaRepository.findByPartida_IdPartida(partida.getIdPartida())
                 .stream()
                 .filter(jp -> jp.getEquipo().equals(rival) && jp.getRol().equals(Rol.lider))
                 .findFirst()
                 .orElseThrow(() -> new GameLogicException("No hay líder en el equipo rival."));
 
-        // Creamos un turno vacío (sin palabra_pista). 
-        // El GameStateMapper verá palabraPista=null y dirá "Fase: esperando_pista".
         Turno turnoVacio = new Turno();
         turnoVacio.setPartida(partida);
         turnoVacio.setJugadorPartida(liderRival);
         turnoVacio.setNumTurno(turnoRepository.findByPartida_IdPartidaOrderByNumTurnoAsc(partida.getIdPartida()).size() + 1);
-        turnoVacio.setPalabraPista(null); // <--- Clave para el cambio de fase visual
+        turnoVacio.setPalabraPista(null);
         turnoVacio.setPistaNumero(null);
         turnoVacio.setAciertosTurno(0);
         turnoRepository.save(turnoVacio);
         
-        // Iniciamos el temporizador para el líder rival
         temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
-                () -> forzarFinTurno(partida.getIdPartida()));
+                () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
     }
 
     // ─── GameState broadcast ──────────────────────────────────────────────────
 
-    /**
-     *Envío personalizado por usuario según su rol.
-     * Se elimina el broadcast general a /topic/partidas/{id}/estado que:
-     *   1. Causaba que el frontend recibiera dos eventos por actualización.
-     *   2. Enviaba siempre la versión de agente (sin tipos de carta),
-     *      lo que hacía que los líderes recibieran momentáneamente un
-     *      estado incorrecto antes del mensaje personalizado correcto.
-     *
-     * Los clientes deben suscribirse a:
-     *   /user/queue/partidas/{id}/estado
-     * En STOMP esto se traduce a suscribirse a:
-     *   /user/queue/partidas/{id}/estado
-     * (Spring añade el prefijo /user/{sessionId} automáticamente al enviar)
-     */
     @Transactional(readOnly = true)
     public void broadcastEstado(Integer idPartida) {
         Partida partida = partidaRepository.findById(idPartida).orElseThrow();
@@ -426,28 +381,10 @@ public class JuegoService {
                     "/queue/partidas/" + idPartida + "/estado",
                     estado);
         }
-
-        // Se elimina el broadcast general que causaba duplicación:
-        // messagingTemplate.convertAndSend("/topic/partidas/" + idPartida + "/estado", estadoAgente);
     }
 
     // ─── Forzar fin de turno (timeout) ────────────────────────────────────────
 
-    /**
-     * Llamado por TemporizadorService cuando el tiempo expira.
-     *
-     * Este método se llama como lambda desde TemporizadorService
-     * en un hilo distinto (CompletableFuture.runAsync). Spring no crea un proxy
-     * transaccional nuevo para lambdas, por lo que @Transactional aquí no garantiza
-     * una transacción nueva en ese hilo.
-     *
-     * El método solo hace operaciones de lectura y broadcast.
-     * Las operaciones de escritura (si las hubiera) deben ir en métodos separados
-     * inyectados correctamente. En el estado actual, broadcastEstado no escribe
-     * en BD y requireEnCurso solo lee, por lo que el riesgo es bajo.
-     * Si se requiere escritura en el timeout, inyectar JuegoService via
-     * ApplicationContext para obtener el proxy con @Transactional.
-     */
     @Transactional
     public void forzarFinTurno(Integer idPartida) {
         Partida partida = partidaRepository.findById(idPartida).orElse(null);
@@ -459,7 +396,6 @@ public class JuegoService {
         List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno());
 
         if (!votos.isEmpty()) {
-            // Contamos votos
             Map<Integer, Long> conteo = votos.stream()
                 .collect(Collectors.groupingBy(v -> v.getCartaTablero().getIdCartaTablero(), Collectors.counting()));
 
@@ -469,34 +405,23 @@ public class JuegoService {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-            // Si hay un ganador único (mayoría clara), resolvemos esa carta
             if (ganadores.size() == 1) {
                 resolverVotacion(partida, turnoActual, turnoActual.getJugadorPartida().getEquipo());
-                return; // resolverVotacion ya hace el broadcast y cambia el turno si falla
+                return;
             }
         }
 
-        // Si llegamos aquí es porque no hay votos o hay empate (indecisión)
-        // El equipo pierde el turno por falta de decisión.
         prepararTurnoRival(partida, turnoActual.getJugadorPartida().getEquipo());
         broadcastEstado(idPartida);
     }
 
     // ─── GameState para un jugador concreto ───────────────────────────────────
 
-    /**
-     * Acepta tanto estado en_curso como finalizada.
-     * Antes lanzaba GameLogicException si la partida estaba finalizada,
-     * impidiendo mostrar la pantalla de resultados.
-     */
     @Transactional(readOnly = true)
     public GameStateDTO getGameState(Integer idPartida, String idGoogle) {
         Partida partida = partidaRepository.findById(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
-        // Permite en_curso y finalizada (necesario para la reconexión
-        // al volver a entrar mientras la partida está activa, y para el endpoint
-        // /estado que el frontend puede llamar justo cuando termina)
         if (!Partida.EstadoPartida.en_curso.equals(partida.getEstado()) &&
             !Partida.EstadoPartida.finalizada.equals(partida.getEstado())) {
             throw new GameLogicException("La partida no está en curso ni finalizada.");
@@ -515,12 +440,6 @@ public class JuegoService {
         return GameStateMapper.toDTO(partida, cartas, turnoActual, votos, esLider);
     }
 
-    /**
-     * Endpoint dedicado para la pantalla de fin de partida.
-     * Igual que getGameState pero solo acepta estado finalizada.
-     * Devuelve el tablero completo con tipos de carta visibles para todos
-     * (al terminar la partida se revela todo el tablero).
-     */
     @Transactional(readOnly = true)
     public GameStateDTO getGameStateFinalizado(Integer idPartida, String idGoogle) {
         Partida partida = partidaRepository.findById(idPartida)
@@ -539,7 +458,6 @@ public class JuegoService {
                 ? votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno())
                 : List.of();
 
-        // En la pantalla de resultados se muestra el tablero completo (todos ven los tipos)
         return GameStateMapper.toDTO(partida, cartas, turnoActual, votos, true);
     }
 
@@ -582,12 +500,9 @@ public class JuegoService {
         Equipo equipoUltimoTurno = ultimo.getJugadorPartida().getEquipo();
 
         if (equipoJugador.equals(equipoUltimoTurno)) {
-            // Corrección 4 (Bug 4): si el último turno está vacío (palabraPista == null) es el
-            // turno placeholder creado por prepararTurnoRival. El jefe SÍ puede dar su pista.
             if (ultimo.getPalabraPista() != null) {
                 throw new GameLogicException("Tu equipo ya ha dado una pista. Debes esperar al turno del rival.");
             }
-            // palabraPista == null → es el placeholder → se permite continuar.
         }
     }
 
@@ -625,33 +540,13 @@ public class JuegoService {
 
         for (JugadorPartida jp : partida.getJugadores()) {
             Jugador j = jp.getJugador();
-            
-            // Determinar si ha ganado
             boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
             boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
             
-            // ACTUALIZAR ESTADÍSTICAS GLOBALES (Necesario para los logros)
-            j.setPartidasJugadas(j.getPartidasJugadas() + 1);
-            if (gano) {
-                j.setVictorias(j.getVictorias() + 1);
-            }
-            j.setNumAciertos(j.getNumAciertos() + jp.getNumAciertos());
-            j.setNumFallos(j.getNumFallos() + jp.getNumFallos());
-            
-            // Guardamos las estadísticas primero
-            jugadorRepository.save(j);
-
-            // ASIGNAR BALAS mediante el método seguro
-            int premio = gano ? BALAS_GANADOR : BALAS_DERROTA;
-            jugadorService.modificarBalas(j.getIdGoogle(), premio);
-
-            // ACTUALIZAR LOGROS
-            jugadorService.actualizarProgresoLogros(j.getIdGoogle());
+            jugadorService.procesarFinPartida(j.getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
         }
 
-        // Actualizar el ranking global al finalizar la partida
         leaderboardService.broadcastGlobalRanking(); 
-
         broadcastEstado(partida.getIdPartida());
     }
 
@@ -702,7 +597,6 @@ public class JuegoService {
             throw new GameLogicException("La partida aún no ha finalizado.");
         }
         
-        // Verificamos que el jugador pertenezca a la partida
         requireJugadorEnPartida(idGoogle, idPartida);
 
         long aciertosRojo = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(

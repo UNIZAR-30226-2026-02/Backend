@@ -94,7 +94,10 @@ public class AmistadService {
 
         // Si no existía nada, crear nueva solicitud normal
         Amistad nueva = new Amistad();
-        nueva.setId(new AmistadId(idSolicitante, receptor.getIdGoogle()));
+        AmistadId aid = new AmistadId();
+        aid.setIdSolicitante(idSolicitante);
+        aid.setIdReceptor(receptor.getIdGoogle());
+        nueva.setId(aid);
         nueva.setSolicitante(solicitante);
         nueva.setReceptor(receptor);
         nueva.setEstado(Amistad.EstadoAmistad.pendiente);
@@ -106,7 +109,10 @@ public class AmistadService {
 
     @Transactional
     public void gestionarSolicitud(String idReceptor, String idSolicitante, String estado) {
-        Amistad amistad = amistadRepository.findById(new AmistadId(idSolicitante, idReceptor))
+        AmistadId aid = new AmistadId();
+        aid.setIdSolicitante(idSolicitante);
+        aid.setIdReceptor(idReceptor);
+        Amistad amistad = amistadRepository.findById(aid)
                 .orElseThrow(() -> new NotFoundException("Solicitud no encontrada."));
 
         if ("aceptada".equalsIgnoreCase(estado)) {

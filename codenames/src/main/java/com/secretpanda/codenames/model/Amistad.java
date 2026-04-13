@@ -38,7 +38,7 @@ public class Amistad {
     private Jugador receptor;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(name = "estado", nullable = false, length = 16)
     private EstadoAmistad estado;
 
     @CreationTimestamp

@@ -1,18 +1,28 @@
 package com.secretpanda.codenames.dto.tienda;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO para la Pantalla de Logros y Medallas.
  * Basado estrictamente en el contrato de API (Página 30).
  */
 public class LogroDTO {
 
+    @JsonProperty("id_logro")
     private Integer idLogro;
+    @JsonProperty("es_logro")
     private boolean esLogro; // true = Logro, false = Medalla
+    @JsonProperty("nombre")
     private String nombre;
+    @JsonProperty("descripcion")
     private String descripcion;
+    @JsonProperty("progreso_actual")
     private int progresoActual;
+    @JsonProperty("progreso_max")
     private int progresoMax;
+    @JsonProperty("completado")
     private boolean completado;
+    @JsonProperty("balas_recompensa")
     private int balasRecompensa;
 
     public LogroDTO() {

@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.juego;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 
@@ -9,8 +10,10 @@ import java.util.Map;
  */
 public class VotoRecibidoDTO {
 
+    @JsonProperty("id_turno")
     private Integer idTurno;
     // key: idCartaTablero, value: lista de tags de jugadores que votaron esa carta
+    @JsonProperty("votos_por_carta")
     private Map<Integer, List<String>> votosPorCarta;
 
     public VotoRecibidoDTO() {}

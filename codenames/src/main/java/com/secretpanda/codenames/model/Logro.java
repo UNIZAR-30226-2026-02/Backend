@@ -22,14 +22,14 @@ public class Logro {
     @Column(name = "id_logro")
     private Integer idLogro;
 
-    @Column(nullable = false, unique = true, length = 128)
+    @Column(name = "nombre", nullable = false, unique = true, length = 128)
     private String nombre;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 64)
+    @Column(name = "tipo", nullable = false, length = 64)
     private TipoLogro tipo;
 
     @Column(name = "estadistica_clave", nullable = false, length = 64)
@@ -41,7 +41,7 @@ public class Logro {
     @Column(name = "balas_recompensa", nullable = false)
     private int balasRecompensa;
 
-    @Column(nullable = false)
+    @Column(name = "activo", nullable = false)
     private boolean activo = true;
 
     public Logro() {

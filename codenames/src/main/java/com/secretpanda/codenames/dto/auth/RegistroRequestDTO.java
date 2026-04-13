@@ -1,12 +1,17 @@
 package com.secretpanda.codenames.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Body para POST /api/auth/registro
  * { "id_google": "<sub de Google>", "tag": "NombreElegido" }
  */
 public class RegistroRequestDTO {
 
+    @JsonProperty("id_google")
     private String idGoogle;
+
+    @JsonProperty("tag")
     private String tag;
 
     public RegistroRequestDTO() {}

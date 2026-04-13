@@ -1,18 +1,29 @@
 package com.secretpanda.codenames.dto.juego;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.secretpanda.codenames.model.TableroCarta;
 
 public class CartaDTO {
-    
+
+    @JsonProperty("id_carta_tablero")
     private Integer idCartaTablero;
+
+    @JsonProperty("palabra")
     private String palabra;
+
+    @JsonProperty("fila")
     private int fila;
+
+    @JsonProperty("columna")
     private int columna;
+
+    @JsonProperty("estado")
     private String estado; // "oculta" o "revelada"
     
     // IMPORTANTE SEGURIDAD: 
     // Si la carta está oculta para el agente, no revelamos su tipo (lo ponemos null).
     // Si la carta está revelada o el agente es el líder, sí mostramos su tipo real.
+    @JsonProperty("tipo")
     private String tipo; 
 
     // Constructor vacío

@@ -41,11 +41,11 @@ public class JugadorPartida {
     private Partida partida;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(name = "equipo", nullable = false, length = 16)
     private Equipo equipo; 
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
+    @Column(name = "rol", nullable = false, length = 32)
     private Rol rol; 
 
     @Column(name = "num_fallos", nullable = false)
@@ -54,7 +54,7 @@ public class JugadorPartida {
     @Column(name = "num_aciertos", nullable = false)
     private int numAciertos = 0;
 
-    @Column(nullable = false)
+    @Column(name = "abandono", nullable = false)
     private boolean abandono = false;
 
     public JugadorPartida() {}

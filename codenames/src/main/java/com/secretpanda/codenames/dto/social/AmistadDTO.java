@@ -6,13 +6,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AmistadDTO {
 
+    @JsonProperty("id_solicitante")
     private String idSolicitante; 
+    @JsonProperty("tag_solicitante")
     private String tagSolicitante;
+    @JsonProperty("foto_perfil_solicitante")
     private String fotoPerfilSolicitante;
 
     @JsonProperty("fecha_solicitud")
     private LocalDateTime fechaSolicitud; 
 
+    @JsonProperty("estado")
     private String estado; // "pendiente" o "aceptada"
 
     public AmistadDTO() {}

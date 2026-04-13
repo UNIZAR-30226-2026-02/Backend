@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,8 @@ import com.secretpanda.codenames.util.CodigoPartidaGenerator;
 @Service
 public class PartidaService {
 
-    private static final int BALAS_PENALIZACION_ABANDONO = 10;
+    @Value("${game.penalizacion-abandono:10}")
+    private int balasPenalizacionAbandono;
 
     private final PartidaRepository partidaRepository;
     private final JugadorRepository jugadorRepository;
@@ -41,6 +43,7 @@ public class PartidaService {
     private final CodigoPartidaGenerator codigoGenerator;
     private final SimpMessagingTemplate messagingTemplate;
     private final JugadorService jugadorService;
+    private final JuegoService juegoService;
 
     public PartidaService(PartidaRepository partidaRepository,
                           JugadorRepository jugadorRepository,
@@ -50,7 +53,8 @@ public class PartidaService {
                           TableroCartaRepository tableroCartaRepository,
                           CodigoPartidaGenerator codigoGenerator,
                           SimpMessagingTemplate messagingTemplate,
-                          JugadorService jugadorService) {
+                          JugadorService jugadorService,
+                          JuegoService juegoService) {
         this.partidaRepository = partidaRepository;
         this.jugadorRepository = jugadorRepository;
         this.temaRepository = temaRepository;
@@ -60,25 +64,23 @@ public class PartidaService {
         this.codigoGenerator = codigoGenerator;
         this.messagingTemplate = messagingTemplate;
         this.jugadorService = jugadorService;
+        this.juegoService = juegoService;
     }
 
     // ─── Crear partida ─────────────────────────────────────────────────────────
 
     @Transactional
     public LobbyStatusDTO crearPartida(CrearPartidaDTO dto, String idGoogle) {
-        // 1 partida activa por jugador
         validarSinPartidaActiva(idGoogle);
 
         Tema tema = temaRepository.findById(dto.getIdTema())
                 .orElseThrow(() -> new NotFoundException("El tema seleccionado no existe."));
         Jugador creador = findJugador(idGoogle);
 
-        // Validar que el creador tiene ese tema adquirido
         if (!inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, dto.getIdTema())) {
             throw new GameLogicException("No tienes adquirido ese tema de cartas.");
         }
 
-        // Generar código único
         String codigo;
         do {
             codigo = codigoGenerator.generarCodigo();
@@ -94,12 +96,11 @@ public class PartidaService {
         partida.setCodigoPartida(codigo);
         partida = partidaRepository.save(partida);
 
-        // El creador entra al lobby en equipo rojo por defecto
         JugadorPartida jp = new JugadorPartida();
         jp.setJugador(creador);
         jp.setPartida(partida);
         jp.setEquipo(JugadorPartida.Equipo.rojo);
-        jp.setRol(JugadorPartida.Rol.agente); // El rol real se asigna al iniciar
+        jp.setRol(JugadorPartida.Rol.agente);
         jugadorPartidaRepository.save(jp);
 
         return buildLobbyStatusDTO(partida, List.of(jp));
@@ -119,7 +120,6 @@ public class PartidaService {
         }
 
         unirseValidado(partida, idGoogle);
-
         return partida.getIdPartida();
     }
 
@@ -136,7 +136,6 @@ public class PartidaService {
             throw new GameLogicException("Esta partida es privada.");
         }
 
-        // Comprobar que el jugador tiene el tema de la partida
         if (!inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(
                 idGoogle, partida.getTema().getIdTema())) {
             throw new GameLogicException("No tienes adquirido el tema de esta partida.");
@@ -149,7 +148,6 @@ public class PartidaService {
 
     @Transactional
     public void abandonar(Integer idPartida, String idGoogle) {
-        // 1. Bloqueamos la fila de la partida para evitar que dos abandonos simultáneos corrompan el estado
         Partida partida = partidaRepository.findByIdForUpdate(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
@@ -157,22 +155,17 @@ public class PartidaService {
                 .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
                 .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
 
-        // CASO A: LA PARTIDA ESTÁ EN JUEGO
         if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-            jugadorService.modificarBalas(idGoogle, -10);
+            jugadorService.modificarBalas(idGoogle, -balasPenalizacionAbandono);
 
-            // Marcar que el jugador ha abandonado
             jp.setAbandono(true);
             jugadorPartidaRepository.save(jp);
 
-            // Chequeo de fin de partida por falta de personal operativo
-            // Obtenemos todos los que NO han abandonado en esta partida
             List<JugadorPartida> activos = jugadorPartidaRepository
                     .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
             
             JugadorPartida.Equipo miEquipo = jp.getEquipo();
             
-            // Contamos cuántos Líderes y Agentes quedan en el equipo del que se acaba de ir
             long lideresEnMiEquipo = activos.stream()
                     .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.lider))
                     .count();
@@ -180,25 +173,20 @@ public class PartidaService {
                     .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.agente))
                     .count();
 
-            // Si mi equipo se queda sin Líder (RF-27) O sin Agentes (nadie para votar)
             if (lideresEnMiEquipo == 0 || agentesEnMiEquipo == 0) {
-                // El equipo rival gana automáticamente
                 boolean ganaRojo = !miEquipo.equals(JugadorPartida.Equipo.rojo);
                 finalizarPartidaManual(partida, ganaRojo);
+            } else {
+                juegoService.broadcastEstado(idPartida);
             }
-            // Si aún quedan jugadores suficientes, la partida continúa normalmente.
-
         } 
-        // CASO B: LA PARTIDA ESTÁ EN EL LOBBY
         else {
             boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
             if (esCreador) {
-                // Si el creador se va del lobby, la partida se cancela para todos
                 partida.setEstado(Partida.EstadoPartida.finalizada);
                 partida.setFechaFin(LocalDateTime.now());
                 partidaRepository.save(partida);
             }
-            // Eliminamos físicamente el registro del jugador del lobby
             jugadorPartidaRepository.delete(jp);
         }
     }
@@ -211,7 +199,6 @@ public class PartidaService {
                 .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
                 .orElseThrow(() -> new NotFoundException("No perteneces a esta partida."));
 
-        // El equipo inicial es el que tiene más cartas (rojo normalmente empieza con 9 vs 8)
         long cartasRojo = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
                 idPartida,
                 com.secretpanda.codenames.model.TableroCarta.TipoCarta.rojo,
@@ -251,7 +238,6 @@ public class PartidaService {
         JugadorPartida jp = new JugadorPartida();
         jp.setJugador(jugador);
         jp.setPartida(partida);
-        // Balancear: ir al equipo con menos jugadores
         long rojos = jugadorPartidaRepository
                 .findByPartida_IdPartidaAndEquipo(partida.getIdPartida(), JugadorPartida.Equipo.rojo).size();
         long azules = jugadorPartidaRepository
@@ -263,20 +249,11 @@ public class PartidaService {
 
     private void validarSinPartidaActiva(String idGoogle) {
         boolean tienePartidaActiva = jugadorPartidaRepository
-                .findByJugador_IdGoogle(idGoogle).stream()
-                .anyMatch(jp -> !jp.isAbandono() &&
-                        (Partida.EstadoPartida.en_curso.equals(jp.getPartida().getEstado()) ||
-                         Partida.EstadoPartida.esperando.equals(jp.getPartida().getEstado())));
+                .existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+                        idGoogle, List.of(Partida.EstadoPartida.en_curso, Partida.EstadoPartida.esperando));
         if (tienePartidaActiva) {
             throw new GameLogicException("Ya estás en una partida activa.");
         }
-    }
-
-    private void finalizarPorAbandonoLider(Partida partida, JugadorPartida.Equipo equipoPerdedor) {
-        partida.setEstado(Partida.EstadoPartida.finalizada);
-        partida.setFechaFin(LocalDateTime.now());
-        partida.setRojoGana(!JugadorPartida.Equipo.rojo.equals(equipoPerdedor));
-        partidaRepository.save(partida);
     }
 
     private void finalizarPartidaManual(Partida partida, boolean rojoGana) {
@@ -285,7 +262,13 @@ public class PartidaService {
         partida.setRojoGana(rojoGana);
         partidaRepository.save(partida);
 
-        // Notificar al canal de la partida que ha terminado
+        List<JugadorPartida> todos = jugadorPartidaRepository.findByPartida_IdPartida(partida.getIdPartida());
+        for (JugadorPartida jp : todos) {
+            boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
+            boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
+            jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
+        }
+
         messagingTemplate.convertAndSend("/topic/partidas/" + partida.getIdPartida() + "/estado", "FINALIZADA");
     }
 

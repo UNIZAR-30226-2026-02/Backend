@@ -1,11 +1,18 @@
 package com.secretpanda.codenames.dto.tienda;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class TemaDTO {
 
+    @JsonProperty("id_tema")
     private Integer idTema;
+    @JsonProperty("nombre")
     private String nombre;
+    @JsonProperty("descripcion")
     private String descripcion;
+    @JsonProperty("precio_balas")
     private int precioBalas;
+    @JsonProperty("comprado")
     private boolean comprado;
 
     public TemaDTO() {

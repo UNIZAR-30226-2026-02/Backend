@@ -1,5 +1,6 @@
 package com.secretpanda.codenames.dto.jugador;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.secretpanda.codenames.model.Jugador;
 
 /**
@@ -8,21 +9,34 @@ import com.secretpanda.codenames.model.Jugador;
  */
 public class JugadorDTO {
 
+    @JsonProperty("id_google")
     private String idGoogle;
+    @JsonProperty("tag")
     private String tag;
+    @JsonProperty("foto_perfil")
     private String fotoPerfil;
+    @JsonProperty("balas")
     private int balas;
+    @JsonProperty("activo")
     private boolean activo;
 
+    @JsonProperty("partidas_jugadas")
     private int partidasJugadas;
+    @JsonProperty("victorias")
     private int victorias;
+    @JsonProperty("num_aciertos")
     private int numAciertos;
+    @JsonProperty("num_fallos")
     private int numFallos;
 
+    @JsonProperty("derrotas")
     private int derrotas;
+    @JsonProperty("porcentaje_victorias")
     private double porcentajeVictorias;
 
+    @JsonProperty("marco_carta_equipado")
     private String marcoCartaEquipado;
+    @JsonProperty("fondo_tablero_equipado")
     private String fondoTableroEquipado;
 
     public JugadorDTO() {
