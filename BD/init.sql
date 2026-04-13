@@ -185,6 +185,7 @@ CREATE TABLE voto_carta (
     id_turno             INT           NOT NULL REFERENCES turno(id_turno)                     ON DELETE CASCADE,
     id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida) ON DELETE CASCADE,
     id_carta_tablero     INT           NOT NULL REFERENCES tablero_carta(id_carta_tablero)     ON DELETE CASCADE,
+    id_carta_revelada    INT           REFERENCES tablero_carta(id_carta_tablero)              ON DELETE SET NULL,
     UNIQUE (id_turno, id_jugador_partida, id_carta_tablero)
 );
 

@@ -17,19 +17,27 @@ erDiagram
     TEMA ||--o{ INVENTARIO_TEMA : "es_desbloqueado_por"
     
     TEMA ||--o{ PALABRA_TEMA : "contiene"
-    TEMA ||..o{ PARTIDA : "configura"
-    JUGADOR ||..o{ PARTIDA : "crea"
-    PARTIDA ||..|{ JUGADOR_PARTIDA : "incluye"
-    JUGADOR ||..o{ JUGADOR_PARTIDA : "participa"
-    PARTIDA ||..o{ CHAT : "alberga (optimización)"
-    JUGADOR_PARTIDA ||..o{ CHAT : "escribe"
-    PARTIDA ||..|{ TABLERO_CARTA : "genera"
-    PALABRA_TEMA }o..o{ TABLERO_CARTA : "usa (N:M lógico)"
-    PARTIDA ||..o{ TURNO : "se_divide_en (optimización)"
-    JUGADOR_PARTIDA ||..o{ TURNO : "inicia"
-    TURNO ||..o{ VOTO_CARTA : "registra"
-    TABLERO_CARTA ||..o{ VOTO_CARTA : "recibe"
-    JUGADOR_PARTIDA ||..o{ VOTO_CARTA : "realiza"
+    TEMA ||--o{ PARTIDA : "configura"
+    
+    JUGADOR ||--o{ PARTIDA : "crea"
+    
+    PARTIDA ||--|{ JUGADOR_PARTIDA : "incluye"
+    JUGADOR ||--o{ JUGADOR_PARTIDA : "participa"
+    
+    PARTIDA ||--o{ CHAT : "alberga"
+    JUGADOR_PARTIDA ||--o{ CHAT : "escribe"
+    
+    PARTIDA ||--|{ TABLERO_CARTA : "genera"
+    PALABRA_TEMA ||--o{ TABLERO_CARTA : "se_asigna_a"
+    
+    PARTIDA ||--o{ TURNO : "se_divide_en"
+    JUGADOR_PARTIDA ||--o{ TURNO : "inicia"
+    
+    TURNO ||--o{ VOTO_CARTA : "registra"
+    JUGADOR_PARTIDA ||--o{ VOTO_CARTA : "realiza"
+    
+    TABLERO_CARTA ||--o{ VOTO_CARTA : "es_votada"
+    TABLERO_CARTA ||--o{ VOTO_CARTA : "es_revelada"
 
     JUGADOR {
         string id_google PK
@@ -37,22 +45,22 @@ erDiagram
         string foto_perfil
         int balas
         datetime fecha_registro
-        boolean activo "Borrado lógico"
-        int partidas_jugadas "Estadística global (Trigger)"
-        int victorias "Estadística global (Trigger)"
-        int num_aciertos "Estadística global (Trigger)"
-        int num_fallos "Estadística global (Trigger)"
+        boolean activo
+        int partidas_jugadas
+        int victorias
+        int num_aciertos
+        int num_fallos
     }
 
     LOGRO {
         int id_logro PK
         string nombre UK
         string descripcion
-        string tipo "medalla, logro"
+        string tipo
         string estadistica_clave
         int valor_objetivo
         int balas_recompensa
-        boolean activo "Borrado lógico"
+        boolean activo
     }
 
     JUGADOR_LOGRO {
@@ -66,7 +74,7 @@ erDiagram
     AMISTAD {
         string id_solicitante PK, FK
         string id_receptor PK, FK
-        string estado "pendiente, aceptada"
+        string estado
         datetime fecha_solicitud
     }
 
@@ -77,7 +85,7 @@ erDiagram
         int precio_bala
         string tipo
         string valor_visual
-        boolean activo "Borrado lógico"
+        boolean activo
     }
 
     INVENTARIO_PERSONALIZACION {
@@ -96,19 +104,19 @@ erDiagram
         string nombre UK
         string descripcion
         int precio_balas
-        boolean activo "Borrado lógico"
+        boolean activo
     }
 
     PALABRA_TEMA {
         int id_palabra PK
         int id_tema FK
         string valor
-        boolean activo "Borrado lógico"
+        boolean activo
     }
 
     PARTIDA {
         int id_partida PK
-        string codigo_partida UK "Código invitación"
+        string codigo_partida UK
         int id_tema FK
         string id_creador FK
         int tiempo_espera
@@ -128,12 +136,12 @@ erDiagram
         string rol
         int num_fallos
         int num_aciertos
-        boolean abandono "Control de rage-quit"
+        boolean abandono
     }
 
     CHAT {
         int id_mensaje PK
-        int id_partida FK "Desnormalizado por rendimiento"
+        int id_partida FK
         int id_jugador_partida FK
         string mensaje
         datetime fecha
@@ -151,7 +159,7 @@ erDiagram
 
     TURNO {
         int id_turno PK
-        int id_partida FK "Desnormalizado por rendimiento"
+        int id_partida FK
         int id_jugador_partida FK
         int num_turno
         string palabra_pista
@@ -164,4 +172,5 @@ erDiagram
         int id_turno FK
         int id_jugador_partida FK
         int id_carta_tablero FK
+        int id_carta_revelada FK
     }
