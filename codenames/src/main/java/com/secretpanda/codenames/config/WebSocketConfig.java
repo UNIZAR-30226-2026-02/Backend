@@ -47,7 +47,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private JwtService jwtService;
 
     /** Orígenes permitidos para el handshake WebSocket (igual que CORS REST) */
-    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:5173}")
+    @Value("${cors.allowed-origins:codenamesreactweb-hgebahh0bvg6aah6.spaincentral-01.azurewebsites.net, codenames-db.postgres.database.azure.com}")
     private String[] allowedOrigins;
 
     // ──────────────────────────────────────────────────────────────────────────
