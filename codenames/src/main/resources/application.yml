@@ -27,8 +27,8 @@ spring:
       password: disabled
 
 google:
-  client-id: ${GOOGLE_CLIENT_ID:271645130319-f9agsfadvl8njoaoitevnaspuchj5fb9.apps.googleusercontent.com}
-
+  client-id: ${GOOGLE_CLIENT_ID:271645130319-2raursujnehhvpjcj6g015kpn9rqfnbs.apps.googleusercontent.com}
+  
 jwt:
   secret: ${JWT_SECRET:esta_es_una_clave_secreta_muy_larga_para_el_mvp_de_mañana_2024}
   expiration-ms: 86400000
