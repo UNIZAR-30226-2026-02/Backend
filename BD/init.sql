@@ -222,42 +222,42 @@ BEGIN
     -- Paquete Básico (nombres: carta1.png a carta20.png)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Basico';
     FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, url_imagen) 
+        INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/basico/carta' || i || '.png');
     END LOOP;
 
     -- Paquete Magia (nombres: carta_magia1.png ...)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Magia';
     FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, url_imagen) 
+        INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/magia/carta_magia' || i || '.png');
     END LOOP;
 
     -- Paquete Cyberpunk (nombres: carta_cyberpunk1.png ...)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Cyberpunk';
     FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, url_imagen) 
+        INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/cyber_punk/carta_cyberpunk' || i || '.png');
     END LOOP;
 
     -- Paquete Histórico (nombres: carta_historico1.png ...)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Histórico';
     FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, url_imagen) 
+        INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/hist%C3%B3rico/carta_historico' || i || '.png');
     END LOOP;
 
     -- Paquete Vida submarina (nombres: carta_submarina1.png ...)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Vida submarina';
     FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, url_imagen) 
+        INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/vida_submarina/carta_submarina' || i || '.png');
     END LOOP;
 
     -- Paquete Naturaleza (nombres: carta_naturaleza1.png ...)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Naturaleza';
     FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, url_imagen) 
+        INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/naturaleza/carta_naturaleza' || i || '.png');
     END LOOP;
 END $$;
