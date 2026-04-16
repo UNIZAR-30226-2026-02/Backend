@@ -267,13 +267,13 @@ INSERT INTO logro (nombre, descripcion, tipo, estadistica_clave, valor_objetivo,
 
 -- Temas visuales de Carta y Tablero
 INSERT INTO personalizacion (nombre, descripcion, precio_bala, tipo, valor_visual, activo) VALUES
-('Fondo Oro envejecido', 'Fondo de tablero amarillo.', 50, 'tablero', 'color_amarillo_fondo', true),
-('Fondo Verde salvia', 'Fondo de tablero verde.', 50, 'tablero', 'color_verde_fondo', true),
-('Fondo Terracota cálida', 'Fondo de tablero naranja.', 50, 'tablero', 'color_naranja_fondo', true),
-('Fondo Púrpura real', 'Fondo de tablero morado.', 50, 'tablero', 'color_morado_fondo', true),
-('Fondo Cuarzo rosa', 'Fondo de tablero rosa.', 50, 'tablero', 'color_rosa_fondo', true),
-('Marco Oro envejecido', 'Marco de cartas amarillo.', 50, 'carta', 'color_amarillo_marco', true),
-('Marco Verde salvia', 'Marco de cartas verde.', 50, 'carta', 'color_verde_marco', true),
-('Marco Terracota cálida', 'Marco de cartas naranja.', 50, 'carta', 'color_naranja_marco', true),
-('Marco Púrpura real', 'Marco de cartas morado.', 50, 'carta', 'color_morado_marco', true),
-('Marco Cuarzo rosa', 'Marco de cartas rosa.', 50, 'carta', 'color_rosa_marco', true);
+('Fondo Oro envejecido', 'Fondo de tablero amarillo.', 50, 'tablero', 'd4af37', true),
+('Fondo Verde salvia', 'Fondo de tablero verde.', 50, 'tablero', '8a9a5b', true),
+('Fondo Terracota cálida', 'Fondo de tablero naranja.', 50, 'tablero', 'c65d3b', true),
+('Fondo Púrpura real', 'Fondo de tablero morado.', 50, 'tablero', '8b5a8b', true),
+('Fondo Cuarzo rosa', 'Fondo de tablero rosa.', 50, 'tablero', 'c67b8a', true),
+('Marco Oro envejecido', 'Marco de cartas amarillo.', 50, 'carta', 'd4af37', true),
+('Marco Verde salvia', 'Marco de cartas verde.', 50, 'carta', '8a9a5b', true),
+('Marco Terracota cálida', 'Marco de cartas naranja.', 50, 'carta', 'c65d3b', true),
+('Marco Púrpura real', 'Marco de cartas morado.', 50, 'carta', '8b5a8b', true),
+('Marco Cuarzo rosa', 'Marco de cartas rosa.', 50, 'carta', 'c67b8a', true);
