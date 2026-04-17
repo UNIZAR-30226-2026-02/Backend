@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,19 +27,24 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
-    @Value("${cors.allowed-origins:https://codenamesreactweb-hgebahh0bvg6aah6.spaincentral-01.azurewebsites.net,http://localhost:5173}")
+    @Value("${cors.allowed-origins:https://codenamesweb.azurewebsites.net,https://codenamesreactweb-hgebahh0bvg6aah6.spaincentral-01.azurewebsites.net,http://localhost:5173}")
     private String[] allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            // Ahora cogerá automáticamente el Bean corsConfigurationSource de abajo
             .cors(Customizer.withDefaults()) 
             .sessionManagement(session -> 
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.disable())
+                .contentSecurityPolicy(csp -> csp.policyDirectives("upgrade-insecure-requests;"))
+                .addHeaderWriter(new StaticHeadersWriter("Cross-Origin-Opener-Policy", "unsafe-none"))
+                .addHeaderWriter(new StaticHeadersWriter("Cross-Origin-Embedder-Policy", "unsafe-none"))
+            )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/api/hello").permitAll() // <-- NUEVA LÍNEA PARA EL TEST
+                .requestMatchers(HttpMethod.GET, "/api/hello").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/temas/activos").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/logros/activos").permitAll()
@@ -53,16 +59,20 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Le damos las reglas de CORS directamente a Spring Security
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Usamos patrones para permitir cualquier subdominio de azurewebsites.net y localhost
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://*.azurewebsites.net",
+                "http://localhost:[*]",
+                "http://127.0.0.1:[*]"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        // VITAL para que React pueda recibir y enviar la cookie HttpOnly
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
         configuration.setAllowCredentials(true); 
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

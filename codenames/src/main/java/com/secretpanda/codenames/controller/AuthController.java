@@ -70,17 +70,35 @@ public class AuthController {
         return ResponseEntity.ok(respuesta);
     }
 
-    // ─── Logout ───────────────────────────────────────────────────────────────
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private void setCookie(HttpServletResponse response, String token) {
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(MAX_AGE_SEC)
+                .build();
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void invalidateCookie(HttpServletResponse response) {
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        // Invalida la cookie poniendo Max-Age=0
-        response.setHeader("Set-Cookie",
-                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0");
+        invalidateCookie(response);
         return ResponseEntity.noContent().build();
     }
-
-    // ─── Desactivar cuenta ────────────────────────────────────────────────────
 
     @PutMapping("/desactivar")
     public ResponseEntity<Void> desactivar(
@@ -89,18 +107,8 @@ public class AuthController {
 
         String idGoogle = extraerIdGoogleDeCookie(request);
         authService.desactivarCuenta(idGoogle);
-        // También invalidamos la sesión
-        response.setHeader("Set-Cookie",
-                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0");
+        invalidateCookie(response);
         return ResponseEntity.noContent().build();
-    }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
-    private void setCookie(HttpServletResponse response, String token) {
-        response.setHeader("Set-Cookie",
-                String.format("%s=%s; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=%d",
-                        COOKIE_NAME, token, MAX_AGE_SEC));
     }
 
     /**
