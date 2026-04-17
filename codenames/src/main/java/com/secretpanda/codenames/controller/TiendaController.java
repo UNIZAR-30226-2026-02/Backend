@@ -38,17 +38,15 @@ public class TiendaController {
     }
 
     /**
-     * Endpoint unificado según Contrato API 1.4
-     * POST /tienda/comprar/{id_google}
+     * Endpoint unificado según Contrato API
+     * POST /tienda/comprar
      */
-    @PostMapping("/tienda/comprar/{id_google}")
+    @PostMapping("/tienda/comprar")
     public ResponseEntity<Map<String, Object>> comprar(
-            @PathVariable("id_google") String idGooglePath,
             @RequestBody CompraRequestDTO request,
             Principal principal) {
         
-        // Aunque el contrato pide id_google en la URL, usamos el del token por seguridad,
-        // pero validamos que coincidan o simplemente usamos el del token si es el mismo usuario.
+        // Extraemos el id_google directamente del token (Principal) por seguridad.
         String idGoogle = principal.getName();
         int restantes;
 

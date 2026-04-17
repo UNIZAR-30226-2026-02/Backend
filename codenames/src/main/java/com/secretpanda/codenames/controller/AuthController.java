@@ -76,7 +76,7 @@ public class AuthController {
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         // Invalida la cookie poniendo Max-Age=0
         response.setHeader("Set-Cookie",
-                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");
+                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0");
         return ResponseEntity.noContent().build();
     }
 
@@ -91,7 +91,7 @@ public class AuthController {
         authService.desactivarCuenta(idGoogle);
         // También invalidamos la sesión
         response.setHeader("Set-Cookie",
-                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0");
+                COOKIE_NAME + "=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0");
         return ResponseEntity.noContent().build();
     }
 
@@ -99,7 +99,7 @@ public class AuthController {
 
     private void setCookie(HttpServletResponse response, String token) {
         response.setHeader("Set-Cookie",
-                String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=%d",
+                String.format("%s=%s; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=%d",
                         COOKIE_NAME, token, MAX_AGE_SEC));
     }
 
