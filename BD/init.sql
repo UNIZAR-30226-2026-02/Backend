@@ -204,7 +204,7 @@ CREATE TABLE chat (
 -- DATOS INICIALES POR DEFECTO
 -- ============================================================
 
--- Insertar Tema 'Basico' y resto de temas (RF-11)
+-- Inserción de temas (RF-11)
 INSERT INTO tema (nombre, descripcion, precio_balas, activo) VALUES 
 ('Basico', 'Tema clásico con palabras comunes', 0, true),
 ('Magia', 'Un tema místico lleno de magia y fantasía', 100, true),
@@ -213,46 +213,57 @@ INSERT INTO tema (nombre, descripcion, precio_balas, activo) VALUES
 ('Cyberpunk', 'Un futuro oscuro, tecnológico y rebelde', 100, true),
 ('Naturaleza', 'Fauna, flora natural y paisajes boscosos', 100, true);
 
--- Insertar 20 palabras por tema 
-INSERT INTO palabra_tema (id_tema, valor)
-SELECT t.id_tema, palabra FROM tema t CROSS JOIN unnest(ARRAY[
-    'AGUA', 'ANILLO', 'ARBOL', 'BANCO', 'BATERIA', 
-    'BOMBA', 'BOSQUE', 'BOTA', 'CABALLO', 'CABEZA',
-    'CAMARA', 'CAMPANA', 'CARTA', 'CASINO', 'CENTRO', 
-    'CHILE', 'CIELO', 'CINTA', 'CLAVO', 'COCHE'
-]) AS palabra WHERE t.nombre = 'Basico';
 
-INSERT INTO palabra_tema (id_tema, valor)
-SELECT t.id_tema, palabra FROM tema t CROSS JOIN unnest(ARRAY[
-    'HECHIZO', 'MAGO', 'VARITA', 'POCION', 'DRAGON', 'ESCOBA', 'SOMBRERO', 'CRISTAL', 'ILUSION', 'ENCANTO', 
-    'RUNAS', 'AMULETO', 'CONJURO', 'GRIMORIO', 'ELFO', 'ORCO', 'HECHICERO', 'PORTAL', 'FANTASMA', 'MANA'
-]) AS palabra WHERE t.nombre = 'Magia';
+-- INSERCIÓN DE LAS IMÁGENES DESDE LA NUBE
+DO $$ 
+DECLARE 
+    t_id INT;
+BEGIN
+    -- Paquete Básico (carta1.png - carta20.png)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Basico';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/basico/carta' || i || '.png');
+    END LOOP;
 
-INSERT INTO palabra_tema (id_tema, valor)
-SELECT t.id_tema, palabra FROM tema t CROSS JOIN unnest(ARRAY[
-    'BATALLA', 'IMPERIO', 'GLADIADOR', 'CASTILLO', 'REY', 'CORONA', 'ESPADA', 'CABALLERO', 'PIRAMIDE', 'FARAON', 
-    'COLONIA', 'REVOLUCION', 'TRATADO', 'MONARCA', 'CONQUISTA', 'ESCUDO', 'ARMADURA', 'CAÑON', 'MURALLA', 'EMPERADOR'
-]) AS palabra WHERE t.nombre = 'Histórico';
+    -- Paquete Magia (carta_magia1.png - carta_magia20.png)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Magia';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/magia/carta_magia' || i || '.png');
+    END LOOP;
 
-INSERT INTO palabra_tema (id_tema, valor)
-SELECT t.id_tema, palabra FROM tema t CROSS JOIN unnest(ARRAY[
-    'CORAL', 'TIBURON', 'ABISMO', 'BALLENA', 'DELFIN', 'ALGA', 'OCEANO', 'BUZO', 'SUBMARINO', 'PULPO', 
-    'MEDUSA', 'ESTRELLA', 'CONCHA', 'ARRECIFE', 'CANGREJO', 'TORTUGA', 'CABALLITO', 'MANTARRAYA', 'OSTRA', 'ANGUILA'
-]) AS palabra WHERE t.nombre = 'Vida submarina';
+    -- Paquete Cyberpunk (carta_cyberpunk1.png - carta_cyberpunk20.png)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Cyberpunk';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/cyber_punk/carta_cyberpunk' || i || '.png');
+    END LOOP;
 
-INSERT INTO palabra_tema (id_tema, valor)
-SELECT t.id_tema, palabra FROM tema t CROSS JOIN unnest(ARRAY[
-    'HACKER', 'NEON', 'IMPLANTE', 'MATRIZ', 'RED', 'CHIP', 'ROBOT', 'HOLOGRAMA', 'CYBORG', 'VIRUS', 
-    'MEGAURBE', 'ANDROIDE', 'NEURO', 'PLASMA', 'BIONICO', 'VIRTUAL', 'SINTETICO', 'DRON', 'DATOS', 'SERVIDOR'
-]) AS palabra WHERE t.nombre = 'Cyberpunk';
+    -- Paquete Histórico (carta_historico1.png - carta_historico20.png)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Histórico';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/hist%C3%B3rico/carta_historico' || i || '.png');
+    END LOOP;
 
-INSERT INTO palabra_tema (id_tema, valor)
-SELECT t.id_tema, palabra FROM tema t CROSS JOIN unnest(ARRAY[
-    'HOJA', 'MONTAÑA', 'LOBO', 'BOSQUE', 'CASCADA', 'RIO', 'FLOR', 'ARBOL', 'ROCA', 'LLUVIA', 
-    'VIENTO', 'NIEBLA', 'VALLE', 'CUEVA', 'PINO', 'SEMILLA', 'RAICES', 'CIELO', 'TIERRA', 'FUEGO'
-]) AS palabra WHERE t.nombre = 'Naturaleza';
+    -- Paquete Vida submarina (carta_submarina1.png - carta_submarina20.png)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Vida submarina';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/vida_submarina/carta_submarina' || i || '.png');
+    END LOOP;
 
--- Insertar Logros y Medallas
+    -- Paquete Naturaleza (carta_naturaleza1.png - carta_naturaleza20.png)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Naturaleza';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/naturaleza/carta_naturaleza' || i || '.png');
+    END LOOP;
+END $$;
+
+
+-- Inserción de Logros y Medallas
 INSERT INTO logro (nombre, descripcion, tipo, estadistica_clave, valor_objetivo, balas_recompensa, activo) VALUES 
 ('Agente principiante', 'Primera partida completada.', 'logro', 'partidas_jugadas', 1, 50, true),
 ('Agente de entrenamiento', '20 partidas jugadas.', 'logro', 'partidas_jugadas', 20, 50, true),
@@ -265,15 +276,15 @@ INSERT INTO logro (nombre, descripcion, tipo, estadistica_clave, valor_objetivo,
 ('Agente de plata', '100 partidas ganadas. Insignia de color plateado.', 'medalla', 'victorias', 100, 0, true),
 ('Agente de oro', '200 partidas ganadas. Insignia de color dorado.', 'medalla', 'victorias', 200, 0, true);
 
--- Temas visuales de Carta y Tablero
+-- Inserción de temas visuales de Carta y Tablero (según fichero ids_y_mas.md de Gestión)
 INSERT INTO personalizacion (nombre, descripcion, precio_bala, tipo, valor_visual, activo) VALUES
-('Fondo Oro envejecido', 'Fondo de tablero amarillo.', 50, 'tablero', 'color_amarillo_fondo', true),
-('Fondo Verde salvia', 'Fondo de tablero verde.', 50, 'tablero', 'color_verde_fondo', true),
-('Fondo Terracota cálida', 'Fondo de tablero naranja.', 50, 'tablero', 'color_naranja_fondo', true),
-('Fondo Púrpura real', 'Fondo de tablero morado.', 50, 'tablero', 'color_morado_fondo', true),
-('Fondo Cuarzo rosa', 'Fondo de tablero rosa.', 50, 'tablero', 'color_rosa_fondo', true),
-('Marco Oro envejecido', 'Marco de cartas amarillo.', 50, 'carta', 'color_amarillo_marco', true),
-('Marco Verde salvia', 'Marco de cartas verde.', 50, 'carta', 'color_verde_marco', true),
-('Marco Terracota cálida', 'Marco de cartas naranja.', 50, 'carta', 'color_naranja_marco', true),
-('Marco Púrpura real', 'Marco de cartas morado.', 50, 'carta', 'color_morado_marco', true),
-('Marco Cuarzo rosa', 'Marco de cartas rosa.', 50, 'carta', 'color_rosa_marco', true);
+('gold', 'Fondo de tablero amarillo (oro envejecido).', 50, 'tablero', 'd4af37', true),
+('sage', 'Fondo de tablero verde (verde salvia).', 50, 'tablero', '8a9a5b', true),
+('terracotta', 'Fondo de tablero naranja (terracota cálida).', 50, 'tablero', 'c65d3b', true),
+('purple', 'Fondo de tablero morado (púrpura real).', 50, 'tablero', '8b5a8b', true),
+('rose', 'Fondo de tablero rosa (cuarzo rosa).', 50, 'tablero', 'c67b8a', true),
+('gold', 'Marco de cartas amarillo (oro envejecido).', 50, 'carta', 'd4af37', true),
+('sage', 'Marco de cartas verde (verde salvia).', 50, 'carta', '8a9a5b', true),
+('terracotta', 'Marco de cartas naranja (terracota cálida).', 50, 'carta', 'c65d3b', true),
+('purple', 'Marco de cartas morado (púrpura real).', 50, 'carta', '8b5a8b', true),
+('rose', 'Marco de cartas rosa (cuarzo rosa).', 50, 'carta', 'c67b8a', true);
