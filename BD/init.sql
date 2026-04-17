@@ -278,13 +278,13 @@ INSERT INTO logro (nombre, descripcion, tipo, estadistica_clave, valor_objetivo,
 
 -- Inserción de temas visuales de Carta y Tablero (según fichero ids_y_mas.md de Gestión)
 INSERT INTO personalizacion (nombre, descripcion, precio_bala, tipo, valor_visual, activo) VALUES
-('gold', 'Fondo de tablero amarillo (oro envejecido).', 50, 'tablero', 'd4af37', true),
-('sage', 'Fondo de tablero verde (verde salvia).', 50, 'tablero', '8a9a5b', true),
-('terracotta', 'Fondo de tablero naranja (terracota cálida).', 50, 'tablero', 'c65d3b', true),
-('purple', 'Fondo de tablero morado (púrpura real).', 50, 'tablero', '8b5a8b', true),
-('rose', 'Fondo de tablero rosa (cuarzo rosa).', 50, 'tablero', 'c67b8a', true),
-('gold', 'Marco de cartas amarillo (oro envejecido).', 50, 'carta', 'd4af37', true),
-('sage', 'Marco de cartas verde (verde salvia).', 50, 'carta', '8a9a5b', true),
-('terracotta', 'Marco de cartas naranja (terracota cálida).', 50, 'carta', 'c65d3b', true),
-('purple', 'Marco de cartas morado (púrpura real).', 50, 'carta', '8b5a8b', true),
-('rose', 'Marco de cartas rosa (cuarzo rosa).', 50, 'carta', 'c67b8a', true);
+('gold_tablero', 'Fondo de tablero amarillo (oro envejecido).', 50, 'tablero', 'd4af37', true),
+('sage_tablero', 'Fondo de tablero verde (verde salvia).', 50, 'tablero', '8a9a5b', true),
+('terracotta_tablero', 'Fondo de tablero naranja (terracota cálida).', 50, 'tablero', 'c65d3b', true),
+('purple_tablero', 'Fondo de tablero morado (púrpura real).', 50, 'tablero', '8b5a8b', true),
+('rose_tablero', 'Fondo de tablero rosa (cuarzo rosa).', 50, 'tablero', 'c67b8a', true),
+('gold_carta', 'Marco de cartas amarillo (oro envejecido).', 50, 'carta', 'd4af37', true),
+('sage_carta', 'Marco de cartas verde (verde salvia).', 50, 'carta', '8a9a5b', true),
+('terracotta_carta', 'Marco de cartas naranja (terracota cálida).', 50, 'carta', 'c65d3b', true),
+('purple_carta', 'Marco de cartas morado (púrpura real).', 50, 'carta', '8b5a8b', true),
+('rose_carta', 'Marco de cartas rosa (cuarzo rosa).', 50, 'carta', 'c67b8a', true);
