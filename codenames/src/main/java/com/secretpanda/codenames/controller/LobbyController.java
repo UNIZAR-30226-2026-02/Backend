@@ -60,12 +60,6 @@ public class LobbyController {
         return ResponseEntity.ok(lobbyService.getLobby(idPartida));
     }
 
-    /** Obtener todas las partidas públicas en estado 'esperando'. */
-    @GetMapping("/api/partidas/publicas")
-    public ResponseEntity<List<PartidaPublicaDTO>> obtenerPartidasPublicas(Principal principal) {
-        return ResponseEntity.ok(lobbyService.listarPartidasPublicas(principal.getName()));
-    }
-
     /** Iniciar partida (PUT, solo el creador). */
     @PutMapping("/api/partida/{id_partida}/iniciar")
     public ResponseEntity<Void> iniciarPartida(

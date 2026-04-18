@@ -35,12 +35,15 @@ public class WebSocketEventListener {
     @Autowired
     private TaskScheduler taskScheduler;
 
+    @org.springframework.beans.factory.annotation.Value("${game.timeout-reconexion:60}")
+    private int timeoutReconexion;
+
     // Mapa para guardar las tareas de desconexión pendientes
     private final Map<String, ScheduledFuture<?>> disconnectTasks = new ConcurrentHashMap<>();
 
     /**
      * PASO 1: MANEJAR LA RECONEXIÓN
-     * Si el usuario se vuelve a conectar antes de 30 segundos, cancelamos su abandono.
+     * Si el usuario se vuelve a conectar antes del timeout, cancelamos su abandono.
      */
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -71,12 +74,12 @@ public class WebSocketEventListener {
         if (principal == null) return;
         
         String idGoogle = principal.getName();
-        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de 30s...", idGoogle);
+        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de {}s...", idGoogle, timeoutReconexion);
 
-        // Programamos la ejecución del abandono para dentro de 30 segundos
+        // Programamos la ejecución del abandono para dentro del tiempo configurado
         ScheduledFuture<?> task = taskScheduler.schedule(
             () -> ejecutarAbandonoDefinitivo(idGoogle), 
-            Instant.now().plusSeconds(30)
+            Instant.now().plusSeconds(timeoutReconexion)
         );
 
         // Guardamos la tarea en el mapa usando su ID como llave
@@ -84,10 +87,10 @@ public class WebSocketEventListener {
     }
 
     /**
-     * PASO 3: LA LÓGICA DE ABANDONO DEFINITIVA (Solo se ejecuta si el timer de 30s expira)
+     * PASO 3: LA LÓGICA DE ABANDONO DEFINITIVA
      */
     private void ejecutarAbandonoDefinitivo(String idGoogle) {
-        log.error("Tiempo expirado (30s) para jugador [{}]. Ejecutando abandono definitivo.", idGoogle);
+        log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
         
         // Limpiamos el mapa por seguridad
         disconnectTasks.remove(idGoogle);

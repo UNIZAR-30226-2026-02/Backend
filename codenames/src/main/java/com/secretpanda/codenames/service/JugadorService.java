@@ -29,6 +29,7 @@ import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorLogro;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Logro;
+import com.secretpanda.codenames.model.Partida;
 import com.secretpanda.codenames.model.Personalizacion;
 import com.secretpanda.codenames.repository.InventarioPersonalizacionRepository;
 import com.secretpanda.codenames.repository.InventarioTemaRepository;
@@ -84,7 +85,15 @@ public class JugadorService {
             jugador.getInventario().size();
         }
 
-        return JugadorMapper.toDTO(jugador, calculator);
+        JugadorDTO dto = JugadorMapper.toDTO(jugador, calculator);
+
+        // 2. Buscar si tiene alguna partida activa (esperando o en_curso)
+        jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+            idGoogle, 
+            List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
+        ).ifPresent(jp -> dto.setPartidaActivaId(jp.getPartida().getIdPartida()));
+
+        return dto;
     }
 
     @Transactional

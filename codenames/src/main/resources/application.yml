@@ -51,3 +51,4 @@ game:
   penalizacion-abandono: 10
   balas-ganador: 20
   balas-derrota: 10
+  timeout-reconexion: 60

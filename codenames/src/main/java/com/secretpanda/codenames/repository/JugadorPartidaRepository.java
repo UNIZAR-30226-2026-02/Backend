@@ -43,6 +43,9 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
     // Comprobar si un jugador tiene alguna partida activa (esperando o en curso) y no ha abandonado
     boolean existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(String idGoogle, List<com.secretpanda.codenames.model.Partida.EstadoPartida> estados);
 
+    // Buscar la primera participación activa de un jugador para el login/reconexión (soporta múltiples estados)
+    Optional<JugadorPartida> findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(String idGoogle, List<com.secretpanda.codenames.model.Partida.EstadoPartida> estados);
+
     // Buscar todas las participaciones activas (sin abandono) de un jugador
     List<JugadorPartida> findByJugador_IdGoogleAndAbandonoFalse(String idGoogle);
 

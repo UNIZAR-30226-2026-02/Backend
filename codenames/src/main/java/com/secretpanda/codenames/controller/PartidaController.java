@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.controller;
 
 import java.security.Principal;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.secretpanda.codenames.dto.partida.CrearPartidaDTO;
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
+import com.secretpanda.codenames.dto.partida.PartidaPublicaDTO;
 import com.secretpanda.codenames.dto.partida.RolPartidaDTO;
 import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.model.Partida;
@@ -23,6 +25,7 @@ import com.secretpanda.codenames.service.PartidaService;
 
 /**
  * POST /api/partidas/                              → crear partida
+ * GET  /api/partidas/publicas                      → listar partidas públicas (Movido desde LobbyController)
  * POST /api/partidas/{codigo_partida}/unirse/privada → unirse con código (Contrato actualizado)
  * POST /api/partidas/{id_partida}/unirse/publica     → unirse a pública
  * DELETE /api/partidas/{id_partida}/participantes    → abandonar
@@ -55,6 +58,12 @@ public class PartidaController {
             lobbyService.broadcastPartidasPublicas();
         }
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    /** Obtener todas las partidas públicas en estado 'esperando'. */
+    @GetMapping("/publicas")
+    public ResponseEntity<List<PartidaPublicaDTO>> obtenerPartidasPublicas(Principal principal) {
+        return ResponseEntity.ok(lobbyService.listarPartidasPublicas(principal.getName()));
     }
 
     // ─── Unirse a privada (Contrato: api/partidas/{codigo_partida}/unirse/privada) ──

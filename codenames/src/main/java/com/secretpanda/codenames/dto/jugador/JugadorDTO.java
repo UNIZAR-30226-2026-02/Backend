@@ -39,19 +39,10 @@ public class JugadorDTO {
     @JsonProperty("fondo_tablero_equipado")
     private String fondoTableroEquipado;
 
-    public JugadorDTO() {
-    }
+    @JsonProperty("partida_activa_id")
+    private Integer partidaActivaId;
 
-    public JugadorDTO(Jugador jugador) {
-        this.idGoogle = jugador.getIdGoogle();
-        this.tag = jugador.getTag();
-        this.fotoPerfil = jugador.getFotoPerfil();
-        this.balas = jugador.getBalas();
-        this.activo = jugador.isActivo();
-        this.partidasJugadas = jugador.getPartidasJugadas();
-        this.victorias = jugador.getVictorias();
-        this.numAciertos = jugador.getNumAciertos();
-        this.numFallos = jugador.getNumFallos();
+    public JugadorDTO() {
     }
 
     // --- GETTERS ---
@@ -160,5 +151,13 @@ public class JugadorDTO {
 
     public void setFondoTableroEquipado(String fondoTableroEquipado) {
         this.fondoTableroEquipado = fondoTableroEquipado;
+    }
+
+    public Integer getPartidaActivaId() {
+        return partidaActivaId;
+    }
+
+    public void setPartidaActivaId(Integer partidaActivaId) {
+        this.partidaActivaId = partidaActivaId;
     }
 }

@@ -179,13 +179,13 @@ public class AuthService {
     }
 
     /**
-     * Devuelve el id de la primera partida en_curso en la que el jugador participa
+     * Devuelve el id de la primera partida en_curso o esperando en la que el jugador participa
      * y no ha abandonado. Null si no hay ninguna.
      */
     private Integer buscarPartidaActiva(String idGoogle) {
         return jugadorPartidaRepository
-                .findFirstByJugador_IdGoogleAndPartida_EstadoAndAbandonoFalse(
-                        idGoogle, Partida.EstadoPartida.en_curso)
+                .findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+                        idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso))
                 .map(jp -> jp.getPartida().getIdPartida())
                 .orElse(null);
     }
