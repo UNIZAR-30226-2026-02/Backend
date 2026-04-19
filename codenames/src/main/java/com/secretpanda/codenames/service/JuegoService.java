@@ -149,6 +149,9 @@ public class JuegoService {
         turnoInicial.setAciertosTurno(0);
         turnoRepository.save(turnoInicial);
 
+        partida.setFechaInicioTurno(LocalDateTime.now());
+        partidaRepository.save(partida);
+
         // Uso del Bean a través de ApplicationContext para asegurar transaccionalidad en el hilo del timer
         temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
                 () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
@@ -188,6 +191,9 @@ public class JuegoService {
         turno.setPalabraPista(pistaLimpia);
         turno.setPistaNumero(pistaNumero);
         turnoRepository.save(turno);
+
+        partida.setFechaInicioTurno(LocalDateTime.now());
+        partidaRepository.save(partida);
 
         temporizadorService.iniciarTemporizador(idPartida, partida.getTiempoEspera(),
                 () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(idPartida));
@@ -296,13 +302,37 @@ public class JuegoService {
 
         if (votos.isEmpty()) return;
 
-        TableroCarta cartaGanadora = votos.stream()
+        // Conteo de votos por carta
+        Map<Integer, Long> conteo = votos.stream()
                 .collect(Collectors.groupingBy(v -> v.getCartaTablero().getIdCartaTablero(),
-                        Collectors.counting()))
-                .entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(e -> tableroCartaRepository.findById(e.getKey()).orElseThrow())
-                .orElseThrow(() -> new GameLogicException("Error al procesar la votación."));
+                        Collectors.counting()));
+
+        // Hallar el máximo de votos
+        long maxVotos = Collections.max(conteo.values());
+
+        // Identificar cartas con ese máximo
+        List<Integer> ganadores = conteo.entrySet().stream()
+                .filter(e -> e.getValue() == maxVotos)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        // RF-17: Si hay empate en la votación, el equipo falla y pierde el turno.
+        if (ganadores.size() > 1) {
+            temporizadorService.cancelarTemporizador(partida.getIdPartida());
+            prepararTurnoRival(partida, equipoVotante);
+            
+            Integer idPartida = partida.getIdPartida();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcastEstado(idPartida);
+                }
+            });
+            return;
+        }
+
+        // Si no hay empate, revelamos la única carta ganadora
+        TableroCarta cartaGanadora = tableroCartaRepository.findById(ganadores.get(0)).orElseThrow();
 
         cartaGanadora.setEstado(EstadoCarta.revelada);
         tableroCartaRepository.save(cartaGanadora);
@@ -329,6 +359,9 @@ public class JuegoService {
                 if (turno.getPistaNumero() != null && turno.getAciertosTurno() >= turno.getPistaNumero()) {
                     prepararTurnoRival(partida, equipoVotante);
                 } else {
+                    partida.setFechaInicioTurno(LocalDateTime.now());
+                    partidaRepository.save(partida);
+
                     temporizadorService.iniciarTemporizador(partida.getIdPartida(),
                             partida.getTiempoEspera(), () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
                 }
@@ -361,6 +394,9 @@ public class JuegoService {
         turnoVacio.setPistaNumero(null);
         turnoVacio.setAciertosTurno(0);
         turnoRepository.save(turnoVacio);
+
+        partida.setFechaInicioTurno(LocalDateTime.now());
+        partidaRepository.save(partida);
         
         temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
                 () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
@@ -402,6 +438,14 @@ public class JuegoService {
         Turno turnoActual = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
         if (turnoActual == null) return;
 
+        // Si el líder no dio la pista, pasamos turno directamente
+        if (turnoActual.getPalabraPista() == null) {
+            prepararTurnoRival(partida, turnoActual.getJugadorPartida().getEquipo());
+            broadcastEstado(idPartida);
+            return;
+        }
+
+        // Si hay pista pero el tiempo acabó, resolvemos por mayoría simple si existe
         List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno());
 
         if (!votos.isEmpty()) {

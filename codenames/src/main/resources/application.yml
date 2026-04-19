@@ -52,3 +52,4 @@ game:
   balas-ganador: 20
   balas-derrota: 10
   timeout-reconexion: 60
+  horas-limpieza-fantasma: 1000

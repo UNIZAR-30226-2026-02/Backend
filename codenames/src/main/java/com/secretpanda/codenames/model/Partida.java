@@ -72,6 +72,9 @@ public class Partida {
     @Column(name = "rojo_gana")
     private Boolean rojoGana;
 
+    @Column(name = "fecha_inicio_turno")
+    private LocalDateTime fechaInicioTurno;
+
     @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JugadorPartida> jugadores = new ArrayList<>();
 
@@ -201,6 +204,14 @@ public class Partida {
 
     public void setRojoGana(Boolean rojoGana) { 
         this.rojoGana = rojoGana; 
+    }
+
+    public LocalDateTime getFechaInicioTurno() {
+        return fechaInicioTurno;
+    }
+
+    public void setFechaInicioTurno(LocalDateTime fechaInicioTurno) {
+        this.fechaInicioTurno = fechaInicioTurno;
     }
 
     public List<JugadorPartida> getJugadores() { 

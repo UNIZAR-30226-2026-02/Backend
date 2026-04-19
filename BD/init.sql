@@ -129,8 +129,8 @@ CREATE TABLE partida (
     fecha_fin            TIMESTAMP,
     estado               VARCHAR(32)   NOT NULL DEFAULT 'esperando'
                                        CHECK (estado IN ('esperando', 'en_curso', 'finalizada')),
-    rojo_gana            BOOLEAN
-
+    rojo_gana            BOOLEAN,
+    fecha_inicio_turno   TIMESTAMP
 );
 
 -- ----------------------------------------------------------------

@@ -31,7 +31,7 @@ import com.secretpanda.codenames.util.CodigoPartidaGenerator;
 @Service
 public class PartidaService {
 
-    @Value("${game.penalizacion-abandono:10}")
+    @Value("${game.penalizacion-abandono:5}")
     private int balasPenalizacionAbandono;
 
     private final PartidaRepository partidaRepository;

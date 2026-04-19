@@ -27,6 +27,9 @@ public class GameStateDTO {
     @JsonProperty("rojo_gana")
     private Boolean rojoGana;
 
+    @JsonProperty("segundos_restantes")
+    private Integer segundosRestantes;
+
     // Componentes del juego
     @JsonProperty("pista_actual")
     private PistaDTO pistaActual; // Puede ser null si el líder aún no la ha introducido
@@ -61,6 +64,9 @@ public class GameStateDTO {
 
     public Boolean getRojoGana() { return rojoGana; } 
     public void setRojoGana(Boolean rojoGana) { this.rojoGana = rojoGana; } 
+
+    public Integer getSegundosRestantes() { return segundosRestantes; }
+    public void setSegundosRestantes(Integer segundosRestantes) { this.segundosRestantes = segundosRestantes; }
 
     public PistaDTO getPistaActual() { return pistaActual; }
     public void setPistaActual(PistaDTO pistaActual) { this.pistaActual = pistaActual; }

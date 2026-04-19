@@ -126,6 +126,7 @@ erDiagram
         datetime fecha_fin
         string estado
         boolean rojo_gana
+        TIMESTAMP fecha_inicio_turno
     }
 
     JUGADOR_PARTIDA {

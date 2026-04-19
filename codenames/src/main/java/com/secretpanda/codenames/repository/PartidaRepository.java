@@ -43,6 +43,9 @@ public interface PartidaRepository extends JpaRepository<Partida, Integer> {
 
     // Buscar partidas antiguas para cierre automático
     List<Partida> findByEstadoAndFechaCreacionBefore(Partida.EstadoPartida estado, LocalDateTime fechaLimite);
+
+    // Buscar partidas fantasma (sin actividad reciente en el turno)
+    List<Partida> findByEstadoAndFechaInicioTurnoBefore(Partida.EstadoPartida estado, LocalDateTime fechaLimite);
     
     // Listar partidas creadas por un jugador
     List<Partida> findByCreador_IdGoogle(String idGoogle);

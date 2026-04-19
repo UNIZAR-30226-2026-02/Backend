@@ -1,5 +1,7 @@
 package com.secretpanda.codenames.mapper.juego;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
@@ -21,6 +23,15 @@ public class GameStateMapper {
         dto.setIdPartida(partida.getIdPartida());
         dto.setEstado(partida.getEstado().name());
         dto.setRojoGana(partida.getRojoGana());
+
+        // Cálculo de segundos restantes
+        if (partida.getFechaInicioTurno() != null && partida.getEstado() == Partida.EstadoPartida.en_curso) {
+            long transcurridos = ChronoUnit.SECONDS.between(partida.getFechaInicioTurno(), LocalDateTime.now());
+            int restantes = (int) (partida.getTiempoEspera() - transcurridos);
+            dto.setSegundosRestantes(Math.max(0, restantes));
+        } else {
+            dto.setSegundosRestantes(0);
+        }
 
         // Tablero con niebla de guerra según rol
         dto.setTablero(TableroMapper.toDTO(cartas, esLider));
