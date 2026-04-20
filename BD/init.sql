@@ -218,50 +218,49 @@ INSERT INTO tema (nombre, descripcion, precio_balas, activo) VALUES
 DO $$ 
 DECLARE 
     t_id INT;
-BEGIN
-    -- Paquete Básico (carta1.png - carta20.png)
+BEGIN 
+    -- TEMA BÁSICO
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Basico';
     FOR i IN 1..20 LOOP
         INSERT INTO palabra_tema (id_tema, valor) 
-        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/basico/carta' || i || '.png');
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/basico/carta' || i || '.webp');
     END LOOP;
 
-    -- Paquete Magia (carta_magia1.png - carta_magia20.png)
+    -- TEMA MAGIA
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Magia';
     FOR i IN 1..20 LOOP
         INSERT INTO palabra_tema (id_tema, valor) 
-        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/magia/carta_magia' || i || '.png');
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/magia/carta_magia' || i || '.webp');
     END LOOP;
 
-    -- Paquete Cyberpunk (carta_cyberpunk1.png - carta_cyberpunk20.png)
+    -- TEMA CYBERPUNK (Ej: carta_cyberpunk1.webp)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Cyberpunk';
     FOR i IN 1..20 LOOP
         INSERT INTO palabra_tema (id_tema, valor) 
-        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/cyber_punk/carta_cyberpunk' || i || '.png');
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/cyberpunk/carta_cyberpunk' || i || '.webp');
     END LOOP;
 
-    -- Paquete Histórico (carta_historico1.png - carta_historico20.png)
+    -- TEMA HISTÓRICO (Ej: carta_historico1.webp)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Histórico';
     FOR i IN 1..20 LOOP
         INSERT INTO palabra_tema (id_tema, valor) 
-        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/hist%C3%B3rico/carta_historico' || i || '.png');
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/historico/carta_historico' || i || '.webp');
     END LOOP;
 
-    -- Paquete Vida submarina (carta_submarina1.png - carta_submarina20.png)
-    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Vida submarina';
-    FOR i IN 1..20 LOOP
-        INSERT INTO palabra_tema (id_tema, valor) 
-        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/vida_submarina/carta_submarina' || i || '.png');
-    END LOOP;
-
-    -- Paquete Naturaleza (carta_naturaleza1.png - carta_naturaleza20.png)
+    -- TEMA NATURALEZA (Ej: carta_naturaleza1.webp)
     SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Naturaleza';
     FOR i IN 1..20 LOOP
         INSERT INTO palabra_tema (id_tema, valor) 
-        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/naturaleza/carta_naturaleza' || i || '.png');
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/naturaleza/carta_naturaleza' || i || '.webp');
+    END LOOP;
+
+    -- TEMA VIDA SUBMARINA (Ej: carta_submarina1.webp)
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Vida submarina';
+    FOR i IN 1..20 LOOP
+        INSERT INTO palabra_tema (id_tema, valor) 
+        VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/vidasubmarina/carta_submarina' || i || '.webp');
     END LOOP;
 END $$;
-
 
 -- Inserción de Logros y Medallas
 INSERT INTO logro (nombre, descripcion, tipo, estadistica_clave, valor_objetivo, balas_recompensa, activo) VALUES 
