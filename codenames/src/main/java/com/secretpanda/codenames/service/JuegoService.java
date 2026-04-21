@@ -102,8 +102,8 @@ public class JuegoService {
         int totalRojas = rojoEmpieza ? CARTAS_EQUIPO_QUE_INICIA : CARTAS_EQUIPO_SEGUNDO;
         int totalAzules = rojoEmpieza ? CARTAS_EQUIPO_SEGUNDO : CARTAS_EQUIPO_QUE_INICIA;
 
-        List<PalabraTema> palabras = palabraTemaRepository
-                .findPalabrasAleatoriasPorTema(partida.getTema().getIdTema(), TOTAL_CARTAS);
+        // Obtener las 20 palabras del tema directamente (ya que hay exactamente 20)
+        List<PalabraTema> palabras = palabraTemaRepository.findByTema_IdTemaAndActivoTrue(partida.getTema().getIdTema());
 
         if (palabras.size() < TOTAL_CARTAS) {
             throw new GameLogicException(
@@ -152,7 +152,6 @@ public class JuegoService {
         partida.setFechaInicioTurno(LocalDateTime.now());
         partidaRepository.save(partida);
 
-        // Uso del Bean a través de ApplicationContext para asegurar transaccionalidad en el hilo del timer
         temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
                 () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
 
@@ -254,8 +253,12 @@ public class JuegoService {
             throw new GameLogicException("Esa carta ya ha sido revelada.");
         }
 
+        // Buscamos si el jugador ya tiene un voto activo en esta ronda (sin carta revelada asociada)
         votoCartaRepository.findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartida(
                         turno.getIdTurno(), jp.getIdJugadorPartida())
+                .stream()
+                .filter(v -> v.getCartaRevelada() == null)
+                .findFirst()
                 .ifPresent(v -> {
                     votoCartaRepository.delete(v);
                     votoCartaRepository.flush();
@@ -267,16 +270,20 @@ public class JuegoService {
         voto.setCartaTablero(carta);
         votoCartaRepository.saveAndFlush(voto);
 
-        List<VotoCarta> todosVotos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
+        // Solo contamos los votos que aún no han resultado en una carta revelada
+        List<VotoCarta> votosActivos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno())
+                .stream()
+                .filter(v -> v.getCartaRevelada() == null)
+                .collect(Collectors.toList());
 
-        List<JugadorPartida> agentesActivos = jugadorPartidaRepository
+        List<JugadorPartida> agentesActivosEnEquipo = jugadorPartidaRepository
                 .findByPartida_IdPartidaAndAbandonoFalse(idPartida).stream()
                 .filter(a -> Rol.agente.equals(a.getRol())
                           && a.getEquipo().equals(jp.getEquipo()))
                 .collect(Collectors.toList());
 
-        boolean todosVotaron = agentesActivos.stream()
-                .allMatch(a -> todosVotos.stream()
+        boolean todosVotaron = agentesActivosEnEquipo.stream()
+                .allMatch(a -> votosActivos.stream()
                         .anyMatch(v -> v.getJugadorPartida().getIdJugadorPartida()
                                 .equals(a.getIdJugadorPartida())));
 
@@ -291,19 +298,23 @@ public class JuegoService {
             });
         }
 
-        return buildVotoRecibidoDTO(turno.getIdTurno(), todosVotos);
+        return buildVotoRecibidoDTO(turno.getIdTurno(), votosActivos);
     }
 
     // ─── Resolver votación ────────────────────────────────────────────────────
 
     @Transactional
     public void resolverVotacion(Partida partida, Turno turno, Equipo equipoVotante) {
-        List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
+        // Obtenemos solo los votos de la ronda actual
+        List<VotoCarta> votosRonda = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno())
+                .stream()
+                .filter(v -> v.getCartaRevelada() == null)
+                .collect(Collectors.toList());
 
-        if (votos.isEmpty()) return;
+        if (votosRonda.isEmpty()) return;
 
         // Conteo de votos por carta
-        Map<Integer, Long> conteo = votos.stream()
+        Map<Integer, Long> conteo = votosRonda.stream()
                 .collect(Collectors.groupingBy(v -> v.getCartaTablero().getIdCartaTablero(),
                         Collectors.counting()));
 
@@ -316,7 +327,7 @@ public class JuegoService {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        // RF-17: Si hay empate en la votación, el equipo falla y pierde el turno.
+        // RF-17: Si hay empate en la votación (o no hay mayoría simple única), el equipo falla y pierde el turno.
         if (ganadores.size() > 1) {
             temporizadorService.cancelarTemporizador(partida.getIdPartida());
             prepararTurnoRival(partida, equipoVotante);
@@ -337,10 +348,11 @@ public class JuegoService {
         cartaGanadora.setEstado(EstadoCarta.revelada);
         tableroCartaRepository.save(cartaGanadora);
 
-        actualizarEstadisticasAgentes(votos, equipoVotante, cartaGanadora);
+        actualizarEstadisticasAgentes(votosRonda, equipoVotante, cartaGanadora);
 
-        votos.forEach(v -> v.setCartaRevelada(cartaGanadora));
-        votoCartaRepository.saveAll(votos);
+        // Marcamos los votos de esta ronda como resueltos
+        votosRonda.forEach(v -> v.setCartaRevelada(cartaGanadora));
+        votoCartaRepository.saveAll(votosRonda);
         votoCartaRepository.flush();
 
         temporizadorService.cancelarTemporizador(partida.getIdPartida());
@@ -356,9 +368,11 @@ public class JuegoService {
                 turno.setAciertosTurno(turno.getAciertosTurno() + 1);
                 turnoRepository.save(turno);
 
+                // REGLA: Límite estricto de N aciertos (sin el +1 oficial)
                 if (turno.getPistaNumero() != null && turno.getAciertosTurno() >= turno.getPistaNumero()) {
                     prepararTurnoRival(partida, equipoVotante);
                 } else {
+                    // El equipo puede seguir votando. Reiniciamos temporizador.
                     partida.setFechaInicioTurno(LocalDateTime.now());
                     partidaRepository.save(partida);
 
@@ -526,9 +540,14 @@ public class JuegoService {
     }
 
     private JugadorPartida requireJugadorEnPartida(String idGoogle, Integer idPartida) {
-        return jugadorPartidaRepository
+        JugadorPartida jp = jugadorPartidaRepository
                 .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
                 .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
+        
+        if (jp.isAbandono()) {
+            throw new GameLogicException("Has abandonado esta partida y no puedes volver a entrar.");
+        }
+        return jp;
     }
 
     private void validarTurnoEquipo(Partida partida, Equipo equipoJugador) {
@@ -592,11 +611,14 @@ public class JuegoService {
         partidaRepository.save(partida);
 
         for (JugadorPartida jp : partida.getJugadores()) {
-            Jugador j = jp.getJugador();
-            boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
-            boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
-            
-            jugadorService.procesarFinPartida(j.getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
+            // Solo procesamos estadísticas si NO ha abandonado voluntariamente antes
+            if (!jp.isAbandono()) {
+                Jugador j = jp.getJugador();
+                boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
+                boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
+                
+                jugadorService.procesarFinPartida(j.getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
+            }
         }
 
         leaderboardService.broadcastGlobalRanking(); 
