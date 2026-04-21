@@ -2,17 +2,15 @@ package com.secretpanda.codenames.controller;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.secretpanda.codenames.dto.tienda.CompraRequestDTO;
+import com.secretpanda.codenames.dto.tienda.ComprarItemRequest;
 import com.secretpanda.codenames.dto.tienda.PersonalizacionDTO;
 import com.secretpanda.codenames.dto.tienda.TemaDTO;
 import com.secretpanda.codenames.service.TiendaService;
@@ -29,37 +27,35 @@ public class TiendaController {
 
     @GetMapping("/temas/activos")
     public ResponseEntity<List<TemaDTO>> getTemas(Principal principal) {
-        return ResponseEntity.ok(tiendaService.getTemasTienda(principal.getName()));
+        String idGoogle = (principal != null) ? principal.getName() : null;
+        return ResponseEntity.ok(tiendaService.getTemasTienda(idGoogle));
     }
 
     @GetMapping("/personalizaciones/activas")
     public ResponseEntity<List<PersonalizacionDTO>> getPersonalizaciones(Principal principal) {
-        return ResponseEntity.ok(tiendaService.getPersonalizacionesTienda(principal.getName()));
+        String idGoogle = (principal != null) ? principal.getName() : null;
+        return ResponseEntity.ok(tiendaService.getPersonalizacionesTienda(idGoogle));
     }
 
     /**
-     * Endpoint unificado según Contrato API (Refactorizado: ID extraído de JWT)
-     * POST /tienda/comprar
+     * POST /api/tienda/comprar/tema
      */
-    @PostMapping("/tienda/comprar")
-    public ResponseEntity<Map<String, Object>> comprar(
-            @RequestBody CompraRequestDTO request,
-            Principal principal) {
-        
-        String idGoogle = principal.getName();
-        int restantes;
+    @PostMapping("/tienda/comprar/tema")
+    public ResponseEntity<?> comprarTema(@RequestBody ComprarItemRequest dto, Principal principal) {
+        int saldo = tiendaService.comprarTema(principal.getName(), dto.getIdTema());
+        return ResponseEntity.ok().body(new java.util.HashMap<String, Integer>() {{
+            put("balas", saldo);
+        }});
+    }
 
-        if (request.getIdTema() != null) {
-            restantes = tiendaService.comprarTema(idGoogle, request.getIdTema());
-        } else if (request.getIdPersonalizacion() != null) {
-            restantes = tiendaService.comprarPersonalizacion(idGoogle, request.getIdPersonalizacion());
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
-
-        return ResponseEntity.ok(Map.of(
-            "balas_restantes", restantes,
-            "mensaje", "Compra exitosa"
-        ));
+    /**
+     * POST /api/tienda/comprar/personalizacion
+     */
+    @PostMapping("/tienda/comprar/personalizacion")
+    public ResponseEntity<?> comprarPersonalizacion(@RequestBody ComprarItemRequest dto, Principal principal) {
+        int saldo = tiendaService.comprarPersonalizacion(principal.getName(), dto.getIdPersonalizacion());
+        return ResponseEntity.ok().body(new java.util.HashMap<String, Integer>() {{
+            put("balas", saldo);
+        }});
     }
 }

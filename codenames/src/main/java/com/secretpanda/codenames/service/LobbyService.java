@@ -262,6 +262,9 @@ public LobbyService(PartidaRepository partidaRepository,
     }
 
     private void asignarRoles(List<JugadorPartida> jugadores) {
+        // RF: Mezclar la lista para que la elección del líder sea totalmente aleatoria
+        java.util.Collections.shuffle(jugadores);
+
         boolean lidRojoAsignado = false;
         boolean lidAzulAsignado = false;
 

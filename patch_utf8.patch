@@ -1,0 +1,1619 @@
+﻿diff --git a/BD/init.sql b/BD/init.sql
+index 473c190..6fef20b 100644
+--- a/BD/init.sql
++++ b/BD/init.sql
+@@ -7,7 +7,7 @@
+ -- ----------------------------------------------------------------
+ CREATE TABLE jugador (
+     id_google            VARCHAR(255) PRIMARY KEY,
+-    tag                  VARCHAR(100)  NOT NULL UNIQUE,
++    tag                  VARCHAR(100)  UNIQUE,
+     foto_perfil          TEXT,
+     balas                INT           NOT NULL DEFAULT 0,
+     fecha_registro       TIMESTAMP     NOT NULL DEFAULT NOW(),
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/config/SecurityConfig.java b/codenames/src/main/java/com/secretpanda/codenames/config/SecurityConfig.java
+index 1b4b69e..2644f1b 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/config/SecurityConfig.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/config/SecurityConfig.java
+@@ -39,15 +39,12 @@ public class SecurityConfig {
+                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+             .headers(headers -> headers
+                 .frameOptions(frame -> frame.disable())
+-                .contentSecurityPolicy(csp -> csp.policyDirectives("upgrade-insecure-requests;"))
+-                .addHeaderWriter(new StaticHeadersWriter("Cross-Origin-Opener-Policy", "unsafe-none"))
+-                .addHeaderWriter(new StaticHeadersWriter("Cross-Origin-Embedder-Policy", "unsafe-none"))
+             )
+             .authorizeHttpRequests(auth -> auth
+                 .requestMatchers(HttpMethod.GET, "/api/hello").permitAll()
+                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                 .requestMatchers(HttpMethod.GET, "/api/temas/activos").permitAll()
+-                .requestMatchers(HttpMethod.GET, "/api/logros/activos").permitAll()
++                .requestMatchers(HttpMethod.GET, "/api/personalizaciones/activas").permitAll()
+                 .requestMatchers("/api/leaderboard/**").authenticated()
+                 .requestMatchers("/api/amigos/**").authenticated()
+                 .requestMatchers("/api/jugadores/buscar").authenticated()
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/AmistadController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/AmistadController.java
+index de0cdc3..f9884a9 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/AmistadController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/AmistadController.java
+@@ -14,9 +14,13 @@ import org.springframework.web.bind.annotation.RequestParam;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+ import com.secretpanda.codenames.dto.social.AmistadDTO;
++import com.secretpanda.codenames.dto.social.EnviarSolicitudDTO;
++import com.secretpanda.codenames.dto.social.GestionarSolicitudDTO;
+ import com.secretpanda.codenames.dto.social.RankingDTO;
+ import com.secretpanda.codenames.service.AmistadService;
+ 
++import jakarta.validation.Valid;
++
+ @RestController
+ @RequestMapping("/api")
+ public class AmistadController {
+@@ -38,14 +42,14 @@ public class AmistadController {
+     }
+ 
+     @PostMapping("/amigos/solicitudes")
+-    public ResponseEntity<Void> enviarSolicitud(@RequestBody Map<String, String> body, Principal principal) {
+-        amistadService.enviarSolicitud(principal.getName(), body.get("tag_receptor"));
++    public ResponseEntity<Void> enviarSolicitud(@Valid @RequestBody EnviarSolicitudDTO dto, Principal principal) {
++        amistadService.enviarSolicitud(principal.getName(), dto.getTagReceptor());
+         return ResponseEntity.ok().build();
+     }
+ 
+     @PutMapping("/amigos/solicitudes")
+-    public ResponseEntity<Void> gestionarSolicitud(@RequestBody Map<String, String> body, Principal principal) {
+-        amistadService.gestionarSolicitud(principal.getName(), body.get("id_solicitante"), body.get("estado"));
++    public ResponseEntity<Void> gestionarSolicitud(@Valid @RequestBody GestionarSolicitudDTO dto, Principal principal) {
++        amistadService.gestionarSolicitud(principal.getName(), dto.getIdSolicitante(), dto.getEstado());
+         return ResponseEntity.ok().build();
+     }
+ 
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/AuthController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/AuthController.java
+index f86f53b..83b906b 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/AuthController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/AuthController.java
+@@ -9,6 +9,7 @@ import com.secretpanda.codenames.dto.auth.RegistroRequestDTO;
+ import com.secretpanda.codenames.service.AuthService;
+ 
+ import jakarta.servlet.http.HttpServletResponse;
++import jakarta.validation.Valid;
+ 
+ /**
+  * POST /api/auth/login   ÔåÆ Google idToken ÔåÆ esNuevo + (si no nuevo) JWT + Jugador
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/JugadorController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/JugadorController.java
+index 8a118f7..9da2e34 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/JugadorController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/JugadorController.java
+@@ -18,6 +18,8 @@ import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
+ import com.secretpanda.codenames.dto.tienda.LogroDTO;
+ import com.secretpanda.codenames.service.JugadorService;
+ 
++import jakarta.validation.Valid;
++
+ /**
+  * GET  /api/jugadores            ÔåÆ perfil completo (UserContext)
+  * PUT  /api/jugadores            ÔåÆ actualizar tag y foto
+@@ -44,7 +46,7 @@ public class JugadorController {
+     /** Modifica tag y/o foto de perfil. */
+     @PutMapping
+     public ResponseEntity<JugadorDTO> actualizarPerfil(
+-            @RequestBody ActualizarPerfilDTO dto,
++            @Valid @RequestBody ActualizarPerfilDTO dto,
+             Principal principal) {
+         return ResponseEntity.ok(jugadorService.actualizarPerfil(dto, principal.getName()));
+     }
+@@ -74,12 +76,14 @@ public class JugadorController {
+ 
+     @PutMapping("/equipar")
+     public ResponseEntity<Void> equiparItem(
+-            @RequestBody EquiparItemRequest request,
++            @Valid @RequestBody EquiparItemRequest request,
+             Principal principal) {
+         jugadorService.equiparItem(request.idPersonalizacion(), request.equipado(), principal.getName());
+         return ResponseEntity.ok().build();
+     }
+ 
+     // Payload para la operaci├│n de equipar
+-    public record EquiparItemRequest(Integer idPersonalizacion, boolean equipado) {}
++    public record EquiparItemRequest(
++            @com.fasterxml.jackson.annotation.JsonProperty("id_personalizacion") Integer idPersonalizacion, 
++            @com.fasterxml.jackson.annotation.JsonProperty("equipado") boolean equipado) {}
+ }
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/LobbyController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/LobbyController.java
+index 8311903..798b404 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/LobbyController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/LobbyController.java
+@@ -69,11 +69,12 @@ public class LobbyController {
+         return ResponseEntity.ok().build();
+     }
+ 
+-    // ÔöÇÔöÇÔöÇ STOMP Subscribe ÔåÆ env├¡a estado inicial al suscribirse ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++    // ÔöÇÔöÇÔöÇ STOMP SUB ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
+     /**
+-     * Al suscribirse a /topic/partidas/publicas el cliente recibe la lista completa.
+-     * Despu├®s el servidor empuja actualizaciones via broadcastPartidasPublicas().
++     * Env├¡a la lista inicial de partidas p├║blicas al suscribirse al topic.
++     * El destino en el cliente es /topic/partidas/publicas.
++     * Se filtran seg├║n los temas que posea el usuario (RF-15).
+      */
+     @SubscribeMapping("/partidas/publicas")
+     public List<PartidaPublicaDTO> subscribePartidasPublicas(Principal principal) {
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/PartidaController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/PartidaController.java
+index 05831c2..698b8ff 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/PartidaController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/PartidaController.java
+@@ -23,6 +23,8 @@ import com.secretpanda.codenames.repository.PartidaRepository;
+ import com.secretpanda.codenames.service.LobbyService;
+ import com.secretpanda.codenames.service.PartidaService;
+ 
++import jakarta.validation.Valid;
++
+ /**
+  * POST /api/partidas/                              ÔåÆ crear partida
+  * GET  /api/partidas/publicas                      ÔåÆ listar partidas p├║blicas (Movido desde LobbyController)
+@@ -51,7 +53,7 @@ public class PartidaController {
+ 
+     @PostMapping("/")
+     public ResponseEntity<LobbyStatusDTO> crearPartida(
+-            @RequestBody CrearPartidaDTO dto,
++            @Valid @RequestBody CrearPartidaDTO dto,
+             Principal principal) {
+         LobbyStatusDTO response = partidaService.crearPartida(dto, principal.getName());
+         if (dto.isEsPublica()) {
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/TestController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/TestController.java
+index fa68f8b..632ab90 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/TestController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/TestController.java
+@@ -8,6 +8,6 @@ public class TestController {
+ 
+     @GetMapping("/api/hello")
+     public String hello() {
+-        return "┬íHola! El backend de Codenames est├í funcionando correctamente en Azure. PRUEBA 1 DESPLIEGUE ACTION";
++        return "┬íHola! El backend de Codenames est├í funcionando correctamente en Azure. Auditor├¡a 21/04/2026 OK.";
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/controller/TiendaController.java b/codenames/src/main/java/com/secretpanda/codenames/controller/TiendaController.java
+index 03318d2..6613a71 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/controller/TiendaController.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/controller/TiendaController.java
+@@ -12,11 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+-import com.secretpanda.codenames.dto.tienda.CompraRequestDTO;
+ import com.secretpanda.codenames.dto.tienda.PersonalizacionDTO;
+ import com.secretpanda.codenames.dto.tienda.TemaDTO;
+ import com.secretpanda.codenames.service.TiendaService;
+ 
++import jakarta.validation.Valid;
++
+ @RestController
+ @RequestMapping("/api")
+ public class TiendaController {
+@@ -29,37 +30,45 @@ public class TiendaController {
+ 
+     @GetMapping("/temas/activos")
+     public ResponseEntity<List<TemaDTO>> getTemas(Principal principal) {
+-        return ResponseEntity.ok(tiendaService.getTemasTienda(principal.getName()));
++        String idGoogle = (principal != null) ? principal.getName() : null;
++        return ResponseEntity.ok(tiendaService.getTemasTienda(idGoogle));
+     }
+ 
+     @GetMapping("/personalizaciones/activas")
+     public ResponseEntity<List<PersonalizacionDTO>> getPersonalizaciones(Principal principal) {
+-        return ResponseEntity.ok(tiendaService.getPersonalizacionesTienda(principal.getName()));
++        String idGoogle = (principal != null) ? principal.getName() : null;
++        return ResponseEntity.ok(tiendaService.getPersonalizacionesTienda(idGoogle));
+     }
+ 
+     /**
+-     * Endpoint unificado seg├║n Contrato API (Refactorizado: ID extra├¡do de JWT)
+-     * POST /tienda/comprar
++     * Comprar paquete de cartas
++     * POST /api/tienda/comprar/tema
+      */
+-    @PostMapping("/tienda/comprar")
+-    public ResponseEntity<Map<String, Object>> comprar(
+-            @RequestBody CompraRequestDTO request,
++    @PostMapping("/tienda/comprar/tema")
++    public ResponseEntity<Map<String, Object>> comprarTema(
++            @Valid @RequestBody ComprarTemaRequest request,
+             Principal principal) {
+         
+-        String idGoogle = principal.getName();
+-        int restantes;
+-
+-        if (request.getIdTema() != null) {
+-            restantes = tiendaService.comprarTema(idGoogle, request.getIdTema());
+-        } else if (request.getIdPersonalizacion() != null) {
+-            restantes = tiendaService.comprarPersonalizacion(idGoogle, request.getIdPersonalizacion());
+-        } else {
+-            return ResponseEntity.badRequest().build();
+-        }
++        int restantes = tiendaService.comprarTema(principal.getName(), request.idTema());
++        return ResponseEntity.ok(Map.of("balas", restantes));
++    }
+ 
+-        return ResponseEntity.ok(Map.of(
+-            "balas_restantes", restantes,
+-            "mensaje", "Compra exitosa"
+-        ));
++    /**
++     * Comprar personalizaci├│n
++     * POST /api/tienda/comprar/personalizacion
++     */
++    @PostMapping("/tienda/comprar/personalizacion")
++    public ResponseEntity<Map<String, Object>> comprarPersonalizacion(
++            @Valid @RequestBody ComprarPersonalizacionRequest request,
++            Principal principal) {
++        
++        int restantes = tiendaService.comprarPersonalizacion(principal.getName(), request.idPersonalizacion());
++        return ResponseEntity.ok(Map.of("balas", restantes));
+     }
++
++    public record ComprarTemaRequest(
++            @com.fasterxml.jackson.annotation.JsonProperty("id_tema") Integer idTema) {}
++
++    public record ComprarPersonalizacionRequest(
++            @com.fasterxml.jackson.annotation.JsonProperty("id_personalizacion") Integer idPersonalizacion) {}
+ }
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/dto/juego/GameStateDTO.java b/codenames/src/main/java/com/secretpanda/codenames/dto/juego/GameStateDTO.java
+index 1405706..c541230 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/dto/juego/GameStateDTO.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/dto/juego/GameStateDTO.java
+@@ -30,6 +30,12 @@ public class GameStateDTO {
+     @JsonProperty("segundos_restantes")
+     private Integer segundosRestantes;
+ 
++    @JsonProperty("num_jugadores_rojo")
++    private int numJugadoresRojo;
++
++    @JsonProperty("num_jugadores_azul")
++    private int numJugadoresAzul;
++
+     // Componentes del juego
+     @JsonProperty("pista_actual")
+     private PistaDTO pistaActual; // Puede ser null si el l├¡der a├║n no la ha introducido
+@@ -68,6 +74,12 @@ public class GameStateDTO {
+     public Integer getSegundosRestantes() { return segundosRestantes; }
+     public void setSegundosRestantes(Integer segundosRestantes) { this.segundosRestantes = segundosRestantes; }
+ 
++    public int getNumJugadoresRojo() { return numJugadoresRojo; }
++    public void setNumJugadoresRojo(int numJugadoresRojo) { this.numJugadoresRojo = numJugadoresRojo; }
++
++    public int getNumJugadoresAzul() { return numJugadoresAzul; }
++    public void setNumJugadoresAzul(int numJugadoresAzul) { this.numJugadoresAzul = numJugadoresAzul; }
++
+     public PistaDTO getPistaActual() { return pistaActual; }
+     public void setPistaActual(PistaDTO pistaActual) { this.pistaActual = pistaActual; }
+ 
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/dto/social/EnviarSolicitudDTO.java b/codenames/src/main/java/com/secretpanda/codenames/dto/social/EnviarSolicitudDTO.java
+new file mode 100644
+index 0000000..a1a7f32
+--- /dev/null
++++ b/codenames/src/main/java/com/secretpanda/codenames/dto/social/EnviarSolicitudDTO.java
+@@ -0,0 +1,19 @@
++package com.secretpanda.codenames.dto.social;
++
++import jakarta.validation.constraints.NotBlank;
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.NoArgsConstructor;
++
++/**
++ * DTO para enviar una solicitud de amistad.
++ * Recibe el tag completo del jugador receptor (ej. "Nombre#1234").
++ */
++@Data
++@NoArgsConstructor
++@AllArgsConstructor
++public class EnviarSolicitudDTO {
++
++    @NotBlank(message = "El tag del receptor no puede estar vac├¡o.")
++    private String tagReceptor;
++}
+\ No newline at end of file
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/dto/social/GestionarSolicitudDTO.java b/codenames/src/main/java/com/secretpanda/codenames/dto/social/GestionarSolicitudDTO.java
+new file mode 100644
+index 0000000..8b227d1
+--- /dev/null
++++ b/codenames/src/main/java/com/secretpanda/codenames/dto/social/GestionarSolicitudDTO.java
+@@ -0,0 +1,23 @@
++package com.secretpanda.codenames.dto.social;
++
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.Pattern;
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.NoArgsConstructor;
++
++/**
++ * DTO para aceptar o rechazar una solicitud de amistad.
++ */
++@Data
++@NoArgsConstructor
++@AllArgsConstructor
++public class GestionarSolicitudDTO {
++
++    @NotBlank(message = "El ID del solicitante no puede estar vac├¡o.")
++    private String idSolicitante;
++
++    @NotBlank(message = "El estado de la solicitud es obligatorio.")
++    @Pattern(regexp = "^(aceptada|rechazada)$", message = "El estado debe ser 'aceptada' o 'rechazada'.")
++    private String estado;
++}
+\ No newline at end of file
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/exception/GlobalExceptionHandler.java b/codenames/src/main/java/com/secretpanda/codenames/exception/GlobalExceptionHandler.java
+index c6b1ffe..8ac020d 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/exception/GlobalExceptionHandler.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/exception/GlobalExceptionHandler.java
+@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
+      */
+     @ExceptionHandler(Exception.class)
+     public ResponseEntity<Object> handleGlobalException(Exception ex) {
+-        return buildResponse("Error interno en los sistemas de Secret Panda: " + ex.getMessage(), 
++        return buildResponse("Error interno en los sistemas de Secret Panda.", 
+                              HttpStatus.INTERNAL_SERVER_ERROR);
+     }
+ 
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/mapper/juego/GameStateMapper.java b/codenames/src/main/java/com/secretpanda/codenames/mapper/juego/GameStateMapper.java
+index 3da17c5..aa08d66 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/mapper/juego/GameStateMapper.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/mapper/juego/GameStateMapper.java
+@@ -48,6 +48,16 @@ public class GameStateMapper {
+         dto.setCartasRojasRestantes((int) rojas);
+         dto.setCartasAzulesRestantes((int) azules);
+ 
++        // Conteo de jugadores por equipo (que no han abandonado)
++        long jugadoresRojo = partida.getJugadores().stream()
++                .filter(jp -> com.secretpanda.codenames.model.JugadorPartida.Equipo.rojo.equals(jp.getEquipo()) && !jp.isAbandono())
++                .count();
++        long jugadoresAzul = partida.getJugadores().stream()
++                .filter(jp -> com.secretpanda.codenames.model.JugadorPartida.Equipo.azul.equals(jp.getEquipo()) && !jp.isAbandono())
++                .count();
++        dto.setNumJugadoresRojo((int) jugadoresRojo);
++        dto.setNumJugadoresAzul((int) jugadoresAzul);
++
+         // Turno actual
+         if (turnoActual != null) {
+             dto.setEquipoTurnoActual(turnoActual.getJugadorPartida().getEquipo().name());
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/model/Jugador.java b/codenames/src/main/java/com/secretpanda/codenames/model/Jugador.java
+index 72dd823..181ad68 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/model/Jugador.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/model/Jugador.java
+@@ -22,7 +22,7 @@ public class Jugador {
+     @Column(name = "id_google", length = 255)
+     private String idGoogle;
+ 
+-    @Column(name = "tag", nullable = false, length = 50)
++    @Column(name = "tag", nullable = true, length = 50)
+     private String tag;
+ 
+     @Column(name = "foto_perfil", columnDefinition = "TEXT")
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/repository/AmistadRepository.java b/codenames/src/main/java/com/secretpanda/codenames/repository/AmistadRepository.java
+index 184280e..10f3390 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/repository/AmistadRepository.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/repository/AmistadRepository.java
+@@ -4,6 +4,7 @@ import java.util.List;
+ import java.util.Optional;
+ 
+ import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Modifying;
+ import org.springframework.data.jpa.repository.Query;
+ import org.springframework.data.repository.query.Param;
+ import org.springframework.stereotype.Repository;
+@@ -14,6 +15,10 @@ import com.secretpanda.codenames.model.AmistadId;
+ @Repository
+ public interface AmistadRepository extends JpaRepository<Amistad, AmistadId> {
+     
++    @Modifying
++    @Query("DELETE FROM Amistad a WHERE a.id.idSolicitante = :idGoogle OR a.id.idReceptor = :idGoogle")
++    void deleteAllByJugador(@Param("idGoogle") String idGoogle);
++
+     // OBTENER TODAS
+     List<Amistad> findById_IdSolicitante(String idSolicitante);
+     List<Amistad> findById_IdReceptor(String idReceptor);
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorPartidaRepository.java b/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorPartidaRepository.java
+index 438aa98..e49eaf8 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorPartidaRepository.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorPartidaRepository.java
+@@ -22,8 +22,9 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida,
+     // Obtener todos los jugadores de un equipo concreto en una partida concreta
+     List<JugadorPartida> findByPartida_IdPartidaAndEquipo(Integer idPartida, Equipo equipo);
+     
+-    // Obtener el historial de partidas de un jugador ordenado por fecha de finalizaci├│n (m├ís reciente primero)
+-    List<JugadorPartida> findByJugador_IdGoogleOrderByPartida_FechaFinDesc(String idGoogle);
++    // Obtener el historial de partidas de un jugador ordenado por fecha de finalizaci├│n (m├ís reciente primero) con paginaci├│n
++    @org.springframework.data.jpa.repository.Query("SELECT jp FROM JugadorPartida jp JOIN FETCH jp.partida p WHERE jp.jugador.idGoogle = :idGoogle ORDER BY p.fechaFin DESC")
++    List<JugadorPartida> findHistoryByJugadorId(@org.springframework.data.repository.query.Param("idGoogle") String idGoogle, org.springframework.data.domain.Pageable pageable);
+     
+     // Buscar el registro exacto de un jugador en una partida
+     Optional<JugadorPartida> findByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
+@@ -37,6 +38,12 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida,
+     // Contar cu├íntos jugadores NO han abandonado la partida (Para verificar si se puede jugar)
+     long countByPartida_IdPartidaAndAbandonoFalse(Integer idPartida);
+ 
++    // Contar cu├íntos jugadores de un equipo NO han abandonado
++    long countByPartida_IdPartidaAndEquipoAndAbandonoFalse(Integer idPartida, Equipo equipo);
++
++    // Obtener la lista de jugadores de un equipo que siguen activos
++    List<JugadorPartida> findByPartida_IdPartidaAndEquipoAndAbandonoFalse(Integer idPartida, Equipo equipo);
++
+     // Obtener la lista de jugadores que siguen activos en la partida (Los que no han abandonado)
+     List<JugadorPartida> findByPartida_IdPartidaAndAbandonoFalse(Integer idPartida);
+ 
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorRepository.java b/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorRepository.java
+index 87a3bf9..f79ccce 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorRepository.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/repository/JugadorRepository.java
+@@ -63,6 +63,12 @@ public interface JugadorRepository extends JpaRepository<Jugador, String> {
+     Optional<Jugador> findByTagAndActivoTrue(String tag);
+ 
+     // M├®todos con bloqueo optimista para evitar condiciones de carrera
++    // Comprobar si un tag existe ignorando may├║sculas/min├║sculas
++    boolean existsByTagIgnoreCase(String tag);
++
++    // Buscar jugador por tag ignorando may├║sculas/min├║sculas
++    Optional<Jugador> findByTagIgnoreCase(String tag);
++
+     @Lock(LockModeType.PESSIMISTIC_WRITE)
+     @Query("SELECT j FROM Jugador j WHERE j.idGoogle = :id")
+     Optional<Jugador> findByIdForUpdate(@Param("id") String id);
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/repository/PartidaRepository.java b/codenames/src/main/java/com/secretpanda/codenames/repository/PartidaRepository.java
+index bbae780..0e7def3 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/repository/PartidaRepository.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/repository/PartidaRepository.java
+@@ -36,7 +36,7 @@ public interface PartidaRepository extends JpaRepository<Partida, Integer> {
+     List<Partida> findByEsPublicaTrueAndEstadoAndTema_IdTemaOrderByFechaCreacionDesc(Partida.EstadoPartida estado, Integer idTema);
+ 
+     // Buscar partidas p├║blicas con huecos libres para matchmaking
+-    @Query("SELECT p FROM Partida p WHERE p.esPublica = true AND p.estado = :estado " +
++    @Query("SELECT p FROM Partida p JOIN FETCH p.tema JOIN FETCH p.creador WHERE p.esPublica = true AND p.estado = :estado " +
+            "AND (SELECT COUNT(jp) FROM JugadorPartida jp WHERE jp.partida = p) < p.maxJugadores " +
+            "ORDER BY p.fechaCreacion DESC")
+     List<Partida> findPartidasPublicasDisponibles(@Param("estado") Partida.EstadoPartida estado);
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/AmistadService.java b/codenames/src/main/java/com/secretpanda/codenames/service/AmistadService.java
+index 03e625a..06b4ffa 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/AmistadService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/AmistadService.java
+@@ -55,14 +55,18 @@ public class AmistadService {
+ 
+     @Transactional
+     public void enviarSolicitud(String idSolicitante, String tagReceptor) {
++        if (tagReceptor == null || tagReceptor.isBlank()) {
++            throw new BadRequestException("El tag del receptor es obligatorio.");
++        }
++        
+         Jugador solicitante = jugadorRepository.findById(idSolicitante).orElseThrow();
+-        Jugador receptor = jugadorRepository.findByTagAndActivoTrue(tagReceptor.trim())
+-                .orElseThrow(() -> new NotFoundException("No existe un jugador activo con el tag: " + tagReceptor));
++        Jugador receptor = jugadorRepository.findByTagIgnoreCase(tagReceptor.trim())
++                .orElseThrow(() -> new NotFoundException("No existe un jugador con el tag: " + tagReceptor));
+ 
+         if (idSolicitante.equals(receptor.getIdGoogle())) 
+             throw new BadRequestException("No puedes enviarte solicitud a ti mismo.");
+ 
+-        // Comprobar si ya existe una relaci├│n previa en cualquier sentido
++        // Consultamos si ya existe una relaci├│n previa (en cualquier direcci├│n)
+         Optional<Amistad> relacionExistente = amistadRepository.findAmistadEntreJugadores(idSolicitante, receptor.getIdGoogle());
+ 
+         if (relacionExistente.isPresent()) {
+@@ -72,27 +76,25 @@ public class AmistadService {
+                 throw new BadRequestException("Ya sois amigos.");
+             }
+ 
+-            // Si la solicitud existente la envi├│ el OTRO y est├í pendiente, asutoacepta
++            // Si el otro ya me hab├¡a enviado una solicitud, la amistad se sella autom├íticamente
+             if (am.getSolicitante().getIdGoogle().equals(receptor.getIdGoogle())) {
+                 am.setEstado(Amistad.EstadoAmistad.aceptada);
+                 amistadRepository.save(am);
+                 
+-                // Notificar a ambos que la amistad se ha sellado
+                 actualizarListaAmigosWS(idSolicitante);
+                 actualizarListaAmigosWS(receptor.getIdGoogle());
+-                enviarNotificacionGeneralWS(idSolicitante, "solicitud_amistad", "┬íInter├®s mutuo! Ahora eres amigo de " + receptor.getTag());
+-                enviarNotificacionGeneralWS(receptor.getIdGoogle(), "solicitud_amistad", solicitante.getTag() + " tambi├®n te ha agregado.");
++                enviarNotificacionGeneralWS(idSolicitante, "solicitud_amistad", "┬íAhora eres amigo de " + receptor.getTag() + "!");
++                enviarNotificacionGeneralWS(receptor.getIdGoogle(), "solicitud_amistad", solicitante.getTag() + " ha aceptado tu solicitud.");
+                 
+-                // Limpiar la lista de pendientes del que ya la ten├¡a
+-                actualizarListaSolicitudesWS(idSolicitante);
++                actualizarListaSolicitudesWS(idSolicitante); // Limpiar mi lista de pendientes
+                 return;
+             } else {
+-                // Si la envi├® YO mismo antes y sigue pendiente
++                // Si yo ya le hab├¡a enviado una y sigue pendiente
+                 throw new BadRequestException("Ya has enviado una solicitud a este jugador.");
+             }
+         }
+ 
+-        // Si no exist├¡a nada, crear nueva solicitud normal
++        // Crear nueva solicitud normal si no hay historial previo
+         Amistad nueva = new Amistad();
+         AmistadId aid = new AmistadId();
+         aid.setIdSolicitante(idSolicitante);
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/AuthService.java b/codenames/src/main/java/com/secretpanda/codenames/service/AuthService.java
+index bd5a638..56c8eb9 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/AuthService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/AuthService.java
+@@ -17,6 +17,7 @@ import com.secretpanda.codenames.model.InventarioTemaId;
+ import com.secretpanda.codenames.model.Jugador;
+ import com.secretpanda.codenames.model.JugadorPartida;
+ import com.secretpanda.codenames.model.Partida;
++import com.secretpanda.codenames.repository.AmistadRepository;
+ import com.secretpanda.codenames.repository.InventarioTemaRepository;
+ import com.secretpanda.codenames.repository.JugadorPartidaRepository;
+ import com.secretpanda.codenames.repository.JugadorRepository;
+@@ -35,6 +36,9 @@ public class AuthService {
+     private final EstadisticasCalculator calculator;
+     private final TemaRepository temaRepository;
+     private final InventarioTemaRepository inventarioTemaRepository;
++    private final AmistadRepository amistadRepository;
++    private final PartidaService partidaService;
++    private final JugadorService jugadorService;
+ 
+     @Value("${game.tema-basico-id:1}")
+     private Integer temaBasicoId;
+@@ -45,7 +49,10 @@ public class AuthService {
+                     JugadorPartidaRepository jugadorPartidaRepository,
+                     EstadisticasCalculator calculator,
+                     TemaRepository temaRepository,
+-                    InventarioTemaRepository inventarioTemaRepository) {
++                    InventarioTemaRepository inventarioTemaRepository,
++                    AmistadRepository amistadRepository,
++                    PartidaService partidaService,
++                    JugadorService jugadorService) {
+         this.googleAuthService = googleAuthService;
+         this.jwtService = jwtService;
+         this.jugadorRepository = jugadorRepository;
+@@ -53,6 +60,9 @@ public class AuthService {
+         this.calculator = calculator;
+         this.temaRepository = temaRepository;
+         this.inventarioTemaRepository = inventarioTemaRepository;
++        this.amistadRepository = amistadRepository;
++        this.partidaService = partidaService;
++        this.jugadorService = jugadorService;
+     }
+ 
+     // ÔöÇÔöÇÔöÇ Login ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+@@ -102,11 +112,12 @@ public class AuthService {
+             throw new BadRequestException("Este usuario ya est├í registrado y activo. Usa /login.");
+         }
+ 
+-        // 4. VALIDAR UNICIDAD DEL TAG (Solo entre usuarios activos)
++        // 4. VALIDAR UNICIDAD DEL TAG (IgnoreCase para evitar "Panda" y "panda" a la vez)
+         if (tag == null || tag.isBlank()) {
+             throw new BadRequestException("El tag no puede estar vac├¡o.");
+         }
+-        if (jugadorRepository.existsByTagAndActivoTrue(tag.trim())) {
++        String tagNormalizado = tag.trim();
++        if (jugadorRepository.existsByTagIgnoreCase(tagNormalizado)) {
+             throw new BadRequestException("Ese nombre de usuario ya est├í en uso.");
+         }
+ 
+@@ -147,6 +158,9 @@ public class AuthService {
+             });
+         }
+ 
++        // 6. INICIALIZAR LOGROS
++        jugadorService.inicializarLogros(jugador);
++
+         return construirRespuestaExistente(jugador);
+     }
+ 
+@@ -157,12 +171,24 @@ public class AuthService {
+         Jugador jugador = jugadorRepository.findById(idGoogle)
+                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
+ 
++        // 1. Abandonar partida activa si existe para evitar "fantasmizaci├│n"
++        Integer partidaId = buscarPartidaActiva(idGoogle);
++        if (partidaId != null) {
++            partidaService.abandonar(partidaId, idGoogle);
++        }
++
++        // 2. Borrar todas las relaciones de amistad (GDPR / Reset)
++        amistadRepository.deleteAllByJugador(idGoogle);
++
++        // 3. Desactivar y resetear estad├¡sticas visibles + liberar TAG
+         jugador.setActivo(false);
+-        // Resetear estad├¡sticas visibles (leaderboard, amigos)
++        jugador.setTag(null);
++        jugador.setFotoPerfil(null);
+         jugador.setPartidasJugadas(0);
+         jugador.setVictorias(0);
+         jugador.setNumAciertos(0);
+         jugador.setNumFallos(0);
++        jugador.setBalas(0);
+         jugadorRepository.save(jugador);
+     }
+ 
+@@ -189,4 +215,4 @@ public class AuthService {
+                 .map(jp -> jp.getPartida().getIdPartida())
+                 .orElse(null);
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/JuegoService.java b/codenames/src/main/java/com/secretpanda/codenames/service/JuegoService.java
+index 1d9f6e9..81eaed3 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/JuegoService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/JuegoService.java
+@@ -176,6 +176,10 @@ public class JuegoService {
+         if (pistaLimpia.isBlank() || pistaLimpia.contains(" ") || pistaLimpia.length() > 20) {
+             throw new BadRequestException("La pista debe ser una sola palabra de m├íximo 20 caracteres.");
+         }
++        // RF-19: No puede contener caracteres especiales (Solo letras y n├║meros)
++        if (!pistaLimpia.matches("^[a-zA-Z├í├®├¡├│├║├ü├ë├ì├ô├Ü├▒├æ0-9]+$")) {
++            throw new BadRequestException("La pista solo puede contener letras y n├║meros, sin s├¡mbolos ni espacios.");
++        }
+         if (pistaNumero < 1 || pistaNumero > 8) {
+             throw new BadRequestException("El n├║mero de la pista debe estar entre 1 y 8.");
+         }
+@@ -247,6 +251,10 @@ public class JuegoService {
+             throw new GameLogicException("No es el turno de tu equipo.");
+         }
+ 
++        if (turno.getPalabraPista() == null) {
++            throw new GameLogicException("El jefe a├║n no ha dado pista.");
++        }
++
+         TableroCarta carta = tableroCartaRepository.findById(idCartaTablero)
+                 .orElseThrow(() -> new NotFoundException("Carta no encontrada."));
+ 
+@@ -281,7 +289,7 @@ public class JuegoService {
+                                 .equals(a.getIdJugadorPartida())));
+ 
+         if (todosVotaron) {
+-            resolverVotacion(partida, turno, jp.getEquipo());
++            resolverVotacion(partida, turno, jp.getEquipo(), false);
+         } else {
+             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                 @Override
+@@ -297,10 +305,16 @@ public class JuegoService {
+     // ÔöÇÔöÇÔöÇ Resolver votaci├│n ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
+     @Transactional
+-    public void resolverVotacion(Partida partida, Turno turno, Equipo equipoVotante) {
++    public void resolverVotacion(Partida partida, Turno turno, Equipo equipoVotante, boolean isTimeout) {
+         List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
+ 
+-        if (votos.isEmpty()) return;
++        if (votos.isEmpty()) {
++            if (isTimeout) {
++                prepararTurnoRival(partida, equipoVotante);
++                broadcastEstado(partida.getIdPartida());
++            }
++            return;
++        }
+ 
+         // Conteo de votos por carta
+         Map<Integer, Long> conteo = votos.stream()
+@@ -350,7 +364,7 @@ public class JuegoService {
+         if (continuaPartida) {
+             boolean esAciertoPropio = esCartaDelEquipo(cartaGanadora.getTipo(), equipoVotante);
+ 
+-            if (!esAciertoPropio) {
++            if (!esAciertoPropio || isTimeout) {
+                 prepararTurnoRival(partida, equipoVotante);
+             } else {
+                 turno.setAciertosTurno(turno.getAciertosTurno() + 1);
+@@ -377,6 +391,40 @@ public class JuegoService {
+         }
+     }
+ 
++    @Transactional
++    public void comprobarYResolverVotacionSiAplica(Integer idPartida) {
++        Partida partida = partidaRepository.findById(idPartida).orElse(null);
++        if (partida == null || !Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
++
++        Turno turno = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
++        if (turno == null || turno.getPalabraPista() == null) return;
++
++        List<VotoCarta> todosVotos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno());
++        Equipo equipoVotante = turno.getJugadorPartida().getEquipo();
++
++        List<JugadorPartida> agentesActivos = jugadorPartidaRepository
++                .findByPartida_IdPartidaAndAbandonoFalse(idPartida).stream()
++                .filter(a -> Rol.agente.equals(a.getRol()) && a.getEquipo().equals(equipoVotante))
++                .collect(Collectors.toList());
++
++        if (agentesActivos.isEmpty()) {
++            // Si no quedan agentes en el equipo que vota, el turno pasa al rival
++            prepararTurnoRival(partida, equipoVotante);
++            broadcastEstado(idPartida);
++            return;
++        }
++
++        boolean todosVotaron = agentesActivos.stream()
++                .allMatch(a -> todosVotos.stream()
++                        .anyMatch(v -> v.getJugadorPartida().getIdJugadorPartida().equals(a.getIdJugadorPartida())));
++
++        if (todosVotaron) {
++            resolverVotacion(partida, turno, equipoVotante, false);
++        } else {
++            broadcastEstado(idPartida);
++        }
++    }
++
+     private void prepararTurnoRival(Partida partida, Equipo equipoActual) {
+         Equipo rival = (equipoActual == Equipo.rojo) ? Equipo.azul : Equipo.rojo;
+         
+@@ -459,7 +507,7 @@ public class JuegoService {
+                 .collect(Collectors.toList());
+ 
+             if (ganadores.size() == 1) {
+-                resolverVotacion(partida, turnoActual, turnoActual.getJugadorPartida().getEquipo());
++                resolverVotacion(partida, turnoActual, turnoActual.getJugadorPartida().getEquipo(), true);
+                 return;
+             }
+         }
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/JugadorService.java b/codenames/src/main/java/com/secretpanda/codenames/service/JugadorService.java
+index 0e01447..5618703 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/JugadorService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/JugadorService.java
+@@ -27,16 +27,20 @@ import com.secretpanda.codenames.mapper.partida.PartidaMapper;
+ import com.secretpanda.codenames.model.InventarioPersonalizacion;
+ import com.secretpanda.codenames.model.Jugador;
+ import com.secretpanda.codenames.model.JugadorLogro;
++import com.secretpanda.codenames.model.JugadorLogroId;
+ import com.secretpanda.codenames.model.JugadorPartida;
+ import com.secretpanda.codenames.model.Logro;
+ import com.secretpanda.codenames.model.Partida;
+ import com.secretpanda.codenames.model.Personalizacion;
++import com.secretpanda.codenames.model.Tema;
+ import com.secretpanda.codenames.repository.InventarioPersonalizacionRepository;
+ import com.secretpanda.codenames.repository.InventarioTemaRepository;
+ import com.secretpanda.codenames.repository.JugadorLogroRepository;
+ import com.secretpanda.codenames.repository.JugadorPartidaRepository;
+ import com.secretpanda.codenames.repository.JugadorRepository;
+ import com.secretpanda.codenames.repository.LogroRepository;
++import com.secretpanda.codenames.repository.PersonalizacionRepository;
++import com.secretpanda.codenames.repository.TemaRepository;
+ import com.secretpanda.codenames.util.EstadisticasCalculator;
+ 
+ @Service
+@@ -52,6 +56,8 @@ public class JugadorService {
+     private final EstadisticasCalculator calculator;
+     private final LogroRepository logroRepository;
+     private final SimpMessagingTemplate messagingTemplate;
++    private final PersonalizacionRepository personalizacionRepository;
++    private final TemaRepository temaRepository;
+ 
+ 
+     public JugadorService(JugadorRepository jugadorRepository,
+@@ -61,7 +67,9 @@ public class JugadorService {
+                           JugadorLogroRepository jugadorLogroRepository,
+                           EstadisticasCalculator calculator, 
+                           LogroRepository logroRepository, 
+-                          SimpMessagingTemplate messagingTemplate) {
++                          SimpMessagingTemplate messagingTemplate,
++                          PersonalizacionRepository personalizacionRepository,
++                          TemaRepository temaRepository) {
+         this.jugadorRepository = jugadorRepository;
+         this.inventarioTemaRepository = inventarioTemaRepository;
+         this.inventarioPersonalizacionRepository = inventarioPersonalizacionRepository;
+@@ -70,6 +78,8 @@ public class JugadorService {
+         this.calculator = calculator;
+         this.logroRepository = logroRepository;
+         this.messagingTemplate = messagingTemplate;
++        this.personalizacionRepository = personalizacionRepository;
++        this.temaRepository = temaRepository;
+     }
+ 
+     // ÔöÇÔöÇÔöÇ Perfil ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+@@ -168,19 +178,35 @@ public class JugadorService {
+ 
+     @Transactional(readOnly = true)
+     public List<PartidaResumenDTO> getHistorial(String idGoogle) {
+-        // Buscamos las participaciones ordenadas por fecha descendente
++        // Buscamos las participaciones ordenadas por fecha descendente directamente con el l├¡mite
+         List<JugadorPartida> participaciones = 
+-            jugadorPartidaRepository.findByJugador_IdGoogleOrderByPartida_FechaFinDesc(idGoogle);
++            jugadorPartidaRepository.findHistoryByJugadorId(idGoogle, org.springframework.data.domain.PageRequest.of(0, MAX_HISTORIAL));
+ 
+-        // Limitamos a las ├║ltimas 30 y mapeamos
++        // Mapeamos los resultados obtenidos
+         return participaciones.stream()
+-                .limit(MAX_HISTORIAL)
+                 .map(jp -> PartidaMapper.toResumenDTO(jp.getPartida(), jp))
+                 .collect(Collectors.toList());
+     }
+ 
+     // ÔöÇÔöÇÔöÇ Logros ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
++    @Transactional
++    public void inicializarLogros(Jugador jugador) {
++        List<Logro> todosLosLogros = logroRepository.findByActivoTrue();
++        for (Logro logro : todosLosLogros) {
++            JugadorLogro jl = new JugadorLogro();
++            JugadorLogroId id = new JugadorLogroId();
++            id.setIdJugador(jugador.getIdGoogle());
++            id.setIdLogro(logro.getIdLogro());
++            jl.setId(id);
++            jl.setJugador(jugador);
++            jl.setLogro(logro);
++            jl.setProgresoActual(0);
++            jl.setCompletado(false);
++            jugadorLogroRepository.save(jl);
++        }
++    }
++
+     @Transactional(readOnly = true)
+     public List<LogroDTO> getLogros(String idGoogle) {
+         // Obtener todos los logros que est├ín activos en el juego (Cat├ílogo)
+@@ -243,19 +269,45 @@ public class JugadorService {
+         j.setNumAciertos(j.getNumAciertos() + aciertos);
+         j.setNumFallos(j.getNumFallos() + fallos);
+ 
++        jugadorRepository.save(j);
++
+         // 2. Asignar balas seg├║n resultado (usando valores configurados)
+         int premio = gano ? balasGanador : balasDerrota;
+-        j.setBalas(j.getBalas() + premio);
+-
+-        jugadorRepository.save(j);
++        modificarBalas(idGoogle, premio);
+ 
+-        // 3. Notificar actualizaci├│n de balas por WS
+-        notificarActualizacionBalas(idGoogle, j.getBalas());
++        // 3. Comprobar logros espec├¡ficos de ESTA partida (Punter├¡a Extrema: 0 fallos)
++        comprobarLogrosDePartida(idGoogle, aciertos, fallos);
+ 
+-        // 4. Actualizar progreso de logros
++        // 4. Actualizar progreso de logros globales
+         actualizarProgresoLogros(idGoogle);
+     }
+ 
++    @Transactional
++    public void comprobarLogrosDePartida(String idGoogle, int aciertos, int fallos) {
++        // RF-8: Logro "Punter├¡a extrema" -> Terminar una partida con 0 fallos (m├¡nimo 3 aciertos para evitar trampas)
++        if (fallos == 0 && aciertos >= 3) {
++            List<JugadorLogro> logs = jugadorLogroRepository.findById_IdJugador(idGoogle);
++            logs.stream()
++                .filter(jl -> "cero_fallos_partida".equals(jl.getLogro().getEstadisticaClave()) && !jl.isCompletado())
++                .findFirst()
++                .ifPresent(jl -> {
++                    jl.setProgresoActual(1);
++                    jl.setCompletado(true);
++                    jl.setFechaDesbloqueo(LocalDateTime.now());
++                    modificarBalas(idGoogle, jl.getLogro().getBalasRecompensa());
++                    notificarLogro(idGoogle, jl.getLogro());
++                    jugadorLogroRepository.save(jl);
++                });
++        }
++    }
++
++    private void notificarLogro(String idGoogle, Logro logro) {
++        NotificacionDTO notif = new NotificacionDTO("logro_desbloqueado", 
++            Map.of("mensaje", "┬íLogro desbloqueado: " + logro.getNombre() + "!", 
++                "recompensa", logro.getBalasRecompensa()));
++        messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
++    }
++
+     @Transactional
+     public void modificarBalas(String idGoogle, int cantidadAModificar) {
+         // Buscamos con bloqueo para que nadie m├ís toque este jugador hasta que terminemos
+@@ -288,22 +340,25 @@ public class JugadorService {
+                 case "victorias" -> valorActual = jugador.getVictorias();
+                 case "num_aciertos" -> valorActual = jugador.getNumAciertos();
+                 case "num_fallos" -> valorActual = jugador.getNumFallos();
++                case "coleccion_completa" -> {
++                    // RF-8: Logro "Fiebre de balas" -> Poseer todos los temas y marcos
++                    long totalItems = personalizacionRepository.count() + temaRepository.count();
++                    long misItems = inventarioPersonalizacionRepository.findById_IdJugador(idGoogle).size() + 
++                                   inventarioTemaRepository.findById_IdJugador(idGoogle).size();
++                    valorActual = (int) misItems;
++                }
+             }
+ 
+-            jl.setProgresoActual(valorActual);
+-
+-            if (valorActual >= logro.getValorObjetivo()) {
+-                jl.setCompletado(true);
+-                jl.setFechaDesbloqueo(LocalDateTime.now());
+-                
+-                // Entregar recompensa usando el m├®todo seguro del Punto 1
+-                modificarBalas(idGoogle, logro.getBalasRecompensa());
+-                
+-                // Notificar desbloqueo por WebSocket
+-                NotificacionDTO notif = new NotificacionDTO("logro_desbloqueado", 
+-                    Map.of("mensaje", "┬íLogro desbloqueado: " + logro.getNombre() + "!", 
+-                        "recompensa", logro.getBalasRecompensa()));
+-                messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
++            if (valorActual > 0) {
++                jl.setProgresoActual(valorActual);
++
++                if (valorActual >= logro.getValorObjetivo()) {
++                    jl.setCompletado(true);
++                    jl.setFechaDesbloqueo(LocalDateTime.now());
++                    
++                    modificarBalas(idGoogle, logro.getBalasRecompensa());
++                    notificarLogro(idGoogle, logro);
++                }
+             }
+         }
+         jugadorLogroRepository.saveAll(pendientes);
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/LobbyService.java b/codenames/src/main/java/com/secretpanda/codenames/service/LobbyService.java
+index 70b47f8..7755916 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/LobbyService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/LobbyService.java
+@@ -262,6 +262,9 @@ public LobbyService(PartidaRepository partidaRepository,
+     }
+ 
+     private void asignarRoles(List<JugadorPartida> jugadores) {
++        // Mezclar la lista para que la elecci├│n del l├¡der sea totalmente aleatoria
++        java.util.Collections.shuffle(jugadores);
++
+         boolean lidRojoAsignado = false;
+         boolean lidAzulAsignado = false;
+ 
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/PartidaService.java b/codenames/src/main/java/com/secretpanda/codenames/service/PartidaService.java
+index 531b94f..01f751c 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/PartidaService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/PartidaService.java
+@@ -9,10 +9,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+-import com.secretpanda.codenames.dto.partida.CrearPartidaDTO;
+ import com.secretpanda.codenames.dto.partida.JugadorLobbyDTO;
+ import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
+-import com.secretpanda.codenames.dto.partida.RolPartidaDTO;
++import com.secretpanda.codenames.dto.partida.PartidaPublicaDTO;
++import com.secretpanda.codenames.dto.partida.CrearPartidaDTO;
+ import com.secretpanda.codenames.exception.BadRequestException;
+ import com.secretpanda.codenames.exception.GameLogicException;
+ import com.secretpanda.codenames.exception.NotFoundException;
+@@ -44,6 +44,7 @@ public class PartidaService {
+     private final SimpMessagingTemplate messagingTemplate;
+     private final JugadorService jugadorService;
+     private final JuegoService juegoService;
++    private final LobbyService lobbyService;
+ 
+     public PartidaService(PartidaRepository partidaRepository,
+                           JugadorRepository jugadorRepository,
+@@ -54,7 +55,8 @@ public class PartidaService {
+                           CodigoPartidaGenerator codigoGenerator,
+                           SimpMessagingTemplate messagingTemplate,
+                           JugadorService jugadorService,
+-                          JuegoService juegoService) {
++                          JuegoService juegoService,
++                          LobbyService lobbyService) {
+         this.partidaRepository = partidaRepository;
+         this.jugadorRepository = jugadorRepository;
+         this.temaRepository = temaRepository;
+@@ -65,238 +67,253 @@ public class PartidaService {
+         this.messagingTemplate = messagingTemplate;
+         this.jugadorService = jugadorService;
+         this.juegoService = juegoService;
++        this.lobbyService = lobbyService;
+     }
+ 
+-    // ÔöÇÔöÇÔöÇ Crear partida ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++    // ÔöÇÔöÇÔöÇ Crear Partida ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
+     @Transactional
+     public LobbyStatusDTO crearPartida(CrearPartidaDTO dto, String idGoogle) {
+         validarSinPartidaActiva(idGoogle);
+ 
++        Jugador creador = jugadorRepository.findById(idGoogle)
++                .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
++
+         Tema tema = temaRepository.findById(dto.getIdTema())
+-                .orElseThrow(() -> new NotFoundException("El tema seleccionado no existe."));
+-        Jugador creador = findJugador(idGoogle);
++                .orElseThrow(() -> new NotFoundException("Tema no encontrado."));
+ 
+-        if (!inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, dto.getIdTema())) {
+-            throw new GameLogicException("No tienes adquirido ese tema de cartas.");
++        // Validar que el creador tenga el tema comprado (excepto el b├ísico)
++        if (dto.getIdTema() != 1) { // 1 = ID del tema b├ísico por defecto
++            boolean tieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, dto.getIdTema());
++            if (!tieneTema) {
++                throw new GameLogicException("No tienes este tema comprado.");
++            }
+         }
+ 
+-        String codigo;
+-        do {
+-            codigo = codigoGenerator.generarCodigo();
+-        } while (partidaRepository.existsByCodigoPartida(codigo));
+-
+         Partida partida = new Partida();
+-        partida.setTema(tema);
+         partida.setCreador(creador);
+-        partida.setTiempoEspera(dto.getTiempoEspera());
+-        partida.setMaxJugadores(dto.getMaxJugadores());
++        partida.setTema(tema);
+         partida.setEsPublica(dto.isEsPublica());
++        partida.setCodigoPartida(codigoGenerator.generarCodigo());
+         partida.setEstado(Partida.EstadoPartida.esperando);
+-        partida.setCodigoPartida(codigo);
+-        partida = partidaRepository.save(partida);
++        partida.setFechaCreacion(LocalDateTime.now());
++        partida.setTiempoEspera(dto.getTiempoEspera()); 
++        partida.setMaxJugadores(dto.getMaxJugadores());
+ 
++        partidaRepository.save(partida);
++
++        // El creador se une autom├íticamente al equipo rojo (por defecto)
+         JugadorPartida jp = new JugadorPartida();
+-        jp.setJugador(creador);
+         jp.setPartida(partida);
++        jp.setJugador(creador);
+         jp.setEquipo(JugadorPartida.Equipo.rojo);
+-        jp.setRol(JugadorPartida.Rol.agente);
++        jp.setAbandono(false);
+         jugadorPartidaRepository.save(jp);
+ 
+-        return buildLobbyStatusDTO(partida, List.of(jp));
++        if (partida.isEsPublica()) {
++            lobbyService.broadcastPartidasPublicas();
++        }
++
++        return lobbyService.buildLobbyDTO(partida);
+     }
+ 
+-    // ÔöÇÔöÇÔöÇ Unirse a privada ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++    // ÔöÇÔöÇÔöÇ Unirse a Partida (Privada/P├║blica por c├│digo) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
++    /** Devuelve el ID de la partida unida para redirecci├│n. */
+     @Transactional
+-    public Integer unirsePartidaPrivada(String codigoPartida, String idGoogle) {
++    public Integer unirsePartidaPrivada(String codigo, String idGoogle) {
+         validarSinPartidaActiva(idGoogle);
+ 
+-        Partida partida = partidaRepository.findByCodigoPartida(codigoPartida.toUpperCase().trim())
+-                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
++        Partida partidaTemp = partidaRepository.findByCodigoPartida(codigo.toUpperCase().trim())
++                .orElseThrow(() -> new NotFoundException("C├│digo de partida no v├ílido."));
+ 
+-        if (partida.isEsPublica()) {
+-            throw new GameLogicException("Esta partida es p├║blica. Usa el endpoint de unirse a p├║blica.");
+-        }
++        // Bloqueamos la fila de la partida en la BD para validar el hueco de forma segura
++        Partida partida = partidaRepository.findByIdForUpdate(partidaTemp.getIdPartida())
++                .orElseThrow(() -> new NotFoundException("La partida ha dejado de existir."));
+ 
+         unirseValidado(partida, idGoogle);
+         return partida.getIdPartida();
+     }
+ 
+-    // ÔöÇÔöÇÔöÇ Unirse a p├║blica ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++    // ÔöÇÔöÇÔöÇ Unirse a Partida P├║blica ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
+     @Transactional
+     public void unirsePartidaPublica(Integer idPartida, String idGoogle) {
+         validarSinPartidaActiva(idGoogle);
+ 
+-        Partida partida = partidaRepository.findById(idPartida)
++        // Bloqueamos la partida para que nadie m├ís se una mientras validamos el hueco
++        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
+                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+ 
+         if (!partida.isEsPublica()) {
+             throw new GameLogicException("Esta partida es privada.");
+         }
+ 
+-        if (!inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(
+-                idGoogle, partida.getTema().getIdTema())) {
+-            throw new GameLogicException("No tienes adquirido el tema de esta partida.");
++        // RF-15: Un usuario solo puede unirse a partidas p├║blicas con temas que ya posea
++        Integer idTema = partida.getTema().getIdTema();
++        if (idTema != 1) { // 1 = ID del tema b├ísico por defecto
++            boolean tieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, idTema);
++            if (!tieneTema) {
++                throw new GameLogicException("No puedes unirte a esta partida p├║blica porque no has adquirido el paquete de cartas '" 
++                                            + partida.getTema().getNombre() + "'.");
++            }
+         }
+ 
+         unirseValidado(partida, idGoogle);
+     }
+ 
+-    // ÔöÇÔöÇÔöÇ Abandonar (lobby o en curso) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++    private void unirseValidado(Partida partida, String idGoogle) {
++        if (!Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
++            throw new GameLogicException("La partida ya ha comenzado o finalizado.");
++        }
++
++        long actuales = jugadorPartidaRepository.countByPartida_IdPartidaAndAbandonoFalse(partida.getIdPartida());
++        if (actuales >= partida.getMaxJugadores()) {
++            throw new GameLogicException("La partida est├í llena.");
++        }
++
++        // Si ya estuvo y abandon├│, no puede volver (opcional seg├║n reglas)
++        if (jugadorPartidaRepository.findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, partida.getIdPartida()).isPresent()) {
++            throw new GameLogicException("Ya has participado en esta partida.");
++        }
++
++        Jugador jugador = jugadorRepository.findById(idGoogle).orElseThrow();
++
++        // El jugador se une al equipo con menos gente para equilibrar
++        long rojos = jugadorPartidaRepository.countByPartida_IdPartidaAndEquipoAndAbandonoFalse(partida.getIdPartida(), JugadorPartida.Equipo.rojo);
++        long azules = jugadorPartidaRepository.countByPartida_IdPartidaAndEquipoAndAbandonoFalse(partida.getIdPartida(), JugadorPartida.Equipo.azul);
++
++        JugadorPartida jp = new JugadorPartida();
++        jp.setPartida(partida);
++        jp.setJugador(jugador);
++        jp.setEquipo(rojos <= azules ? JugadorPartida.Equipo.rojo : JugadorPartida.Equipo.azul);
++        jp.setAbandono(false);
++        jugadorPartidaRepository.save(jp);
++    }
++
++    // ÔöÇÔöÇÔöÇ Abandonar Partida ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
+     @Transactional
+     public void abandonar(Integer idPartida, String idGoogle) {
+-        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
++        Partida partida = partidaRepository.findById(idPartida)
+                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+ 
+         JugadorPartida jp = jugadorPartidaRepository
+                 .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
+                 .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
+ 
+-        if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+-            jugadorService.modificarBalas(idGoogle, -balasPenalizacionAbandono);
+-
+-            jp.setAbandono(true);
+-            jugadorPartidaRepository.save(jp);
++        if (jp.isAbandono()) {
++            return; // Ya abandonado, ignorar para evitar doble penalizaci├│n
++        }
+ 
+-            List<JugadorPartida> activos = jugadorPartidaRepository
+-                    .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
+-            
+-            JugadorPartida.Equipo miEquipo = jp.getEquipo();
+-            
+-            long lideresEnMiEquipo = activos.stream()
+-                    .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.lider))
+-                    .count();
+-            long agentesEnMiEquipo = activos.stream()
+-                    .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.agente))
+-                    .count();
++        boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
+ 
+-            if (lideresEnMiEquipo == 0 || agentesEnMiEquipo == 0) {
+-                boolean ganaRojo = !miEquipo.equals(JugadorPartida.Equipo.rojo);
+-                finalizarPartidaManual(partida, ganaRojo);
+-            } else {
+-                juegoService.broadcastEstado(idPartida);
+-            }
+-        } 
+-        else {
+-            boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
++        if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
++            // EN EL LOBBY
+             if (esCreador) {
++                // Si el creador se va, la partida se cancela
+                 partida.setEstado(Partida.EstadoPartida.finalizada);
+                 partida.setFechaFin(LocalDateTime.now());
+                 partidaRepository.save(partida);
+             }
++            // Eliminamos f├¡sicamente el registro para que pueda unirse a otra
+             jugadorPartidaRepository.delete(jp);
+-        }
+-    }
+-
+-    // ÔöÇÔöÇÔöÇ Rol del jugador ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-
+-    @Transactional(readOnly = true)
+-    public RolPartidaDTO getRolJugador(Integer idPartida, String idGoogle) {
+-        JugadorPartida jp = jugadorPartidaRepository
+-                .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
+-                .orElseThrow(() -> new NotFoundException("No perteneces a esta partida."));
+-
+-        long cartasRojo = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
+-                idPartida,
+-                com.secretpanda.codenames.model.TableroCarta.TipoCarta.rojo,
+-                com.secretpanda.codenames.model.TableroCarta.EstadoCarta.oculta);
+-        long cartasAzul = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
+-                idPartida,
+-                com.secretpanda.codenames.model.TableroCarta.TipoCarta.azul,
+-                com.secretpanda.codenames.model.TableroCarta.EstadoCarta.oculta);
+-
+-        String equipoInicial = (cartasRojo >= cartasAzul) ? "rojo" : "azul";
+-
+-        return new RolPartidaDTO(
+-                jp.getRol().name(),
+-                jp.getEquipo().name(),
+-                equipoInicial);
+-    }
+-
+-    // ÔöÇÔöÇÔöÇ Helpers ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-
+-    private void unirseValidado(Partida partida, String idGoogle) {
+-        if (!Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
+-            throw new GameLogicException("La partida ya ha comenzado o finalizado.");
+-        }
++            
++            // Broadcast lobby actualizado (con estado finalizada si es el creador)
++            lobbyService.broadcastLobby(partida);
++            if (partida.isEsPublica()) {
++                lobbyService.broadcastPartidasPublicas();
++            }
+ 
+-        long actuales = jugadorPartidaRepository
+-                .countByPartida_IdPartidaAndAbandonoFalse(partida.getIdPartida());
+-        if (actuales >= partida.getMaxJugadores()) {
+-            throw new GameLogicException("La sala est├í llena.");
+-        }
+-        if (jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_IdPartida(
+-                idGoogle, partida.getIdPartida())) {
+-            throw new GameLogicException("Ya est├ís en esta partida.");
+-        }
++        } else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
++            // EN PARTIDA ACTIVA
++            jp.setAbandono(true);
++            jugadorPartidaRepository.save(jp);
+ 
+-        Jugador jugador = findJugador(idGoogle);
++            // Penalizaci├│n siempre al que abandona (RF-35: 5 balas)
++            jugadorService.modificarBalas(idGoogle, -balasPenalizacionAbandono);
+ 
+-        JugadorPartida jp = new JugadorPartida();
+-        jp.setJugador(jugador);
+-        jp.setPartida(partida);
+-        long rojos = jugadorPartidaRepository
+-                .findByPartida_IdPartidaAndEquipo(partida.getIdPartida(), JugadorPartida.Equipo.rojo).size();
+-        long azules = jugadorPartidaRepository
+-                .findByPartida_IdPartidaAndEquipo(partida.getIdPartida(), JugadorPartida.Equipo.azul).size();
+-        jp.setEquipo(rojos <= azules ? JugadorPartida.Equipo.rojo : JugadorPartida.Equipo.azul);
+-        jp.setRol(JugadorPartida.Rol.agente);
+-        jugadorPartidaRepository.save(jp);
+-    }
++            // RF-35: REGLAS DE ABANDONO CR├ìTICO
++            // 1. Si abandona un Jefe de Espionaje (L├¡der): Derrota autom├ítica para su equipo
++            if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
++                boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
++                finalizarPorAbandono(partida, rojoGana);
++            } else {
++                // 2. Si abandona un Agente: Comprobar si queda al menos uno activo en el equipo
++                long agentesRestantes = jugadorPartidaRepository
++                    .findByPartida_IdPartidaAndEquipoAndAbandonoFalse(partida.getIdPartida(), jp.getEquipo())
++                    .stream()
++                    .filter(a -> JugadorPartida.Rol.agente.equals(a.getRol()))
++                    .count();
+ 
+-    private void validarSinPartidaActiva(String idGoogle) {
+-        boolean tienePartidaActiva = jugadorPartidaRepository
+-                .existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+-                        idGoogle, List.of(Partida.EstadoPartida.en_curso, Partida.EstadoPartida.esperando));
+-        if (tienePartidaActiva) {
+-            throw new GameLogicException("Ya est├ís en una partida activa.");
++                if (agentesRestantes == 0) {
++                    // Si el equipo se queda sin agentes, no pueden votar -> Derrota autom├ítica
++                    boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
++                    finalizarPorAbandono(partida, rojoGana);
++                } else {
++                    // Si la partida sigue, comprobar si mi marcha desbloquea una votaci├│n
++                    juegoService.comprobarYResolverVotacionSiAplica(idPartida);
++                }
++            }
++            
++            // Broadcast del nuevo estado
++            juegoService.broadcastEstado(idPartida);
+         }
+     }
+ 
+-    private void finalizarPartidaManual(Partida partida, boolean rojoGana) {
++    private void finalizarPorAbandono(Partida partida, boolean rojoGana) {
+         partida.setEstado(Partida.EstadoPartida.finalizada);
+         partida.setFechaFin(LocalDateTime.now());
+         partida.setRojoGana(rojoGana);
+         partidaRepository.save(partida);
+-
+-        List<JugadorPartida> todos = jugadorPartidaRepository.findByPartida_IdPartida(partida.getIdPartida());
+-        for (JugadorPartida jp : todos) {
+-            boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
++        
++        // Procesar recompensas/estad├¡sticas para los que se quedaron
++        for (JugadorPartida p : partida.getJugadores()) {
++            if (p.isAbandono()) continue;
++            boolean esRojo = p.getEquipo() == JugadorPartida.Equipo.rojo;
+             boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
+-            jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
++            jugadorService.procesarFinPartida(p.getJugador().getIdGoogle(), gano, p.getNumAciertos(), p.getNumFallos());
+         }
+-
+-        messagingTemplate.convertAndSend("/topic/partidas/" + partida.getIdPartida() + "/estado", "FINALIZADA");
+     }
+ 
+-    private Jugador findJugador(String idGoogle) {
+-        return jugadorRepository.findById(idGoogle)
+-                .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
+-    }
++    // ÔöÇÔöÇÔöÇ Rol del Jugador ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ 
+-    private LobbyStatusDTO buildLobbyStatusDTO(Partida partida, List<JugadorPartida> jugadores) {
+-        List<JugadorLobbyDTO> jugadoresDTO = jugadores.stream()
+-                .map(jp -> new JugadorLobbyDTO(
+-                        jp.getJugador().getTag(),
+-                        jp.getJugador().getFotoPerfil(),
+-                        jp.getEquipo().name()))
+-                .collect(Collectors.toList());
+-
+-        LobbyStatusDTO dto = new LobbyStatusDTO();
+-        dto.setIdPartida(partida.getIdPartida());
+-        dto.setCodigoPartida(partida.getCodigoPartida());
+-        dto.setEstado(partida.getEstado().name());
+-        dto.setMaxJugadores(partida.getMaxJugadores());
+-        dto.setEsPublica(partida.isEsPublica());
+-        dto.setIdTema(partida.getTema().getIdTema());
+-        dto.setNombreTema(partida.getTema().getNombre());
+-        dto.setTiempoEspera(partida.getTiempoEspera());
+-        dto.setTagCreador(partida.getCreador().getTag());
+-        dto.setHayMinimo(false);
+-        dto.setJugadores(jugadoresDTO);
++    @Transactional(readOnly = true)
++    public com.secretpanda.codenames.dto.partida.RolPartidaDTO getRolJugador(Integer idPartida, String idGoogle) {
++        JugadorPartida jp = jugadorPartidaRepository
++                .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
++                .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
++
++        // RF-17: El equipo que inicia la partida es aquel que tiene 9 cartas (el otro 8).
++        // Contamos cu├íntas cartas rojas y azules hay ocultas en el tablero.
++        long rojas = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
++                idPartida, 
++                com.secretpanda.codenames.model.TableroCarta.TipoCarta.rojo, 
++                com.secretpanda.codenames.model.TableroCarta.EstadoCarta.oculta);
++        long azules = tableroCartaRepository.countByPartida_IdPartidaAndTipoAndEstado(
++                idPartida, 
++                com.secretpanda.codenames.model.TableroCarta.TipoCarta.azul, 
++                com.secretpanda.codenames.model.TableroCarta.EstadoCarta.oculta);
++        
++        // El equipo inicial es el que tiene m├ís cartas (9 vs 8)
++        String equipoInicial = (rojas >= azules) ? "rojo" : "azul";
++
++        com.secretpanda.codenames.dto.partida.RolPartidaDTO dto = new com.secretpanda.codenames.dto.partida.RolPartidaDTO();
++        dto.setRol(jp.getRol() != null ? jp.getRol().name() : null);
++        dto.setEquipo(jp.getEquipo().name());
++        dto.setEquipoInicial(equipoInicial);
+         return dto;
+     }
+-}
++
++    // ÔöÇÔöÇÔöÇ Helpers ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++
++    private void validarSinPartidaActiva(String idGoogle) {
++        boolean activa = jugadorPartidaRepository
++                .findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
++                        idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso))
++                .isPresent();
++        if (activa) {
++            throw new GameLogicException("Ya tienes una partida activa o est├ís en un lobby.");
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/TemporizadorService.java b/codenames/src/main/java/com/secretpanda/codenames/service/TemporizadorService.java
+index 0ce01ec..90a3e5d 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/TemporizadorService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/TemporizadorService.java
+@@ -10,9 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+-import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.messaging.simp.SimpMessagingTemplate;
+-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
++import org.springframework.scheduling.TaskScheduler;
+ import org.springframework.stereotype.Service;
+ 
+ import com.secretpanda.codenames.dto.juego.TemporizadorDTO;
+@@ -30,20 +29,16 @@ public class TemporizadorService {
+     private static final Logger log = LoggerFactory.getLogger(TemporizadorService.class);
+ 
+     private final SimpMessagingTemplate messagingTemplate;
+-    private final ThreadPoolTaskScheduler scheduler;
++    private final TaskScheduler scheduler;
+ 
+     // Mapa: idPartida ÔåÆ ScheduledFuture del contador tick
+     private final Map<Integer, ScheduledFuture<?>> timers = new ConcurrentHashMap<>();
+     // Mapa: idPartida ÔåÆ segundos restantes (para el broadcast)
+     private final Map<Integer, AtomicInteger> segundos = new ConcurrentHashMap<>();
+ 
+-    public TemporizadorService(SimpMessagingTemplate messagingTemplate, 
+-                              @Value("${game.timer-pool-size:4}") int poolSize) {
++    public TemporizadorService(SimpMessagingTemplate messagingTemplate, TaskScheduler scheduler) {
+         this.messagingTemplate = messagingTemplate;
+-        this.scheduler = new ThreadPoolTaskScheduler();
+-        this.scheduler.setPoolSize(poolSize);
+-        this.scheduler.setThreadNamePrefix("timer-");
+-        this.scheduler.initialize();
++        this.scheduler = scheduler;
+     }
+ 
+     /**
+@@ -106,6 +101,5 @@ public class TemporizadorService {
+     @PreDestroy
+     public void shutdown() {
+         timers.values().forEach(f -> f.cancel(true));
+-        scheduler.shutdown();
+     }
+ }
+diff --git a/codenames/src/main/java/com/secretpanda/codenames/service/TiendaService.java b/codenames/src/main/java/com/secretpanda/codenames/service/TiendaService.java
+index 5347bf4..be3b68e 100644
+--- a/codenames/src/main/java/com/secretpanda/codenames/service/TiendaService.java
++++ b/codenames/src/main/java/com/secretpanda/codenames/service/TiendaService.java
+@@ -53,10 +53,12 @@ public class TiendaService {
+     public List<TemaDTO> getTemasTienda(String idGoogle) {
+         List<Tema> todos = temaRepository.findByActivoTrue();
+ 
+-        List<Integer> misTemasIds = inventarioTemaRepository.findById_IdJugador(idGoogle)
+-                .stream()
+-                .map(it -> it.getTema().getIdTema())
+-                .collect(Collectors.toList());
++        final List<Integer> misTemasIds = (idGoogle != null) 
++                ? inventarioTemaRepository.findById_IdJugador(idGoogle)
++                        .stream()
++                        .map(it -> it.getTema().getIdTema())
++                        .collect(Collectors.toList())
++                : List.of();
+ 
+         return todos.stream()
+                 .map(t -> TemaMapper.toDTO(t, misTemasIds.contains(t.getIdTema())))
+@@ -67,10 +69,12 @@ public class TiendaService {
+     public List<PersonalizacionDTO> getPersonalizacionesTienda(String idGoogle) {
+         List<Personalizacion> todas = personalizacionRepository.findByActivoTrue();
+ 
+-        List<Integer> misPersosIds = inventarioPersoRepository.findById_IdJugador(idGoogle)
+-                .stream()
+-                .map(ip -> ip.getPersonalizacion().getIdPersonalizacion())
+-                .collect(Collectors.toList());
++        final List<Integer> misPersosIds = (idGoogle != null)
++                ? inventarioPersoRepository.findById_IdJugador(idGoogle)
++                        .stream()
++                        .map(ip -> ip.getPersonalizacion().getIdPersonalizacion())
++                        .collect(Collectors.toList())
++                : List.of();
+ 
+         return todas.stream()
+                 .map(p -> PersonalizacionMapper.toDTO(p, misPersosIds.contains(p.getIdPersonalizacion())))
+diff --git a/codenames/src/main/resources/application.yml b/codenames/src/main/resources/application.yml
+index 3409cd2..09c3a15 100644
+--- a/codenames/src/main/resources/application.yml
++++ b/codenames/src/main/resources/application.yml
+@@ -48,7 +48,7 @@ game:
+   ranking-global-size: 10
+   ranking-amigos-size: 100
+   timer-pool-size: 4
+-  penalizacion-abandono: 10
++  penalizacion-abandono: 5
+   balas-ganador: 20
+   balas-derrota: 10
+   timeout-reconexion: 60
+diff --git a/codenames/src/test/java/com/secretpanda/codenames/service/AuthServiceTest.java b/codenames/src/test/java/com/secretpanda/codenames/service/AuthServiceTest.java
+index 3031707..3053c75 100644
+--- a/codenames/src/test/java/com/secretpanda/codenames/service/AuthServiceTest.java
++++ b/codenames/src/test/java/com/secretpanda/codenames/service/AuthServiceTest.java
+@@ -19,6 +19,7 @@ import com.secretpanda.codenames.exception.BadRequestException;
+ import com.secretpanda.codenames.model.InventarioTema;
+ import com.secretpanda.codenames.model.Jugador;
+ import com.secretpanda.codenames.model.Tema;
++import com.secretpanda.codenames.repository.AmistadRepository;
+ import com.secretpanda.codenames.repository.InventarioTemaRepository;
+ import com.secretpanda.codenames.repository.JugadorPartidaRepository;
+ import com.secretpanda.codenames.repository.JugadorRepository;
+@@ -38,6 +39,9 @@ class AuthServiceTest {
+     @Mock private EstadisticasCalculator calculator;
+     @Mock private TemaRepository temaRepository;
+     @Mock private InventarioTemaRepository inventarioTemaRepository;
++    @Mock private AmistadRepository amistadRepository;
++    @Mock private PartidaService partidaService;
++    @Mock private JugadorService jugadorService;
+ 
+     @InjectMocks private AuthService authService;
+ 
+diff --git a/codenames/src/test/java/com/secretpanda/codenames/service/PartidaServiceTest.java b/codenames/src/test/java/com/secretpanda/codenames/service/PartidaServiceTest.java
+index eedfec8..972089c 100644
+--- a/codenames/src/test/java/com/secretpanda/codenames/service/PartidaServiceTest.java
++++ b/codenames/src/test/java/com/secretpanda/codenames/service/PartidaServiceTest.java
+@@ -43,6 +43,7 @@ class PartidaServiceTest {
+     @Mock private SimpMessagingTemplate messagingTemplate;
+     @Mock private JugadorService jugadorService;
+     @Mock private JuegoService juegoService;
++    @Mock private LobbyService lobbyService;
+ 
+     @InjectMocks private PartidaService partidaService;
+ 
+@@ -53,8 +54,8 @@ class PartidaServiceTest {
+ 
+     @Test
+     void testCrearPartida_JugadorConPartidaActiva_LanzaExcepcion() {
+-        when(jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+-                eq("id_google"), anyList())).thenReturn(true);
++        when(jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
++                eq("id_google"), anyList())).thenReturn(Optional.of(new JugadorPartida()));
+ 
+         CrearPartidaDTO dto = new CrearPartidaDTO();
+         assertThrows(GameLogicException.class, () -> {
+@@ -64,21 +65,21 @@ class PartidaServiceTest {
+ 
+     @Test
+     void testCrearPartida_SinTemaEnInventario_LanzaExcepcion() {
+-        when(jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+-                eq("id_google"), anyList())).thenReturn(false);
++        when(jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
++                eq("id_google"), anyList())).thenReturn(Optional.empty());
+ 
+         Tema tema = new Tema();
+-        tema.setIdTema(1);
+-        when(temaRepository.findById(1)).thenReturn(Optional.of(tema));
++        tema.setIdTema(2); // Tema de pago para forzar comprobaci├│n
++        when(temaRepository.findById(2)).thenReturn(Optional.of(tema));
+ 
+         Jugador creador = new Jugador();
+         creador.setIdGoogle("id_google");
+         when(jugadorRepository.findById("id_google")).thenReturn(Optional.of(creador));
+ 
+-        when(inventarioTemaRepository.existsById_IdJugadorAndId_IdTema("id_google", 1)).thenReturn(false);
++        when(inventarioTemaRepository.existsById_IdJugadorAndId_IdTema("id_google", 2)).thenReturn(false);
+ 
+         CrearPartidaDTO dto = new CrearPartidaDTO();
+-        dto.setIdTema(1);
++        dto.setIdTema(2);
+ 
+         assertThrows(GameLogicException.class, () -> {
+             partidaService.crearPartida(dto, "id_google");
+@@ -87,22 +88,21 @@ class PartidaServiceTest {
+ 
+     @Test
+     void testCrearPartida_Exito_GeneraCodigoYAsignaRojoAgente() {
+-        when(jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+-                eq("id_google"), anyList())).thenReturn(false);
++        when(jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
++                eq("id_google"), anyList())).thenReturn(Optional.empty());
+ 
+         Tema tema = new Tema();
+-        tema.setIdTema(1);
+-        tema.setNombre("Hacker");
+-        when(temaRepository.findById(1)).thenReturn(Optional.of(tema));
++        tema.setIdTema(2);
++        tema.setNombre("Cyberpunk");
++        when(temaRepository.findById(2)).thenReturn(Optional.of(tema));
+ 
+         Jugador creador = new Jugador();
+         creador.setIdGoogle("id_google");
+         creador.setTag("CreadorTest");
+         when(jugadorRepository.findById("id_google")).thenReturn(Optional.of(creador));
+ 
+-        when(inventarioTemaRepository.existsById_IdJugadorAndId_IdTema("id_google", 1)).thenReturn(true);
++        when(inventarioTemaRepository.existsById_IdJugadorAndId_IdTema("id_google", 2)).thenReturn(true);
+         when(codigoGenerator.generarCodigo()).thenReturn("ABCDEF");
+-        when(partidaRepository.existsByCodigoPartida("ABCDEF")).thenReturn(false);
+         
+         Partida partidaGuardada = new Partida();
+         partidaGuardada.setIdPartida(10);
+@@ -111,10 +111,13 @@ class PartidaServiceTest {
+         partidaGuardada.setTema(tema);
+         partidaGuardada.setCreador(creador);
+ 
+-        when(partidaRepository.save(any(Partida.class))).thenReturn(partidaGuardada);
++        LobbyStatusDTO mockLobby = new LobbyStatusDTO();
++        mockLobby.setCodigoPartida("ABCDEF");
++        mockLobby.setEstado("esperando");
++        when(lobbyService.buildLobbyDTO(any())).thenReturn(mockLobby);
+ 
+         CrearPartidaDTO dto = new CrearPartidaDTO();
+-        dto.setIdTema(1);
++        dto.setIdTema(2);
+         dto.setMaxJugadores(4);
+         dto.setEsPublica(false);
+ 
+@@ -125,8 +128,7 @@ class PartidaServiceTest {
+         assertEquals("esperando", result.getEstado());
+         verify(jugadorPartidaRepository).save(argThat(jp -> 
+             jp.getJugador().getIdGoogle().equals("id_google") &&
+-            jp.getEquipo() == JugadorPartida.Equipo.rojo &&
+-            jp.getRol() == JugadorPartida.Rol.agente
++            jp.getEquipo() == JugadorPartida.Equipo.rojo
+         ));
+     }
+ }

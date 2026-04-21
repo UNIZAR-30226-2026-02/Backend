@@ -27,6 +27,7 @@ import com.secretpanda.codenames.mapper.partida.PartidaMapper;
 import com.secretpanda.codenames.model.InventarioPersonalizacion;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorLogro;
+import com.secretpanda.codenames.model.JugadorLogroId;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Logro;
 import com.secretpanda.codenames.model.Partida;
@@ -168,9 +169,9 @@ public class JugadorService {
 
     @Transactional(readOnly = true)
     public List<PartidaResumenDTO> getHistorial(String idGoogle) {
-        // Buscamos las participaciones ordenadas por fecha descendente
+        // Buscamos las participaciones ordenadas por fecha descendente usando JOIN FETCH (optimizado)
         List<JugadorPartida> participaciones = 
-            jugadorPartidaRepository.findByJugador_IdGoogleOrderByPartida_FechaFinDesc(idGoogle);
+            jugadorPartidaRepository.findHistoryByJugadorId(idGoogle);
 
         // Limitamos a las últimas 30 y mapeamos
         return participaciones.stream()
@@ -180,6 +181,23 @@ public class JugadorService {
     }
 
     // ─── Logros ───────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void inicializarLogros(Jugador jugador) {
+        List<Logro> todosLosLogros = logroRepository.findByActivoTrue();
+        for (Logro logro : todosLosLogros) {
+            JugadorLogro jl = new JugadorLogro();
+            JugadorLogroId id = new JugadorLogroId();
+            id.setIdJugador(jugador.getIdGoogle());
+            id.setIdLogro(logro.getIdLogro());
+            jl.setId(id);
+            jl.setJugador(jugador);
+            jl.setLogro(logro);
+            jl.setProgresoActual(0);
+            jl.setCompletado(false);
+            jugadorLogroRepository.save(jl);
+        }
+    }
 
     @Transactional(readOnly = true)
     public List<LogroDTO> getLogros(String idGoogle) {

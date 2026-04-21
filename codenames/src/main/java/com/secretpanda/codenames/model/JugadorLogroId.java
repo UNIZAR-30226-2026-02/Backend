@@ -5,33 +5,23 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class JugadorLogroId implements Serializable {
 
-    @Column(name = "id_jugador", length = 255, nullable = false)
+    @Column(name = "id_jugador")
     private String idJugador;
 
-    @Column(name = "id_logro", nullable = false)
+    @Column(name = "id_logro")
     private Integer idLogro;
-
-    public JugadorLogroId() {}
-
-    public String getIdJugador() { 
-        return idJugador; 
-    }
-
-    public void setIdJugador(String idJugador) { 
-        this.idJugador = idJugador; 
-    }
-
-    public Integer getIdLogro() { 
-        return idLogro; 
-    }
-    
-    public void setIdLogro(Integer idLogro) { 
-        this.idLogro = idLogro; 
-    }
 
     @Override
     public boolean equals(Object o) {

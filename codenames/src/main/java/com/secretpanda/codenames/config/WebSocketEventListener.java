@@ -96,7 +96,7 @@ public class WebSocketEventListener {
         disconnectTasks.remove(idGoogle);
 
         // Buscamos las partidas en las que el jugador está activo (que no ha abandonado previamente)
-        jugadorPartidaRepository.findByJugador_IdGoogleAndAbandonoFalse(idGoogle).forEach(jp -> {
+        jugadorPartidaRepository.findByJugador_IdGoogleAndAbandonoFalse(idGoogle).ifPresent(jp -> {
                 Partida partida = jp.getPartida();
                 Integer idPartida = partida.getIdPartida();
 

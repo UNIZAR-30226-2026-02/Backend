@@ -136,9 +136,14 @@ public class PartidaService {
             throw new GameLogicException("Esta partida es privada.");
         }
 
-        if (!inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(
-                idGoogle, partida.getTema().getIdTema())) {
-            throw new GameLogicException("No tienes adquirido el tema de esta partida.");
+        // RF-15: Un usuario solo puede unirse a partidas públicas con temas que ya posea (Básico ID 1 siempre)
+        Integer idTema = partida.getTema().getIdTema();
+        if (idTema != 1) {
+            boolean tieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, idTema);
+            if (!tieneTema) {
+                throw new GameLogicException("No puedes unirte a esta partida pública porque no has adquirido el paquete de cartas '" 
+                                            + partida.getTema().getNombre() + "'.");
+            }
         }
 
         unirseValidado(partida, idGoogle);
@@ -156,28 +161,31 @@ public class PartidaService {
                 .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
 
         if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-            jugadorService.modificarBalas(idGoogle, -balasPenalizacionAbandono);
+            // RF-35: Penalización de 5 balas por abandono
+            jugadorService.modificarBalas(idGoogle, -5);
 
             jp.setAbandono(true);
             jugadorPartidaRepository.save(jp);
 
-            List<JugadorPartida> activos = jugadorPartidaRepository
-                    .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
-            
-            JugadorPartida.Equipo miEquipo = jp.getEquipo();
-            
-            long lideresEnMiEquipo = activos.stream()
-                    .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.lider))
-                    .count();
-            long agentesEnMiEquipo = activos.stream()
-                    .filter(a -> a.getEquipo().equals(miEquipo) && a.getRol().equals(JugadorPartida.Rol.agente))
-                    .count();
-
-            if (lideresEnMiEquipo == 0 || agentesEnMiEquipo == 0) {
-                boolean ganaRojo = !miEquipo.equals(JugadorPartida.Equipo.rojo);
-                finalizarPartidaManual(partida, ganaRojo);
+            // RF-35: Si abandona un Jefe de Espionaje (Líder), su equipo pierde automáticamente
+            if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
+                boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
+                finalizarPartidaManual(partida, rojoGana);
             } else {
-                juegoService.broadcastEstado(idPartida);
+                List<JugadorPartida> activos = jugadorPartidaRepository
+                        .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
+                
+                long agentesEnMiEquipo = activos.stream()
+                        .filter(a -> a.getEquipo().equals(jp.getEquipo()) && a.getRol().equals(JugadorPartida.Rol.agente))
+                        .count();
+
+                if (agentesEnMiEquipo == 0) {
+                    // Si el equipo se queda sin agentes, no pueden votar -> Derrota automática
+                    boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
+                    finalizarPartidaManual(partida, rojoGana);
+                } else {
+                    juegoService.broadcastEstado(idPartida);
+                }
             }
         } 
         else {

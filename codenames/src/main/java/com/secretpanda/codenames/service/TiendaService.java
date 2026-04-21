@@ -53,10 +53,12 @@ public class TiendaService {
     public List<TemaDTO> getTemasTienda(String idGoogle) {
         List<Tema> todos = temaRepository.findByActivoTrue();
 
-        List<Integer> misTemasIds = inventarioTemaRepository.findById_IdJugador(idGoogle)
-                .stream()
-                .map(it -> it.getTema().getIdTema())
-                .collect(Collectors.toList());
+        final List<Integer> misTemasIds = (idGoogle != null) 
+                ? inventarioTemaRepository.findById_IdJugador(idGoogle)
+                        .stream()
+                        .map(it -> it.getTema().getIdTema())
+                        .collect(Collectors.toList())
+                : List.of();
 
         return todos.stream()
                 .map(t -> TemaMapper.toDTO(t, misTemasIds.contains(t.getIdTema())))
@@ -67,10 +69,12 @@ public class TiendaService {
     public List<PersonalizacionDTO> getPersonalizacionesTienda(String idGoogle) {
         List<Personalizacion> todas = personalizacionRepository.findByActivoTrue();
 
-        List<Integer> misPersosIds = inventarioPersoRepository.findById_IdJugador(idGoogle)
-                .stream()
-                .map(ip -> ip.getPersonalizacion().getIdPersonalizacion())
-                .collect(Collectors.toList());
+        final List<Integer> misPersosIds = (idGoogle != null)
+                ? inventarioPersoRepository.findById_IdJugador(idGoogle)
+                        .stream()
+                        .map(ip -> ip.getPersonalizacion().getIdPersonalizacion())
+                        .collect(Collectors.toList())
+                : List.of();
 
         return todas.stream()
                 .map(p -> PersonalizacionMapper.toDTO(p, misPersosIds.contains(p.getIdPersonalizacion())))
@@ -95,7 +99,6 @@ public class TiendaService {
 
         jugadorService.modificarBalas(idGoogle, -t.getPrecioBalas());
 
-        // Registro en inventario mediante setters
         InventarioTema it = new InventarioTema();
         InventarioTemaId itid = new InventarioTemaId();
         itid.setIdJugador(idGoogle);

@@ -35,6 +35,7 @@ public class AuthService {
     private final EstadisticasCalculator calculator;
     private final TemaRepository temaRepository;
     private final InventarioTemaRepository inventarioTemaRepository;
+    private final JugadorService jugadorService;
 
     @Value("${game.tema-basico-id:1}")
     private Integer temaBasicoId;
@@ -45,7 +46,8 @@ public class AuthService {
                     JugadorPartidaRepository jugadorPartidaRepository,
                     EstadisticasCalculator calculator,
                     TemaRepository temaRepository,
-                    InventarioTemaRepository inventarioTemaRepository) {
+                    InventarioTemaRepository inventarioTemaRepository,
+                    JugadorService jugadorService) {
         this.googleAuthService = googleAuthService;
         this.jwtService = jwtService;
         this.jugadorRepository = jugadorRepository;
@@ -53,6 +55,7 @@ public class AuthService {
         this.calculator = calculator;
         this.temaRepository = temaRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
+        this.jugadorService = jugadorService;
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
@@ -146,6 +149,9 @@ public class AuthService {
                 inventarioTemaRepository.save(inv);
             });
         }
+
+        // RF: Inicializar logros con progreso 0 para el nuevo jugador
+        jugadorService.inicializarLogros(jugador);
 
         return construirRespuestaExistente(jugador);
     }

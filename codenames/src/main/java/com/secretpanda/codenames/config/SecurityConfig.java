@@ -39,14 +39,12 @@ public class SecurityConfig {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(headers -> headers
                 .frameOptions(frame -> frame.disable())
-                .contentSecurityPolicy(csp -> csp.policyDirectives("upgrade-insecure-requests;"))
-                .addHeaderWriter(new StaticHeadersWriter("Cross-Origin-Opener-Policy", "unsafe-none"))
-                .addHeaderWriter(new StaticHeadersWriter("Cross-Origin-Embedder-Policy", "unsafe-none"))
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/hello").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/temas/activos").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/personalizaciones/activas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/logros/activos").permitAll()
                 .requestMatchers("/api/leaderboard/**").authenticated()
                 .requestMatchers("/api/amigos/**").authenticated()
