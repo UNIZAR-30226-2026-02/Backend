@@ -77,18 +77,15 @@ public class JugadorService {
 
     @Transactional(readOnly = true)
     public JugadorDTO getPerfil(String idGoogle) {
-        // 1. Buscamos el jugador
         Jugador jugador = jugadorRepository.findById(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
         
-        // Al acceder al .size(), la colección se llena y el mapper ya no la verá vacía.
         if (jugador.getInventario() != null) {
             jugador.getInventario().size();
         }
 
         JugadorDTO dto = JugadorMapper.toDTO(jugador, calculator);
 
-        // 2. Buscar si tiene alguna partida activa (esperando o en_curso)
         jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
             idGoogle, 
             List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
@@ -101,7 +98,6 @@ public class JugadorService {
     public JugadorDTO actualizarPerfil(ActualizarPerfilDTO dto, String idGoogle) {
         Jugador jugador = findJugador(idGoogle);
 
-        // Validar unicidad del nuevo tag (si lo está cambiando)
         if (dto.getTag() != null && !dto.getTag().equals(jugador.getTag())) {
             if (jugadorRepository.existsByTagAndActivoTrue(dto.getTag().trim())) {
                 throw new BadRequestException("Ese nombre de usuario ya está en uso.");
@@ -121,19 +117,13 @@ public class JugadorService {
                 inventarioPersonalizacionRepository.findById_IdJugador(idGoogle));
     }
 
-    /**
-     * Gestiona qué aspecto estético tiene activo el jugador.
-     * Si se equipa un nuevo tablero o carta, se desequipa automáticamente el anterior del mismo tipo.
-     */
     @Transactional
     public void equiparItem(Integer idPersonalizacion, boolean equipado, String idGoogle) {
-        // Lógica de base de datos (Ya la tienes, pero asegúrate de que sea así)
         InventarioPersonalizacion itemAEquipar = inventarioPersonalizacionRepository
                 .findById_IdJugadorAndId_IdPersonalizacion(idGoogle, idPersonalizacion)
                 .orElseThrow(() -> new NotFoundException("No posees este artículo."));
 
         if (equipado) {
-            // Desequipar el anterior del mismo tipo
             Personalizacion.TipoPersonalizacion tipo = itemAEquipar.getPersonalizacion().getTipo();
             inventarioPersonalizacionRepository
                 .findById_IdJugadorAndPersonalizacion_TipoAndEquipadoTrue(idGoogle, tipo)
@@ -146,14 +136,12 @@ public class JugadorService {
         itemAEquipar.setEquipado(equipado);
         inventarioPersonalizacionRepository.save(itemAEquipar);
 
-        // Notificar al cliente por WebSocket con el nuevo estado del item equipado
         PersonalizacionWS dto = new PersonalizacionWS(
             itemAEquipar.getPersonalizacion().getTipo().name(),
             itemAEquipar.getPersonalizacion().getValorVisual(),
             equipado
         );
     
-        // Ahora Jackson usará el DTO y respetará el snake_case del properties
         messagingTemplate.convertAndSendToUser(idGoogle, "/queue/personalizacion", dto);
     }
 
@@ -169,11 +157,9 @@ public class JugadorService {
 
     @Transactional(readOnly = true)
     public List<PartidaResumenDTO> getHistorial(String idGoogle) {
-        // Buscamos las participaciones ordenadas por fecha descendente usando JOIN FETCH (optimizado)
         List<JugadorPartida> participaciones = 
             jugadorPartidaRepository.findHistoryByJugadorId(idGoogle);
 
-        // Limitamos a las últimas 30 y mapeamos
         return participaciones.stream()
                 .limit(MAX_HISTORIAL)
                 .map(jp -> PartidaMapper.toResumenDTO(jp.getPartida(), jp))
@@ -201,36 +187,25 @@ public class JugadorService {
 
     @Transactional(readOnly = true)
     public List<LogroDTO> getLogros(String idGoogle) {
-        // Obtener todos los logros que están activos en el juego (Catálogo)
         List<Logro> todosLosLogros = logroRepository.findByActivoTrue();
-        
-        // Obtener solo el progreso específico de este jugador
         List<JugadorLogro> progresosJugador = jugadorLogroRepository.findById_IdJugador(idGoogle);
 
-        // xCruzamos los datos para construir la respuesta de la API
         return todosLosLogros.stream().map(logroBase -> {
             LogroDTO dto = new LogroDTO();
-            
-            // Datos estáticos del logro
             dto.setIdLogro(logroBase.getIdLogro());
             dto.setNombre(logroBase.getNombre());
             dto.setDescripcion(logroBase.getDescripcion());
             dto.setBalasRecompensa(logroBase.getBalasRecompensa());
             dto.setProgresoMax(logroBase.getValorObjetivo());
-            
-            // Lógica es_logro: true si el tipo es 'logro', false si es 'medalla'
             dto.setEsLogro("logro".equalsIgnoreCase(logroBase.getTipo().name()));
 
-            // Buscamos si hay progreso registrado
             progresosJugador.stream()
                 .filter(pj -> pj.getLogro().getIdLogro().equals(logroBase.getIdLogro()))
                 .findFirst()
                 .ifPresentOrElse(pj -> {
-                    // Si hay progreso en la BD, lo ponemos
                     dto.setProgresoActual(pj.getProgresoActual());
                     dto.setCompletado(pj.isCompletado());
                 }, () -> {
-                    // Si no hay progreso registrado aún, devolvemos valores por defecto
                     dto.setProgresoActual(0);
                     dto.setCompletado(false);
                 });
@@ -249,11 +224,9 @@ public class JugadorService {
 
     @Transactional
     public void procesarFinPartida(String idGoogle, boolean gano, int aciertos, int fallos) {
-        // Buscamos con bloqueo para asegurar la atomicidad de las estadísticas
         Jugador j = jugadorRepository.findByIdForUpdate(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
 
-        // 1. Actualizar estadísticas globales
         j.setPartidasJugadas(j.getPartidasJugadas() + 1);
         if (gano) {
             j.setVictorias(j.getVictorias() + 1);
@@ -261,64 +234,58 @@ public class JugadorService {
         j.setNumAciertos(j.getNumAciertos() + aciertos);
         j.setNumFallos(j.getNumFallos() + fallos);
 
-        // Si la partida termina sin fallos para este jugador, sumamos a su estadística de puntería
-        if (fallos == 0) {
-            j.setPartidasSinFallos(j.getPartidasSinFallos() + 1);
-        }
-
-        // 2. Asignar balas según resultado (usando valores configurados)
         int premio = gano ? balasGanador : balasDerrota;
         j.setBalas(j.getBalas() + premio);
 
         jugadorRepository.save(j);
-
-        // 3. Notificar actualización de balas por WS
         notificarActualizacionBalas(idGoogle, j.getBalas());
 
-        // 4. Actualizar progreso de logros
+        if (fallos == 0) {
+            jugadorLogroRepository.findById_IdJugador(idGoogle).stream()
+                .filter(jl -> "partidas_sin_fallos".equals(jl.getLogro().getEstadisticaClave()))
+                .findFirst()
+                .ifPresent(jl -> {
+                    jl.setProgresoActual(1);
+                    jugadorLogroRepository.save(jl);
+                });
+        }
+
         actualizarProgresoLogros(idGoogle);
     }
 
     @Transactional
     public void modificarBalas(String idGoogle, int cantidadAModificar) {
-        // Buscamos con bloqueo para que nadie más toque este jugador hasta que terminemos
         Jugador jugador = jugadorRepository.findByIdForUpdate(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado"));
 
         jugador.setBalas(jugador.getBalas() + cantidadAModificar);
-        if (jugador.getBalas() < 0) jugador.setBalas(0); // Seguro contra negativos
+        if (jugador.getBalas() < 0) jugador.setBalas(0); 
 
         jugadorRepository.save(jugador);
-        
-        // Notificamos por WebSocket inmediatamente
         notificarActualizacionBalas(idGoogle, jugador.getBalas());
     }
 
-    // ─── Progreso de Logros ───────────────────────────────────────────────────────
     @Transactional
     public void actualizarProgresoLogros(String idGoogle) {
         Jugador jugador = jugadorRepository.findById(idGoogle).orElseThrow();
-        // Traemos solo los logros activos que el jugador aún no ha completado
         List<JugadorLogro> pendientes = jugadorLogroRepository.findById_IdJugadorAndCompletadoFalse(idGoogle);
 
         for (JugadorLogro jl : pendientes) {
             Logro logro = jl.getLogro();
             int valorActual = 0;
 
-            // Mapeo dinámico de la estadística clave definida en BD (Solo los casos solicitados)
             switch (logro.getEstadisticaClave()) {
                 case "partidas_jugadas" -> valorActual = jugador.getPartidasJugadas();
                 case "victorias" -> valorActual = jugador.getVictorias();
                 case "amigos_añadidos" -> {
-                    // RF-27: Solo cuentan amistades aceptadas por ambas partes
-                    long enviados = jugador.getAmistadesEnviadas().stream().filter(a -> com.secretpanda.codenames.model.Amistad.EstadoAmistad.aceptada.equals(a.getEstado())).count();
-                    long recibidos = jugador.getAmistadesRecibidas().stream().filter(a -> com.secretpanda.codenames.model.Amistad.EstadoAmistad.aceptada.equals(a.getEstado())).count();
+                    long enviados = jugador.getAmistadesEnviadas().stream()
+                        .filter(a -> com.secretpanda.codenames.model.Amistad.EstadoAmistad.aceptada.equals(a.getEstado())).count();
+                    long recibidos = jugador.getAmistadesRecibidas().stream()
+                        .filter(a -> com.secretpanda.codenames.model.Amistad.EstadoAmistad.aceptada.equals(a.getEstado())).count();
                     valorActual = (int) (enviados + recibidos);
                 }
-                case "partidas_sin_fallos" -> valorActual = jugador.getPartidasSinFallos();
+                case "partidas_sin_fallos" -> valorActual = jl.getProgresoActual();
                 case "compras_tienda" -> {
-                    // Logro 'Fiebre de balas': Adquirir todos los packs (temas) y personalizaciones.
-                    // Sumamos el tamaño de ambos inventarios.
                     int items = jugador.getInventario() != null ? jugador.getInventario().size() : 0;
                     int temas = jugador.getInventarioTemas() != null ? jugador.getInventarioTemas().size() : 0;
                     valorActual = items + temas;
@@ -331,26 +298,21 @@ public class JugadorService {
                 jl.setCompletado(true);
                 jl.setFechaDesbloqueo(LocalDateTime.now());
                 
-                // Solo los de tipo 'logro' otorgan balas (según vuestro requisito)
                 if ("logro".equalsIgnoreCase(logro.getTipo().name())) {
-                    modificarBalas(idGoogle, 50); // Recompensa fija de 50 balas
+                    modificarBalas(idGoogle, 50); 
                 }
                 
-                // Notificar desbloqueo por WebSocket
                 String mensajeNotif = "logro".equalsIgnoreCase(logro.getTipo().name()) 
                     ? "¡Logro desbloqueado: " + logro.getNombre() + "!"
                     : "¡Has ganado la medalla: " + logro.getNombre() + "!";
                 
                 NotificacionDTO notif = new NotificacionDTO("logro_desbloqueado", 
-                    Map.of("mensaje", mensajeNotif, 
-                        "recompensa", logro.getBalasRecompensa()));
+                    Map.of("mensaje", mensajeNotif, "recompensa", 50));
                 messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
             }
         }
         jugadorLogroRepository.saveAll(pendientes);
     }
-
-    // ─── Helper ───────────────────────────────────────────────────────────────
 
     private Jugador findJugador(String idGoogle) {
         return jugadorRepository.findById(idGoogle)
@@ -358,8 +320,6 @@ public class JugadorService {
     }
 
     public void notificarActualizacionBalas(String idGoogle, int nuevasBalas) {
-        // Enviamos el nuevo saldo a la cola privada del usuario
-        // El frontend escuchará en /user/queue/balas
         messagingTemplate.convertAndSendToUser(idGoogle, "/queue/balas", nuevasBalas);
     }
 }
