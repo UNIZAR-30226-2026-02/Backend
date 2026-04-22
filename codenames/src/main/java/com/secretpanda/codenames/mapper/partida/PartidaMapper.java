@@ -56,6 +56,7 @@ public class PartidaMapper {
         dto.setAbandono(jpDelJugador.isAbandono());
         dto.setNumAciertos(jpDelJugador.getNumAciertos());
         dto.setNumFallos(jpDelJugador.getNumFallos());
+        dto.setTagCreador(partida.getCreador().getTag());
 
         return dto;
     }

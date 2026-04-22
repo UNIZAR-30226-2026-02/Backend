@@ -164,6 +164,7 @@ public class AuthService {
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
 
         jugador.setActivo(false);
+        jugador.setFotoPerfil("1");
         // Resetear estadísticas visibles (leaderboard, amigos)
         jugador.setPartidasJugadas(0);
         jugador.setVictorias(0);

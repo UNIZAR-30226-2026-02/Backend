@@ -25,11 +25,21 @@ public class PartidaResumenDTO {
     private int numAciertos;
     @JsonProperty("num_fallos")
     private int numFallos;
+    @JsonProperty("tag_creador")
+    private String tagCreador;
 
     public PartidaResumenDTO() {
     }
 
     // --- GETTERS Y SETTERS ---
+
+    public String getTagCreador() {
+        return tagCreador;
+    }
+
+    public void setTagCreador(String tagCreador) {
+        this.tagCreador = tagCreador;
+    }
 
     public Integer getIdPartida() {
         return idPartida;
