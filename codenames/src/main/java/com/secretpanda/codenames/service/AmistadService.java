@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.secretpanda.codenames.dto.social.AmistadDTO;
 import com.secretpanda.codenames.dto.social.NotificacionDTO;
 import com.secretpanda.codenames.dto.social.RankingDTO;
+import com.secretpanda.codenames.event.LogroEvent;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
@@ -28,11 +30,14 @@ public class AmistadService {
     private final AmistadRepository amistadRepository;
     private final JugadorRepository jugadorRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public AmistadService(AmistadRepository amistadRepository, JugadorRepository jugadorRepository, SimpMessagingTemplate messagingTemplate) {
+    public AmistadService(AmistadRepository amistadRepository, JugadorRepository jugadorRepository, 
+                          SimpMessagingTemplate messagingTemplate, ApplicationEventPublisher eventPublisher) {
         this.amistadRepository = amistadRepository;
         this.jugadorRepository = jugadorRepository;
         this.messagingTemplate = messagingTemplate;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +82,9 @@ public class AmistadService {
                 am.setEstado(Amistad.EstadoAmistad.aceptada);
                 amistadRepository.save(am);
                 
+                eventPublisher.publishEvent(new LogroEvent(idSolicitante, "amigos_añadidos"));
+                eventPublisher.publishEvent(new LogroEvent(receptor.getIdGoogle(), "amigos_añadidos"));
+                
                 // Notificar a ambos que la amistad se ha sellado
                 actualizarListaAmigosWS(idSolicitante);
                 actualizarListaAmigosWS(receptor.getIdGoogle());
@@ -118,6 +126,9 @@ public class AmistadService {
         if ("aceptada".equalsIgnoreCase(estado)) {
             amistad.setEstado(Amistad.EstadoAmistad.aceptada);
             amistadRepository.save(amistad);
+
+            eventPublisher.publishEvent(new LogroEvent(idReceptor, "amigos_añadidos"));
+            eventPublisher.publishEvent(new LogroEvent(idSolicitante, "amigos_añadidos"));
 
             // Notificar a AMBOS para actualizar sus listas de amigos 
             actualizarListaAmigosWS(idReceptor);
