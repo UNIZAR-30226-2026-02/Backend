@@ -165,6 +165,9 @@ public class AuthService {
 
         jugador.setActivo(false);
         jugador.setFotoPerfil("1");
+        jugador.getInventario().clear();
+        jugador.getInventarioTemas().clear();
+        jugador.setBalas(0);
         // Resetear estadísticas visibles (leaderboard, amigos)
         jugador.setPartidasJugadas(0);
         jugador.setVictorias(0);
