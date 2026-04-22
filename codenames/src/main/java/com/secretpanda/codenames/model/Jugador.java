@@ -50,6 +50,9 @@ public class Jugador {
     @Column(name = "num_fallos", nullable = false)
     private int numFallos = 0;
 
+    @Column(name = "partidas_sin_fallos", nullable = false)
+    private int partidasSinFallos = 0;
+
     @OneToMany(mappedBy = "solicitante", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Amistad> amistadesEnviadas = new ArrayList<>();
 
@@ -171,6 +174,14 @@ public class Jugador {
 
     public void setNumFallos(int numFallos) { 
         this.numFallos = numFallos; 
+    }
+
+    public int getPartidasSinFallos() {
+        return partidasSinFallos;
+    }
+
+    public void setPartidasSinFallos(int partidasSinFallos) {
+        this.partidasSinFallos = partidasSinFallos;
     }
 
     public List<Amistad> getAmistadesEnviadas() { 

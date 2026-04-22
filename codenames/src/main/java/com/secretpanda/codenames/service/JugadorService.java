@@ -261,6 +261,11 @@ public class JugadorService {
         j.setNumAciertos(j.getNumAciertos() + aciertos);
         j.setNumFallos(j.getNumFallos() + fallos);
 
+        // Si la partida termina sin fallos para este jugador, sumamos a su estadística de puntería
+        if (fallos == 0) {
+            j.setPartidasSinFallos(j.getPartidasSinFallos() + 1);
+        }
+
         // 2. Asignar balas según resultado (usando valores configurados)
         int premio = gano ? balasGanador : balasDerrota;
         j.setBalas(j.getBalas() + premio);
@@ -300,12 +305,24 @@ public class JugadorService {
             Logro logro = jl.getLogro();
             int valorActual = 0;
 
-            // Mapeo dinámico de la estadística clave definida en BD
+            // Mapeo dinámico de la estadística clave definida en BD (Solo los casos solicitados)
             switch (logro.getEstadisticaClave()) {
                 case "partidas_jugadas" -> valorActual = jugador.getPartidasJugadas();
                 case "victorias" -> valorActual = jugador.getVictorias();
-                case "num_aciertos" -> valorActual = jugador.getNumAciertos();
-                case "num_fallos" -> valorActual = jugador.getNumFallos();
+                case "amigos_añadidos" -> {
+                    // RF-27: Solo cuentan amistades aceptadas por ambas partes
+                    long enviados = jugador.getAmistadesEnviadas().stream().filter(a -> com.secretpanda.codenames.model.Amistad.EstadoAmistad.aceptada.equals(a.getEstado())).count();
+                    long recibidos = jugador.getAmistadesRecibidas().stream().filter(a -> com.secretpanda.codenames.model.Amistad.EstadoAmistad.aceptada.equals(a.getEstado())).count();
+                    valorActual = (int) (enviados + recibidos);
+                }
+                case "partidas_sin_fallos" -> valorActual = jugador.getPartidasSinFallos();
+                case "compras_tienda" -> {
+                    // Logro 'Fiebre de balas': Adquirir todos los packs (temas) y personalizaciones.
+                    // Sumamos el tamaño de ambos inventarios.
+                    int items = jugador.getInventario() != null ? jugador.getInventario().size() : 0;
+                    int temas = jugador.getInventarioTemas() != null ? jugador.getInventarioTemas().size() : 0;
+                    valorActual = items + temas;
+                }
             }
 
             jl.setProgresoActual(valorActual);
@@ -314,12 +331,18 @@ public class JugadorService {
                 jl.setCompletado(true);
                 jl.setFechaDesbloqueo(LocalDateTime.now());
                 
-                // Entregar recompensa usando el método seguro del Punto 1
-                modificarBalas(idGoogle, logro.getBalasRecompensa());
+                // Solo los de tipo 'logro' otorgan balas (según vuestro requisito)
+                if ("logro".equalsIgnoreCase(logro.getTipo().name())) {
+                    modificarBalas(idGoogle, 50); // Recompensa fija de 50 balas
+                }
                 
                 // Notificar desbloqueo por WebSocket
+                String mensajeNotif = "logro".equalsIgnoreCase(logro.getTipo().name()) 
+                    ? "¡Logro desbloqueado: " + logro.getNombre() + "!"
+                    : "¡Has ganado la medalla: " + logro.getNombre() + "!";
+                
                 NotificacionDTO notif = new NotificacionDTO("logro_desbloqueado", 
-                    Map.of("mensaje", "¡Logro desbloqueado: " + logro.getNombre() + "!", 
+                    Map.of("mensaje", mensajeNotif, 
                         "recompensa", logro.getBalasRecompensa()));
                 messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
             }
