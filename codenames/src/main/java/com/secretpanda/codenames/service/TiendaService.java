@@ -3,11 +3,13 @@ package com.secretpanda.codenames.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.secretpanda.codenames.dto.tienda.PersonalizacionDTO;
 import com.secretpanda.codenames.dto.tienda.TemaDTO;
+import com.secretpanda.codenames.event.LogroEvent;
 import com.secretpanda.codenames.exception.BadRequestException;
 import com.secretpanda.codenames.exception.NotFoundException;
 import com.secretpanda.codenames.mapper.tienda.PersonalizacionMapper;
@@ -34,19 +36,22 @@ public class TiendaService {
     private final InventarioPersonalizacionRepository inventarioPersoRepository;
     private final JugadorRepository jugadorRepository;
     private final JugadorService jugadorService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TiendaService(TemaRepository temaRepository, 
                          PersonalizacionRepository personalizacionRepository, 
                          InventarioTemaRepository inventarioTemaRepository, 
                          InventarioPersonalizacionRepository inventarioPersoRepository, 
                          JugadorRepository jugadorRepository,
-                         JugadorService jugadorService) {
+                         JugadorService jugadorService,
+                         ApplicationEventPublisher eventPublisher) {
         this.temaRepository = temaRepository;
         this.personalizacionRepository = personalizacionRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.inventarioPersoRepository = inventarioPersoRepository;
         this.jugadorRepository = jugadorRepository;
         this.jugadorService = jugadorService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -107,6 +112,7 @@ public class TiendaService {
         it.setJugador(j);
         it.setTema(t);
         inventarioTemaRepository.save(it);
+        eventPublisher.publishEvent(new LogroEvent(idGoogle, "compras_tienda"));
 
         return j.getBalas();
     }
@@ -138,6 +144,7 @@ public class TiendaService {
         ip.setPersonalizacion(p);
         ip.setEquipado(false);
         inventarioPersoRepository.save(ip);
+        eventPublisher.publishEvent(new LogroEvent(idGoogle, "compras_tienda"));
 
         return j.getBalas();
     }
