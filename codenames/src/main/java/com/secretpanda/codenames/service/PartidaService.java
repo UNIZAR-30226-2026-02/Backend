@@ -277,7 +277,7 @@ public class PartidaService {
             jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
         }
 
-        messagingTemplate.convertAndSend("/topic/partidas/" + partida.getIdPartida() + "/estado", "FINALIZADA");
+        juegoService.broadcastEstado(partida.getIdPartida());
     }
 
     private Jugador findJugador(String idGoogle) {

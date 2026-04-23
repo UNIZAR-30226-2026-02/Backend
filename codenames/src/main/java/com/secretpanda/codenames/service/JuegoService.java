@@ -163,8 +163,13 @@ public class JuegoService {
 
     @Transactional
     public void darPista(Integer idPartida, String palabraPista, int pistaNumero, String idGoogle) {
-        Partida partida = requireEnCurso(idPartida);
+        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+        if (!Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+            throw new GameLogicException("La partida no está en curso.");
+        }
         JugadorPartida jp = requireJugadorEnPartida(idGoogle, idPartida);
+        // ... (resto de la lógica)
 
         if (!Rol.lider.equals(jp.getRol())) {
             throw new GameLogicException("Solo el jefe de espías puede dar una pista.");
@@ -381,17 +386,17 @@ public class JuegoService {
                             partida.getTiempoEspera(), () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
                 }
             }
-            
-            Integer idPartida = partida.getIdPartida();
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    broadcastEstado(idPartida);
-                }
-            });
         }
-    }
 
+        // Emitir estado actualizado siempre tras resolver votación
+        Integer idPartida = partida.getIdPartida();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                broadcastEstado(idPartida);
+            }
+        });
+        }
     private void prepararTurnoRival(Partida partida, Equipo equipoActual) {
         Equipo rival = (equipoActual == Equipo.rojo) ? Equipo.azul : Equipo.rojo;
         
