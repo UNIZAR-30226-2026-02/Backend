@@ -5,6 +5,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import com.secretpanda.codenames.dto.juego.GameStateDTO;
+import com.secretpanda.codenames.model.JugadorPartida;
+import com.secretpanda.codenames.model.JugadorPartida.Equipo;
+import com.secretpanda.codenames.model.JugadorPartida.Rol;
 import com.secretpanda.codenames.model.Partida;
 import com.secretpanda.codenames.model.TableroCarta;
 import com.secretpanda.codenames.model.Turno;
@@ -23,6 +26,16 @@ public class GameStateMapper {
         dto.setIdPartida(partida.getIdPartida());
         dto.setEstado(partida.getEstado().name());
         dto.setRojoGana(partida.getRojoGana());
+
+        // Cálculo de agentes y abandono
+        List<JugadorPartida> jps = partida.getJugadores();
+        int agentesRojosActivos = (int) jps.stream().filter(jp -> jp.getEquipo() == Equipo.rojo && jp.getRol() == Rol.agente && !jp.isAbandono()).count();
+        int agentesAzulesActivos = (int) jps.stream().filter(jp -> jp.getEquipo() == Equipo.azul && jp.getRol() == Rol.agente && !jp.isAbandono()).count();
+        
+        dto.setTotalAgentesRojos(agentesRojosActivos);
+        dto.setTotalAgentesAzules(agentesAzulesActivos);
+        dto.setAbandonoRojo(jps.stream().anyMatch(jp -> jp.getEquipo() == Equipo.rojo && jp.isAbandono()));
+        dto.setAbandonoAzul(jps.stream().anyMatch(jp -> jp.getEquipo() == Equipo.azul && jp.isAbandono()));
 
         // Cálculo de segundos restantes
         if (partida.getFechaInicioTurno() != null && partida.getEstado() == Partida.EstadoPartida.en_curso) {

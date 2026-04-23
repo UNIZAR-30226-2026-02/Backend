@@ -40,6 +40,18 @@ public class GameStateDTO {
     @JsonProperty("votos_turno_actual")
     private List<VotoDTO> votosTurnoActual; // Votos emitidos en el turno actual
 
+    @JsonProperty("total_agentes_rojos")
+    private int totalAgentesRojos;
+
+    @JsonProperty("total_agentes_azules")
+    private int totalAgentesAzules;
+
+    @JsonProperty("abandono_rojo")
+    private boolean abandonoRojo;
+
+    @JsonProperty("abandono_azul")
+    private boolean abandonoAzul;
+
     // Constructor vacío
     public GameStateDTO() {}
 
@@ -76,4 +88,16 @@ public class GameStateDTO {
 
     public List<VotoDTO> getVotosTurnoActual() { return votosTurnoActual; }
     public void setVotosTurnoActual(List<VotoDTO> votosTurnoActual) { this.votosTurnoActual = votosTurnoActual; }
+
+    public int getTotalAgentesRojos() { return totalAgentesRojos; }
+    public void setTotalAgentesRojos(int totalAgentesRojos) { this.totalAgentesRojos = totalAgentesRojos; }
+
+    public int getTotalAgentesAzules() { return totalAgentesAzules; }
+    public void setTotalAgentesAzules(int totalAgentesAzules) { this.totalAgentesAzules = totalAgentesAzules; }
+
+    public boolean isAbandonoRojo() { return abandonoRojo; }
+    public void setAbandonoRojo(boolean abandonoRojo) { this.abandonoRojo = abandonoRojo; }
+
+    public boolean isAbandonoAzul() { return abandonoAzul; }
+    public void setAbandonoAzul(boolean abandonoAzul) { this.abandonoAzul = abandonoAzul; }
 }
