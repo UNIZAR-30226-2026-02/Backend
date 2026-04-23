@@ -104,6 +104,7 @@ public class JuegoService {
 
         // Obtener las 20 palabras del tema directamente (ya que hay exactamente 20)
         List<PalabraTema> palabras = palabraTemaRepository.findByTema_IdTemaAndActivoTrue(partida.getTema().getIdTema());
+        Collections.shuffle(palabras);
 
         if (palabras.size() < TOTAL_CARTAS) {
             throw new GameLogicException(
