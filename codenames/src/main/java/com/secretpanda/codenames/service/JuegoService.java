@@ -156,7 +156,17 @@ public class JuegoService {
         temporizadorService.iniciarTemporizador(partida.getIdPartida(), partida.getTiempoEspera(), 
                 () -> applicationContext.getBean(JuegoService.class).forzarFinTurno(partida.getIdPartida()));
 
-        broadcastEstado(partida.getIdPartida());
+        Integer idPartidaFinal = partida.getIdPartida();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcastEstado(idPartidaFinal);
+                }
+            });
+        } else {
+            broadcastEstado(idPartidaFinal);
+        }
     }
 
     // ─── Dar pista (Jefe) ─────────────────────────────────────────────────────
@@ -482,7 +492,18 @@ public class JuegoService {
         }
 
         prepararTurnoRival(partida, turnoActual.getJugadorPartida().getEquipo());
-        broadcastEstado(idPartida);
+        
+        Integer idPartidaFinal = idPartida;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcastEstado(idPartidaFinal);
+                }
+            });
+        } else {
+            broadcastEstado(idPartidaFinal);
+        }
     }
 
     // ─── GameState para un jugador concreto ───────────────────────────────────
@@ -625,7 +646,18 @@ public class JuegoService {
         }
 
         leaderboardService.broadcastGlobalRanking(); 
-        broadcastEstado(partida.getIdPartida());
+        
+        Integer idPartida = partida.getIdPartida();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcastEstado(idPartida);
+                }
+            });
+        } else {
+            broadcastEstado(idPartida);
+        }
     }
 
     private boolean esCartaDelEquipo(TipoCarta tipo, Equipo equipo) {

@@ -21,7 +21,7 @@ public interface VotoCartaRepository extends JpaRepository<VotoCarta, Integer> {
     List<VotoCarta> findByCartaTablero_IdCartaTablero(Integer idCartaTablero);
 
     // Buscar si el jugador ya ha votado en este turno (Para permitir cambiar el voto)
-    Optional<VotoCarta> findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartida(Integer idTurno, Integer idJugadorPartida);
+    List<VotoCarta> findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartida(Integer idTurno, Integer idJugadorPartida);
 
     // Buscar el voto de un jugador específico en un turno y sobre una carta
     Optional<VotoCarta> findByTurno_IdTurnoAndJugadorPartida_IdJugadorPartidaAndCartaTablero_IdCartaTablero(Integer idTurno, Integer idJugadorPartida, Integer idCartaTablero);
