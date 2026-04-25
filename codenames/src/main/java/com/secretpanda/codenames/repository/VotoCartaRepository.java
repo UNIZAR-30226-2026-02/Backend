@@ -14,6 +14,9 @@ public interface VotoCartaRepository extends JpaRepository<VotoCarta, Integer> {
     // Obtener todos los votos del turno actual
     List<VotoCarta> findByTurno_IdTurno(Integer idTurno);
     
+    // Obtener solo los votos activos (que aún no han resultado en una carta revelada) del turno actual
+    List<VotoCarta> findByTurno_IdTurnoAndCartaReveladaIsNull(Integer idTurno);
+
     // Historial de votos sobre una carta específica
     List<VotoCarta> findByCartaTablero_IdCartaTablero(Integer idCartaTablero);
 

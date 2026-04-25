@@ -277,10 +277,9 @@ public class JuegoService {
         votoCartaRepository.saveAndFlush(voto);
 
         // Solo contamos los votos que aún no han resultado en una carta revelada
-        List<VotoCarta> votosActivos = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno())
-                .stream()
-                .filter(v -> v.getCartaRevelada() == null)
-                .collect(Collectors.toList());
+        List<VotoCarta> votosActivos = votoCartaRepository
+                .findByTurno_IdTurnoAndCartaReveladaIsNull(turno.getIdTurno());
+ 
 
         List<JugadorPartida> agentesActivosEnEquipo = jugadorPartidaRepository
                 .findByPartida_IdPartidaAndAbandonoFalse(idPartida).stream()
@@ -312,10 +311,8 @@ public class JuegoService {
     @Transactional
     public void resolverVotacion(Partida partida, Turno turno, Equipo equipoVotante) {
         // Obtenemos solo los votos de la ronda actual
-        List<VotoCarta> votosRonda = votoCartaRepository.findByTurno_IdTurno(turno.getIdTurno())
-                .stream()
-                .filter(v -> v.getCartaRevelada() == null)
-                .collect(Collectors.toList());
+        List<VotoCarta> votosRonda = votoCartaRepository
+                .findByTurno_IdTurnoAndCartaReveladaIsNull(turno.getIdTurno());
 
         if (votosRonda.isEmpty()) return;
 
@@ -431,7 +428,7 @@ public class JuegoService {
         Turno turnoActual = turnoRepository
                 .findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
         List<VotoCarta> votos = turnoActual != null
-                ? votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno())
+        ? votoCartaRepository.findByTurno_IdTurnoAndCartaReveladaIsNull(turnoActual.getIdTurno())        
                 : List.of();
 
         GameStateDTO estadoLider  = GameStateMapper.toDTO(partida, cartas, turnoActual, votos, true);
@@ -506,7 +503,7 @@ public class JuegoService {
         Turno turnoActual = turnoRepository
                 .findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
         List<VotoCarta> votos = turnoActual != null
-                ? votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno())
+                ? votoCartaRepository.findByTurno_IdTurnoAndCartaReveladaIsNull(turnoActual.getIdTurno())
                 : List.of();
 
         boolean esLider = Rol.lider.equals(jp.getRol());
