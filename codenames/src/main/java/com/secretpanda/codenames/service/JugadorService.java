@@ -95,6 +95,7 @@ public class JugadorService {
         }
         JugadorMapper.applyUpdateDTO(dto, jugador);
         jugadorRepository.save(jugador);
+        notificarActualizacionPerfil(idGoogle);
         return JugadorMapper.toDTO(jugador, calculator);
     }
 
@@ -116,6 +117,7 @@ public class JugadorService {
         inventarioPersonalizacionRepository.save(item);
         PersonalizacionWS dto = new PersonalizacionWS(item.getPersonalizacion().getTipo().name(), item.getPersonalizacion().getValorVisual(), equipado);
         messagingTemplate.convertAndSendToUser(idGoogle, "/queue/personalizacion", dto);
+        notificarActualizacionPerfil(idGoogle);
     }
 
     @Transactional(readOnly = true)
@@ -174,7 +176,7 @@ public class JugadorService {
         j.setNumAciertos(j.getNumAciertos() + aciertos); j.setNumFallos(j.getNumFallos() + fallos);
         j.setBalas(j.getBalas() + (gano ? balasGanador : balasDerrota));
         jugadorRepository.save(j);
-        notificarActualizacionBalas(idGoogle, j.getBalas());
+        notificarActualizacionPerfil(idGoogle);
         if (fallos == 0) {
             jugadorLogroRepository.findById_IdJugador(idGoogle).stream()
                 .filter(jl -> "partidas_sin_fallos".equals(jl.getLogro().getEstadisticaClave())).findFirst()
@@ -188,7 +190,7 @@ public class JugadorService {
         Jugador jugador = jugadorRepository.findByIdForUpdate(idGoogle).orElseThrow(() -> new NotFoundException("Jugador no encontrado"));
         jugador.setBalas(Math.max(0, jugador.getBalas() + cantidad));
         jugadorRepository.save(jugador);
-        notificarActualizacionBalas(idGoogle, jugador.getBalas());
+        notificarActualizacionPerfil(idGoogle);
     }
 
     @Transactional
@@ -220,5 +222,13 @@ public class JugadorService {
     }
 
     private Jugador findJugador(String idGoogle) { return jugadorRepository.findById(idGoogle).orElseThrow(() -> new NotFoundException("Jugador no encontrado.")); }
-    public void notificarActualizacionBalas(String idGoogle, int nuevasBalas) { messagingTemplate.convertAndSendToUser(idGoogle, "/queue/balas", nuevasBalas); }
+    
+    public void notificarActualizacionPerfil(String idGoogle) {
+        try {
+            JugadorDTO dto = getPerfil(idGoogle);
+            messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores", dto);
+        } catch (Exception e) {
+            // Silently fail as notification is a non-critical side effect
+        }
+    }
 }

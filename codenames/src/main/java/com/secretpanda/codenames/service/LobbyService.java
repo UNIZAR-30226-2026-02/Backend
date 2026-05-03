@@ -285,6 +285,11 @@ public LobbyService(PartidaRepository partidaRepository,
                 }
             }
         }
+
+        if (!lidRojoAsignado || !lidAzulAsignado) {
+            throw new GameLogicException("Error crítico: No se han podido asignar líderes a ambos equipos.");
+        }
+
         jugadorPartidaRepository.saveAll(jugadores);
     }
 

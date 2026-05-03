@@ -100,7 +100,6 @@ public class PartidaService {
         jp.setJugador(creador);
         jp.setPartida(partida);
         jp.setEquipo(JugadorPartida.Equipo.rojo);
-        jp.setRol(JugadorPartida.Rol.agente);
         jugadorPartidaRepository.save(jp);
 
         return buildLobbyStatusDTO(partida, List.of(jp));
@@ -251,7 +250,6 @@ public class PartidaService {
         long azules = jugadorPartidaRepository
                 .findByPartida_IdPartidaAndEquipo(partida.getIdPartida(), JugadorPartida.Equipo.azul).size();
         jp.setEquipo(rojos <= azules ? JugadorPartida.Equipo.rojo : JugadorPartida.Equipo.azul);
-        jp.setRol(JugadorPartida.Rol.agente);
         jugadorPartidaRepository.save(jp);
     }
 
