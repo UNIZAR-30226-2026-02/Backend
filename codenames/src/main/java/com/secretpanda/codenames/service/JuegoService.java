@@ -112,8 +112,8 @@ public class JuegoService {
         }
 
         List<TipoCarta> tipos = new ArrayList<>();
-        for (int i = 0; i < totalRojas; i++) tipos.add(rojoEmpieza ? TipoCarta.rojo : TipoCarta.azul);
-        for (int i = 0; i < totalAzules; i++) tipos.add(rojoEmpieza ? TipoCarta.azul : TipoCarta.rojo);
+        for (int i = 0; i < totalRojas; i++) tipos.add(TipoCarta.rojo);
+        for (int i = 0; i < totalAzules; i++) tipos.add(TipoCarta.azul);
         for (int i = 0; i < CARTAS_ASESINO; i++) tipos.add(TipoCarta.asesino);
         for (int i = 0; i < CARTAS_CIVIL; i++) tipos.add(TipoCarta.civil);
         Collections.shuffle(tipos);
