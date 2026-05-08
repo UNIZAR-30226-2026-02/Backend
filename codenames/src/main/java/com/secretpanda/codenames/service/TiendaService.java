@@ -88,7 +88,7 @@ public class TiendaService {
 
     @Transactional
     public int comprarTema(String idGoogle, Integer idTema) {
-        Jugador j = jugadorRepository.findById(idGoogle)
+        Jugador j = jugadorRepository.findByIdForUpdate(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado"));
 
         Tema t = temaRepository.findById(idTema)
@@ -119,7 +119,7 @@ public class TiendaService {
 
     @Transactional
     public int comprarPersonalizacion(String idGoogle, Integer idPerso) {
-        Jugador j = jugadorRepository.findById(idGoogle)
+        Jugador j = jugadorRepository.findByIdForUpdate(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado"));
 
         Personalizacion p = personalizacionRepository.findById(idPerso)

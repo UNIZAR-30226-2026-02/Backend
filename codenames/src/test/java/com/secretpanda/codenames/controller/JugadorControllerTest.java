@@ -38,10 +38,13 @@ class JugadorControllerTest {
     private JugadorService jugadorService;
 
     @MockBean
+    private com.secretpanda.codenames.repository.JugadorRepository jugadorRepository;
+
+    @MockBean
     private JwtService jwtService;
 
     @Test
-    void testGetPerfil_Exito_DevuelveDatos() throws Exception {
+    void shouldReturnPlayerDataWhenProfileRequestedSuccessfully() throws Exception {
         JugadorDTO mockDTO = new JugadorDTO();
         mockDTO.setIdGoogle("test_id");
         mockDTO.setTag("PandaTester");
@@ -59,7 +62,7 @@ class JugadorControllerTest {
     }
 
     @Test
-    void testActualizarPerfil_Valido_DevuelveActualizado() throws Exception {
+    void shouldReturnUpdatedDataWhenProfileUpdateIsValid() throws Exception {
         ActualizarPerfilDTO requestDTO = new ActualizarPerfilDTO();
         requestDTO.setTag("NuevoTag");
 

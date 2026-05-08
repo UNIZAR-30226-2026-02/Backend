@@ -42,7 +42,7 @@ public class ChatServiceTest {
     private ChatService chatService;
 
     @Test
-    void testProcesarMensaje_LiderLanzaExcepcion() {
+    void shouldThrowExceptionWhenLeaderAttemptsToSendMessage() {
         String idGoogle = "user123";
         EnviarMensajeDTO dto = new EnviarMensajeDTO();
         dto.setIdPartida(1);
@@ -62,7 +62,7 @@ public class ChatServiceTest {
     }
 
     @Test
-    void testProcesarMensaje_Exito() {
+    void shouldProcessMessageAndApplyProfanityFilterSuccessfully() {
         String idGoogle = "user123";
         EnviarMensajeDTO dto = new EnviarMensajeDTO();
         dto.setIdPartida(1);

@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.dto.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Body que envía el cliente al endpoint POST /api/auth/login.
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class LoginRequestDTO {
 
+    @NotBlank(message = "El token de Google es obligatorio")
     @JsonProperty("id_google")
     private String idGoogle;
 

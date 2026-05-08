@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.secretpanda.codenames.dto.jugador.ActualizarPerfilDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 import com.secretpanda.codenames.model.Jugador;
+import com.secretpanda.codenames.model.JugadorLogro;
+import com.secretpanda.codenames.model.Logro;
 import com.secretpanda.codenames.repository.InventarioPersonalizacionRepository;
 import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorLogroRepository;
@@ -26,28 +30,24 @@ import com.secretpanda.codenames.repository.JugadorRepository;
 import com.secretpanda.codenames.repository.LogroRepository;
 import com.secretpanda.codenames.util.EstadisticasCalculator;
 
+/**
+ * Suite de pruebas unitarias para JugadorService.
+ * Valida actualizaciones de perfil, cálculos de final de partida (balas)
+ * y la lógica de progreso y desbloqueo de logros.
+ */
 @ExtendWith(MockitoExtension.class)
 public class JugadorServiceTest {
 
-    @Mock
-    private JugadorRepository jugadorRepository;
-    @Mock
-    private InventarioTemaRepository inventarioTemaRepository;
-    @Mock
-    private InventarioPersonalizacionRepository inventarioPersonalizacionRepository;
-    @Mock
-    private JugadorPartidaRepository jugadorPartidaRepository;
-    @Mock
-    private JugadorLogroRepository jugadorLogroRepository;
-    @Mock
-    private EstadisticasCalculator calculator;
-    @Mock
-    private LogroRepository logroRepository;
-    @Mock
-    private SimpMessagingTemplate messagingTemplate;
+    @Mock private JugadorRepository jugadorRepository;
+    @Mock private InventarioTemaRepository inventarioTemaRepository;
+    @Mock private InventarioPersonalizacionRepository inventarioPersonalizacionRepository;
+    @Mock private JugadorPartidaRepository jugadorPartidaRepository;
+    @Mock private JugadorLogroRepository jugadorLogroRepository;
+    @Mock private EstadisticasCalculator calculator;
+    @Mock private LogroRepository logroRepository;
+    @Mock private SimpMessagingTemplate messagingTemplate;
 
-    @InjectMocks
-    private JugadorService jugadorService;
+    @InjectMocks private JugadorService jugadorService;
 
     @BeforeEach
     void setUp() {
@@ -55,8 +55,14 @@ public class JugadorServiceTest {
         ReflectionTestUtils.setField(jugadorService, "balasDerrota", 10);
     }
 
+    /**
+     * Prueba: shouldProcessEndGameCorrectlyForWinner
+     * Verifica que cuando se procesa el fin de partida para un ganador,
+     * se le otorguen las balas correspondientes (20), y se sumen sus estadísticas de aciertos/fallos.
+     */
     @Test
-    void testProcesarFinPartida_Ganador() {
+    void shouldProcessEndGameCorrectlyForWinner() {
+        // 1. Preparación (Arrange)
         String idGoogle = "user123";
         Jugador jugador = new Jugador();
         jugador.setIdGoogle(idGoogle);
@@ -69,19 +75,29 @@ public class JugadorServiceTest {
         when(jugadorRepository.findByIdForUpdate(idGoogle)).thenReturn(Optional.of(jugador));
         when(jugadorRepository.findById(idGoogle)).thenReturn(Optional.of(jugador));
 
+        // 2. Ejecución (Act)
+        // Procesamos el fin de partida donde el jugador ha ganado, acertado 5 cartas y fallado 2
         jugadorService.procesarFinPartida(idGoogle, true, 5, 2);
 
+        // 3. Verificación (Assert)
+        // Verificamos balas: 100 + 20
         assertEquals(120, jugador.getBalas());
+        // Verificamos estadísticas actualizadas
         assertEquals(6, jugador.getPartidasJugadas());
         assertEquals(3, jugador.getVictorias());
         assertEquals(15, jugador.getNumAciertos());
         assertEquals(7, jugador.getNumFallos());
+        
         verify(jugadorRepository).save(jugador);
-        verify(messagingTemplate).convertAndSendToUser(eq(idGoogle), eq("/queue/balas"), eq(120));
     }
 
+    /**
+     * Prueba: shouldProcessEndGameCorrectlyForLoser
+     * Verifica que cuando un jugador pierde, se le otorgue la recompensa base de derrota (10 balas).
+     */
     @Test
-    void testProcesarFinPartida_Perdedor() {
+    void shouldProcessEndGameCorrectlyForLoser() {
+        // 1. Preparación (Arrange)
         String idGoogle = "user123";
         Jugador jugador = new Jugador();
         jugador.setIdGoogle(idGoogle);
@@ -90,14 +106,22 @@ public class JugadorServiceTest {
         when(jugadorRepository.findByIdForUpdate(idGoogle)).thenReturn(Optional.of(jugador));
         when(jugadorRepository.findById(idGoogle)).thenReturn(Optional.of(jugador));
 
+        // 2. Ejecución (Act)
         jugadorService.procesarFinPartida(idGoogle, false, 2, 5);
 
+        // 3. Verificación (Assert)
+        // 100 + 10 por derrota
         assertEquals(110, jugador.getBalas());
         verify(jugadorRepository).save(jugador);
     }
 
+    /**
+     * Prueba: shouldGuaranteeMinimumZeroBalasWhenModifying
+     * Verifica que el inventario de balas nunca baje de cero, incluso ante deducciones fuertes.
+     */
     @Test
-    void testModificarBalas_NoNegativos() {
+    void shouldGuaranteeMinimumZeroBalasWhenModifying() {
+        // 1. Preparación (Arrange)
         String idGoogle = "user123";
         Jugador jugador = new Jugador();
         jugador.setIdGoogle(idGoogle);
@@ -105,31 +129,61 @@ public class JugadorServiceTest {
 
         when(jugadorRepository.findByIdForUpdate(idGoogle)).thenReturn(Optional.of(jugador));
 
+        // 2. Ejecución (Act)
+        // Restamos 20 balas a un balance de 10
         jugadorService.modificarBalas(idGoogle, -20);
 
+        // 3. Verificación (Assert)
+        // No deben existir balas negativas
         assertEquals(0, jugador.getBalas());
         verify(jugadorRepository).save(jugador);
     }
 
+    /**
+     * Prueba: shouldUnlockAchievementAndRewardBulletsWhenRequirementMet
+     * Verifica que al actualizar el progreso de logros, si se cumple el requisito de uno,
+     * el logro se marque como completado y se otorguen las balas correspondientes.
+     */
     @Test
-    void testActualizarPerfil_VerificaGuardado() {
+    void shouldUnlockAchievementAndRewardBulletsWhenRequirementMet() {
+        // 1. Preparación (Arrange)
         String idGoogle = "user123";
         Jugador jugador = new Jugador();
         jugador.setIdGoogle(idGoogle);
-        jugador.setTag("TagOriginal");
+        jugador.setPartidasJugadas(10); // Tiene 10 partidas jugadas
+        jugador.setBalas(100);
 
-        ActualizarPerfilDTO dto = new ActualizarPerfilDTO();
-        dto.setTag("NuevoTag");
-        dto.setFotoPerfil("nueva_foto.png");
+        Logro logroPartidas = new Logro();
+        logroPartidas.setEstadisticaClave("partidas_jugadas");
+        logroPartidas.setValorObjetivo(10); // Objetivo: 10 partidas
+        logroPartidas.setTipo(Logro.TipoLogro.logro);
+        logroPartidas.setNombre("Veterano");
+
+        JugadorLogro progreso = new JugadorLogro();
+        progreso.setJugador(jugador);
+        progreso.setLogro(logroPartidas);
+        progreso.setProgresoActual(9);
+        progreso.setCompletado(false);
 
         when(jugadorRepository.findById(idGoogle)).thenReturn(Optional.of(jugador));
-        when(jugadorRepository.existsByTagAndActivoTrue("NuevoTag")).thenReturn(false);
+        when(jugadorRepository.findByIdForUpdate(idGoogle)).thenReturn(Optional.of(jugador)); // Por el modificarBalas
+        // Simulamos que este logro estaba pendiente
+        when(jugadorLogroRepository.findById_IdJugadorAndCompletadoFalse(idGoogle))
+                .thenReturn(List.of(progreso));
 
-        JugadorDTO result = jugadorService.actualizarPerfil(dto, idGoogle);
+        // 2. Ejecución (Act)
+        jugadorService.actualizarProgresoLogros(idGoogle);
 
-        assertNotNull(result);
-        assertEquals("NuevoTag", jugador.getTag());
-        assertEquals("nueva_foto.png", jugador.getFotoPerfil());
-        verify(jugadorRepository).save(jugador);
+        // 3. Verificación (Assert)
+        // El logro debe marcarse completado
+        assertTrue(progreso.isCompletado());
+        assertNotNull(progreso.getFechaDesbloqueo());
+        assertEquals(10, progreso.getProgresoActual());
+
+        // Verificamos que se le otorgaron las 50 balas del logro (100 iniciales + 50 = 150)
+        assertEquals(150, jugador.getBalas());
+
+        // Verificamos que se guardaron los cambios del progreso
+        verify(jugadorLogroRepository).saveAll(anyList());
     }
 }

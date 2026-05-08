@@ -9,6 +9,7 @@ import com.secretpanda.codenames.dto.auth.RegistroRequestDTO;
 import com.secretpanda.codenames.service.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 /**
  * POST /api/auth/login   → Google idToken → esNuevo + (si no nuevo) JWT + Jugador
@@ -41,7 +42,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(
-            @RequestBody LoginRequestDTO dto,
+            @Valid @RequestBody LoginRequestDTO dto,
             HttpServletResponse response) {
 
         AuthResponseDTO respuesta = authService.login(dto.getIdGoogle());
@@ -62,7 +63,7 @@ public class AuthController {
      */
     @PostMapping("/registro")
     public ResponseEntity<AuthResponseDTO> registro(
-            @RequestBody RegistroRequestDTO dto,
+            @Valid @RequestBody RegistroRequestDTO dto,
             HttpServletResponse response) {
 
         AuthResponseDTO respuesta = authService.registro(dto.getIdGoogle(), dto.getTag());

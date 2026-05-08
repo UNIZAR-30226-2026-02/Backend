@@ -1,12 +1,17 @@
 package com.secretpanda.codenames.dto.jugador;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class ActualizarPerfilDTO {
     
     // Solo necesitamos los campos que se pueden modificar
+    @NotBlank(message = "El tag no puede estar vacío")
+    @Size(min = 3, max = 20, message = "El tag debe tener entre 3 y 20 caracteres")
     @JsonProperty("tag")
     private String tag;
+
     @JsonProperty("foto_perfil")
     private String fotoPerfil;
 
