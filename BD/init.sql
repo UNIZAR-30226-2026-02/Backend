@@ -172,8 +172,8 @@ CREATE TABLE turno (
     id_partida           INT           NOT NULL REFERENCES partida(id_partida)     ON DELETE CASCADE, -- Desnormalizado para rendimiento
     id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida),
     num_turno            INT           NOT NULL,
-    palabra_pista        VARCHAR(20)   NOT NULL,
-    pista_numero         INT           NOT NULL CHECK(pista_numero > 0 AND pista_numero <= 8),
+    palabra_pista        VARCHAR(20),
+    pista_numero         INT           CHECK(pista_numero > 0 AND pista_numero <= 8),
     aciertos_turno       INT           NOT NULL DEFAULT 0,
     UNIQUE (id_partida, num_turno)
 );
