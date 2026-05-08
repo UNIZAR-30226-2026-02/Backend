@@ -178,8 +178,14 @@ public class AuthService {
 
     // ─── Helper ───────────────────────────────────────────────────────────────
 
-    private AuthResponseDTO construirRespuestaExistente(Jugador jugador) {
+    @Transactional
+    protected AuthResponseDTO construirRespuestaExistente(Jugador jugador) {
         String token = jwtService.generarToken(jugador.getIdGoogle());
+        
+        // RNF-1: Control de Sesión Única
+        jugador.setTokenActual(token);
+        jugadorRepository.save(jugador);
+
         JugadorDTO jugadorDTO = JugadorMapper.toDTO(jugador, calculator);
 
         // Buscar si tiene alguna partida EN CURSO

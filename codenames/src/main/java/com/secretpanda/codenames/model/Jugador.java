@@ -50,6 +50,9 @@ public class Jugador {
     @Column(name = "num_fallos", nullable = false)
     private int numFallos = 0;
 
+    @Column(name = "token_actual", columnDefinition = "TEXT")
+    private String tokenActual;
+
     @OneToMany(mappedBy = "solicitante", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Amistad> amistadesEnviadas = new ArrayList<>();
 
@@ -121,6 +124,9 @@ public class Jugador {
 
     public int getNumFallos() { return numFallos; }
     public void setNumFallos(int numFallos) { this.numFallos = numFallos; }
+
+    public String getTokenActual() { return tokenActual; }
+    public void setTokenActual(String tokenActual) { this.tokenActual = tokenActual; }
 
     public List<Amistad> getAmistadesEnviadas() { return amistadesEnviadas; }
     public void setAmistadesEnviadas(List<Amistad> amistadesEnviadas) { this.amistadesEnviadas = amistadesEnviadas; }

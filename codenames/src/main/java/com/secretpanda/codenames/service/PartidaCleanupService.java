@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,37 +25,43 @@ public class PartidaCleanupService {
 
     private final PartidaRepository partidaRepository;
 
+    @Value("${game.cleanup.horas-esperando:2}")
+    private int horasEsperando;
+
+    @Value("${game.cleanup.horas-en-curso:3}")
+    private int horasEnCurso;
+
     public PartidaCleanupService(PartidaRepository partidaRepository) {
         this.partidaRepository = partidaRepository;
     }
 
     /**
      * Se ejecuta cada 30 minutos.
-     * 1. Finaliza partidas en 'esperando' creadas hace más de 2 horas.
-     * 2. Finaliza partidas 'en_curso' sin actividad (turno) en las últimas 3 horas.
+     * 1. Finaliza partidas en 'esperando' creadas hace más de N horas.
+     * 2. Finaliza partidas 'en_curso' sin actividad (turno) en las últimas M horas.
      */
     @Scheduled(fixedRate = 1800000)
     @Transactional
     public void cleanupGhostGames() {
         logger.info("Iniciando recolector de partidas fantasma...");
         
-        LocalDateTime dosHorasAtras = LocalDateTime.now().minusHours(2);
-        LocalDateTime tresHorasAtras = LocalDateTime.now().minusHours(3);
+        LocalDateTime tiempoEsperando = LocalDateTime.now().minusHours(horasEsperando);
+        LocalDateTime tiempoEnCurso = LocalDateTime.now().minusHours(horasEnCurso);
 
-        // 1. Partidas en 'esperando' creadas hace más de 2 horas
+        // 1. Partidas en 'esperando' antiguas
         List<Partida> esperandoAntiguas = partidaRepository
-                .findByEstadoAndFechaCreacionBefore(EstadoPartida.esperando, dosHorasAtras);
+                .findByEstadoAndFechaCreacionBefore(EstadoPartida.esperando, tiempoEsperando);
         
         for (Partida p : esperandoAntiguas) {
-            finalizarPartidaFantasma(p, "esperando (creada hace > 2h)");
+            finalizarPartidaFantasma(p, "esperando (creada hace > " + horasEsperando + "h)");
         }
 
-        // 2. Partidas 'en_curso' sin cambios de turno en las últimas 3 horas
+        // 2. Partidas 'en_curso' inactivas
         List<Partida> enCursoInactivas = partidaRepository
-                .findByEstadoAndFechaInicioTurnoBefore(EstadoPartida.en_curso, tresHorasAtras);
+                .findByEstadoAndFechaInicioTurnoBefore(EstadoPartida.en_curso, tiempoEnCurso);
         
         for (Partida p : enCursoInactivas) {
-            finalizarPartidaFantasma(p, "en_curso (inactiva hace > 3h)");
+            finalizarPartidaFantasma(p, "en_curso (inactiva hace > " + horasEnCurso + "h)");
         }
 
         partidaRepository.saveAll(esperandoAntiguas);

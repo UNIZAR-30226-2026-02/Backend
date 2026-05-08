@@ -16,6 +16,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.secretpanda.codenames.repository.JugadorRepository;
+
 /**
  * Filtro JWT — se ejecuta una sola vez por petición HTTP.
  *
@@ -35,6 +37,9 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private JugadorRepository jugadorRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -53,15 +58,22 @@ public class JwtFilter extends OncePerRequestFilter {
 
             String idGoogle = jwtService.extraerIdGoogle(token);
 
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                            idGoogle,
-                            null,
-                            Collections.emptyList()
-                    );
+            // RNF-1: Control de Sesión Única
+            boolean sesionValida = jugadorRepository.findById(idGoogle)
+                    .map(j -> token.equals(j.getTokenActual()))
+                    .orElse(false);
 
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            if (sesionValida) {
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                idGoogle,
+                                null,
+                                Collections.emptyList()
+                        );
+
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
         }
 
         filterChain.doFilter(request, response);

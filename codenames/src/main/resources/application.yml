@@ -48,8 +48,10 @@ game:
   ranking-global-size: 10
   ranking-amigos-size: 100
   timer-pool-size: 4
-  penalizacion-abandono: 10
+  penalizacion-abandono: 5
   balas-ganador: 20
   balas-derrota: 10
   timeout-reconexion: 60
-  horas-limpieza-fantasma: 1000
+  cleanup:
+    horas-esperando: 2
+    horas-en-curso: 3

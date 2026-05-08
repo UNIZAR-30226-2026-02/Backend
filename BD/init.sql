@@ -16,7 +16,8 @@ CREATE TABLE jugador (
     partidas_jugadas     INT           NOT NULL DEFAULT 0,
     victorias            INT           NOT NULL DEFAULT 0,
     num_aciertos         INT           NOT NULL DEFAULT 0,
-    num_fallos           INT           NOT NULL DEFAULT 0
+    num_fallos           INT           NOT NULL DEFAULT 0,
+    token_actual         TEXT
 );
 
 -- ----------------------------------------------------------------
@@ -171,8 +172,8 @@ CREATE TABLE turno (
     id_partida           INT           NOT NULL REFERENCES partida(id_partida)     ON DELETE CASCADE, -- Desnormalizado para rendimiento
     id_jugador_partida   INT           NOT NULL REFERENCES jugador_partida(id_jugador_partida),
     num_turno            INT           NOT NULL,
-    palabra_pista        VARCHAR(256),
-    pista_numero         INT,
+    palabra_pista        VARCHAR(20)   NOT NULL,
+    pista_numero         INT           NOT NULL CHECK(pista_numero > 0 AND pista_numero <= 8),
     aciertos_turno       INT           NOT NULL DEFAULT 0,
     UNIQUE (id_partida, num_turno)
 );

@@ -38,10 +38,10 @@ public class Turno {
     @Column(name = "num_turno", nullable = false)
     private int numTurno;
 
-    @Column(name = "palabra_pista", nullable = true, length = 256)
+    @Column(name = "palabra_pista", nullable = false, length = 20)
     private String palabraPista;
 
-    @Column(name = "pista_numero", nullable = true)
+    @Column(name = "pista_numero", nullable = false)
     private Integer pistaNumero;
 
     @Column(name = "aciertos_turno", nullable = false)
