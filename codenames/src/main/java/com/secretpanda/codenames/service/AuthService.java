@@ -65,7 +65,7 @@ public class AuthService {
      * Si el jugador NO existe → devuelve esNuevo=true (sin JWT).
      * Si ya existe → devuelve esNuevo=false + JWT + datos jugador + partidaActivaId.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponseDTO login(String idTokenGoogle) {
         GoogleAuthService.DatosGoogle datos = googleAuthService.verificarToken(idTokenGoogle);
 
