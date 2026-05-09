@@ -179,12 +179,12 @@ public class AuthService {
     // ─── Helper ───────────────────────────────────────────────────────────────
 
     @Transactional
-    protected AuthResponseDTO construirRespuestaExistente(Jugador jugador) {
+    public AuthResponseDTO construirRespuestaExistente(Jugador jugador) {
         String token = jwtService.generarToken(jugador.getIdGoogle());
         
         // RNF-1: Control de Sesión Única
         jugador.setTokenActual(token);
-        jugadorRepository.save(jugador);
+        jugadorRepository.saveAndFlush(jugador);
 
         JugadorDTO jugadorDTO = JugadorMapper.toDTO(jugador, calculator);
 

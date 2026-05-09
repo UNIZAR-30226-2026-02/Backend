@@ -167,8 +167,9 @@ class AuthServiceTest {
         assertEquals(0, jugadorInactivo.getVictorias()); 
         // Verificamos que se haya guardado el tema básico en el inventario
         verify(inventarioTemaRepository).save(any(InventarioTema.class));
-        // Verificamos que se haya guardado el jugador actualizado (dos veces: registro + sesión única)
-        verify(jugadorRepository, times(2)).save(jugadorInactivo);
+        // Verificamos que se haya guardado el jugador (registro + saveAndFlush en sesión única)
+        verify(jugadorRepository, times(1)).save(jugadorInactivo);
+        verify(jugadorRepository, times(1)).saveAndFlush(jugadorInactivo);
         // Verificamos que se hayan inicializado los logros del jugador (Evita falso positivo)
         verify(jugadorService).inicializarLogros(jugadorInactivo);
     }
@@ -210,7 +211,7 @@ class AuthServiceTest {
         // Verificamos que se devuelva el ID de la partida activa (en el DTO de respuesta)
         assertEquals(99, response.getPartidaActivaId());
         // Verificamos que se haya guardado el token actual en el jugador (sesión única)
-        verify(jugadorRepository).save(jugador);
+        verify(jugadorRepository).saveAndFlush(jugador);
         assertEquals("jwt_mock", jugador.getTokenActual());
     }
 }

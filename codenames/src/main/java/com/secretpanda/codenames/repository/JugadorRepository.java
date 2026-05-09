@@ -66,4 +66,7 @@ public interface JugadorRepository extends JpaRepository<Jugador, String> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT j FROM Jugador j WHERE j.idGoogle = :id")
     Optional<Jugador> findByIdForUpdate(@Param("id") String id);
+
+    @Query("SELECT j.tokenActual FROM Jugador j WHERE j.idGoogle = :idGoogle")
+    Optional<String> findTokenActualById(@Param("idGoogle") String idGoogle);
 }

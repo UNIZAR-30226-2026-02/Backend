@@ -86,6 +86,7 @@ public class SecurityIntegrationTest {
         when(jwtService.extraerIdGoogle(validToken)).thenReturn(userId);
         when(jwtService.esTokenValido(validToken)).thenReturn(true);
         when(jugadorRepository.findById(userId)).thenReturn(Optional.of(jugador));
+        when(jugadorRepository.findTokenActualById(userId)).thenReturn(Optional.of(validToken));
 
         Cookie validCookie = new Cookie("token_sesion", validToken);
 

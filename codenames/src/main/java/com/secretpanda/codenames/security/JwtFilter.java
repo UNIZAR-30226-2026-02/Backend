@@ -59,9 +59,9 @@ public class JwtFilter extends OncePerRequestFilter {
             String idGoogle = jwtService.extraerIdGoogle(token);
 
             // RNF-1: Control de Sesión Única
-            boolean sesionValida = jugadorRepository.findById(idGoogle)
-                    .map(j -> token.equals(j.getTokenActual()))
-                    .orElse(false);
+            // Consultamos directamente el token en BD para evitar la caché de primer nivel de JPA
+            String tokenEnBD = jugadorRepository.findTokenActualById(idGoogle).orElse("");
+            boolean sesionValida = token.equals(tokenEnBD);
 
             if (sesionValida) {
                 UsernamePasswordAuthenticationToken auth =
