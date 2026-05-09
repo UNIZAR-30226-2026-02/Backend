@@ -129,7 +129,7 @@ public class JugadorService {
     public List<PartidaResumenDTO> getHistorial(String idGoogle) {
         Jugador jugador = findJugador(idGoogle);
         if (!jugador.isActivo()) return List.of();
-        
+
         // Obtenemos el historial completo del repositorio y limitamos al número de partidas jugadas actuales
         return jugadorPartidaRepository.findHistoryByJugadorId(idGoogle).stream()
                 .limit(Math.min(MAX_HISTORIAL, jugador.getPartidasJugadas()))
