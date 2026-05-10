@@ -1,5 +1,6 @@
-package com.secretpanda.codenames.security;
+package com.secretpanda.codenames.Unitarios.security;
 
+import com.secretpanda.codenames.security.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;

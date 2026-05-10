@@ -1,5 +1,6 @@
-package com.secretpanda.codenames.exception;
+package com.secretpanda.codenames.Unitarios.exception;
 
+import com.secretpanda.codenames.exception.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
