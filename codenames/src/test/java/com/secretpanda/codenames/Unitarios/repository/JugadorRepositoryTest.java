@@ -15,7 +15,6 @@ import com.secretpanda.codenames.model.Jugador;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class JugadorRepositoryTest {
 
     @Autowired

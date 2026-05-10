@@ -20,14 +20,14 @@ import com.secretpanda.codenames.repository.JugadorRepository;
 import java.util.Optional;
 import jakarta.servlet.http.Cookie;
 
+import com.secretpanda.codenames.Integracion.config.IntegrationTestBase;
+
 /**
  * Prueba de integración para validar la correcta configuración de seguridad
  * y el funcionamiento del filtro JWT.
  */
-@SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-public class SecurityIntegrationTest {
+public class SecurityIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private MockMvc mockMvc;

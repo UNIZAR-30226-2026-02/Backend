@@ -18,7 +18,6 @@ import com.secretpanda.codenames.model.Tema;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class PartidaRepositoryTest {
 
     @Autowired private PartidaRepository partidaRepository;

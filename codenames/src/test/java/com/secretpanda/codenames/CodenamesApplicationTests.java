@@ -24,8 +24,9 @@ import com.secretpanda.codenames.repository.PartidaRepository;
 import com.secretpanda.codenames.repository.TableroCartaRepository;
 import com.secretpanda.codenames.repository.TemaRepository;
 
-@SpringBootTest
-class CodenamesApplicationTests {
+import com.secretpanda.codenames.Integracion.config.IntegrationTestBase;
+
+class CodenamesApplicationTests extends IntegrationTestBase {
 
     @Autowired private JugadorRepository jugadorRepository;
     @Autowired private TemaRepository temaRepository;

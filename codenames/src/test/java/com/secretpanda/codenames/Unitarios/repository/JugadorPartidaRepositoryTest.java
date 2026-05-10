@@ -18,7 +18,6 @@ import com.secretpanda.codenames.model.Tema;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class JugadorPartidaRepositoryTest {
 
     @Autowired private JugadorPartidaRepository jugadorPartidaRepository;

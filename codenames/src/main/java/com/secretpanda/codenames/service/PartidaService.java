@@ -129,7 +129,8 @@ public class PartidaService {
     public void unirsePartidaPublica(Integer idPartida, String idGoogle) {
         validarSinPartidaActiva(idGoogle);
 
-        Partida partida = partidaRepository.findById(idPartida)
+        // Bloqueo pesimista para evitar condiciones de carrera en el conteo de jugadores
+        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
         if (!partida.isEsPublica()) {

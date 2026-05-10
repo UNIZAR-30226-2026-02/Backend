@@ -20,13 +20,13 @@ import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
 import com.secretpanda.codenames.repository.TemaRepository;
 
+import com.secretpanda.codenames.Integracion.config.IntegrationTestBase;
+
 /**
  * Prueba de integración para validar la concurrencia y los bloqueos pesimistas
  * en las transacciones de la tienda.
  */
-@SpringBootTest
-@ActiveProfiles("test") // Requiere configuración de base de datos en memoria (H2)
-public class TiendaServiceConcurrencyIT {
+public class TiendaServiceConcurrencyIT extends IntegrationTestBase {
 
     @Autowired
     private TiendaService tiendaService;

@@ -22,7 +22,6 @@ import com.secretpanda.codenames.model.TableroCarta.EstadoCarta;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class TableroCartaRepositoryTest {
 
     @Autowired private TableroCartaRepository tableroCartaRepository;
