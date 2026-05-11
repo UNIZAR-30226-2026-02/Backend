@@ -71,7 +71,14 @@ public class WebSocketEventListener {
     public void handleDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = sha.getUser();
-        if (principal == null) return;
+        
+        log.info("Intento de desconexión. ID de sesión: {}, Principal: {}", 
+                 sha.getSessionId(), (principal != null ? principal.getName() : "NULL"));
+
+        if (principal == null) {
+            log.warn("Desconexión detectada pero el Principal es NULL. No se puede iniciar el temporizador.");
+            return;
+        }
         
         String idGoogle = principal.getName();
         log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de {}s...", idGoogle, timeoutReconexion);
