@@ -169,7 +169,7 @@ public class JugadorService {
     @Value("${game.balas-derrota:10}") private int balasDerrota;
 
     @Transactional
-    public void procesarFinPartida(String idGoogle, boolean gano, int aciertos, int fallos) {
+    public void procesarFinPartida(String idGoogle, boolean gano, int aciertos, int fallos, com.secretpanda.codenames.model.JugadorPartida.Rol rol) {
         Jugador j = jugadorRepository.findByIdForUpdate(idGoogle).orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
         j.setPartidasJugadas(j.getPartidasJugadas() + 1);
         if (gano) j.setVictorias(j.getVictorias() + 1);
@@ -177,10 +177,18 @@ public class JugadorService {
         j.setBalas(j.getBalas() + (gano ? balasGanador : balasDerrota));
         jugadorRepository.save(j);
         notificarActualizacionPerfil(idGoogle);
-        if (fallos == 0) {
+        
+        if (com.secretpanda.codenames.model.JugadorPartida.Rol.agente.equals(rol) && fallos == 0 && aciertos >= 3) {
             jugadorLogroRepository.findById_IdJugador(idGoogle).stream()
-                .filter(jl -> "partidas_sin_fallos".equals(jl.getLogro().getEstadisticaClave())).findFirst()
-                .ifPresent(jl -> { jl.setProgresoActual(1); jugadorLogroRepository.save(jl); });
+                .filter(jl -> "cero_fallos_partida".equals(jl.getLogro().getEstadisticaClave()) && !jl.isCompletado()).findFirst()
+                .ifPresent(jl -> { 
+                    jl.setProgresoActual(1);
+                    jl.setCompletado(true);
+                    jl.setFechaDesbloqueo(LocalDateTime.now());
+                    modificarBalas(idGoogle, jl.getLogro().getBalasRecompensa());
+                    notificarLogro(idGoogle, jl.getLogro());
+                    jugadorLogroRepository.save(jl);
+                });
         }
         actualizarProgresoLogros(idGoogle);
     }
@@ -230,5 +238,12 @@ public class JugadorService {
         } catch (Exception e) {
             // Silently fail as notification is a non-critical side effect
         }
+    }
+
+    private void notificarLogro(String idGoogle, Logro logro) {
+        NotificacionDTO notif = new NotificacionDTO("logro_desbloqueado", 
+            Map.of("mensaje", "¡Logro desbloqueado: " + logro.getNombre() + "!", 
+                "recompensa", logro.getBalasRecompensa()));
+        messagingTemplate.convertAndSendToUser(idGoogle, "/queue/jugadores/notificaciones", notif);
     }
 }

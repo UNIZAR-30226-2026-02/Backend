@@ -78,7 +78,7 @@ public class JugadorServiceTest {
 
         // 2. Ejecución (Act)
         // Procesamos el fin de partida donde el jugador ha ganado, acertado 5 cartas y fallado 2
-        jugadorService.procesarFinPartida(idGoogle, true, 5, 2);
+        jugadorService.procesarFinPartida(idGoogle, true, 5, 2, com.secretpanda.codenames.model.JugadorPartida.Rol.agente);
 
         // 3. Verificación (Assert)
         // Verificamos balas: 100 + 20
@@ -108,7 +108,7 @@ public class JugadorServiceTest {
         when(jugadorRepository.findById(idGoogle)).thenReturn(Optional.of(jugador));
 
         // 2. Ejecución (Act)
-        jugadorService.procesarFinPartida(idGoogle, false, 2, 5);
+        jugadorService.procesarFinPartida(idGoogle, false, 2, 5, com.secretpanda.codenames.model.JugadorPartida.Rol.agente);
 
         // 3. Verificación (Assert)
         // 100 + 10 por derrota

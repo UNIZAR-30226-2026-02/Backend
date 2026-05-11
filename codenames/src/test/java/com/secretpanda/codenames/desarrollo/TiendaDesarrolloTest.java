@@ -110,10 +110,10 @@ public class TiendaDesarrolloTest {
         lenient().when(jugadorRepository.findById(id)).thenReturn(Optional.of(j));
         when(jugadorLogroRepository.findById_IdJugadorAndCompletadoFalse(id)).thenReturn(List.of());
 
-        realJugadorService.procesarFinPartida(id, true, 0, 0);
+        realJugadorService.procesarFinPartida(id, true, 0, 0, com.secretpanda.codenames.model.JugadorPartida.Rol.agente);
         assertEquals(20, j.getBalas());
 
-        realJugadorService.procesarFinPartida(id, false, 0, 0);
+        realJugadorService.procesarFinPartida(id, false, 0, 0, com.secretpanda.codenames.model.JugadorPartida.Rol.agente);
         assertEquals(30, j.getBalas()); 
     }
 }

@@ -275,7 +275,7 @@ public class PartidaService {
         for (JugadorPartida jp : todos) {
             boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
             boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
-            jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
+            jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos(), jp.getRol());
         }
 
         juegoService.broadcastEstado(partida.getIdPartida());

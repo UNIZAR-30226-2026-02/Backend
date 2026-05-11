@@ -641,7 +641,7 @@ public class JuegoService {
                 boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
                 boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
                 
-                jugadorService.procesarFinPartida(j.getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos());
+                jugadorService.procesarFinPartida(j.getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos(), jp.getRol());
             }
         }
 
