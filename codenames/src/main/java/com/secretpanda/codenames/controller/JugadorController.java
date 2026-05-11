@@ -18,8 +18,6 @@ import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
 import com.secretpanda.codenames.dto.tienda.LogroDTO;
 import com.secretpanda.codenames.service.JugadorService;
 
-import jakarta.validation.Valid;
-
 /**
  * GET  /api/jugadores            → perfil completo (UserContext)
  * PUT  /api/jugadores            → actualizar tag y foto
@@ -46,7 +44,7 @@ public class JugadorController {
     /** Modifica tag y/o foto de perfil. */
     @PutMapping
     public ResponseEntity<JugadorDTO> actualizarPerfil(
-            @Valid @RequestBody ActualizarPerfilDTO dto,
+            @RequestBody ActualizarPerfilDTO dto,
             Principal principal) {
         return ResponseEntity.ok(jugadorService.actualizarPerfil(dto, principal.getName()));
     }

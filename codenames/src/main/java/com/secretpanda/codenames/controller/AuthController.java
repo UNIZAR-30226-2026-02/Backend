@@ -1,7 +1,11 @@
 package com.secretpanda.codenames.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.secretpanda.codenames.dto.auth.AuthResponseDTO;
 import com.secretpanda.codenames.dto.auth.LoginRequestDTO;
@@ -9,7 +13,6 @@ import com.secretpanda.codenames.dto.auth.RegistroRequestDTO;
 import com.secretpanda.codenames.service.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 
 /**
  * POST /api/auth/login   → Google idToken → esNuevo + (si no nuevo) JWT + Jugador
@@ -42,7 +45,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(
-            @Valid @RequestBody LoginRequestDTO dto,
+            @RequestBody LoginRequestDTO dto,
             HttpServletResponse response) {
 
         AuthResponseDTO respuesta = authService.login(dto.getIdGoogle());
@@ -63,7 +66,7 @@ public class AuthController {
      */
     @PostMapping("/registro")
     public ResponseEntity<AuthResponseDTO> registro(
-            @Valid @RequestBody RegistroRequestDTO dto,
+            @RequestBody RegistroRequestDTO dto,
             HttpServletResponse response) {
 
         AuthResponseDTO respuesta = authService.registro(dto.getIdGoogle(), dto.getTag());
