@@ -2,6 +2,7 @@ package com.secretpanda.codenames.controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -103,6 +104,15 @@ public class PartidaController {
         lobbyService.broadcastLobby(p);
         lobbyService.broadcastPartidasPublicas();
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id_partida}/situacion")
+    public ResponseEntity<Map<String, String>> getSituacionPartida(
+            @PathVariable("id_partida") Integer idPartida) {
+        Partida partida = partidaRepository.findById(idPartida)
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+        
+        return ResponseEntity.ok(Map.of("estado", partida.getEstado().name()));
     }
 
     // ─── Abandonar ─────────────────────────────────────────────────────────────

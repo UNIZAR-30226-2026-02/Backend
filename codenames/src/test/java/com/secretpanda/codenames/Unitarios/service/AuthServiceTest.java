@@ -175,6 +175,26 @@ class AuthServiceTest {
         verify(jugadorService).inicializarLogros(jugadorInactivo);
     }
 
+    @Test
+    void testRegistroNuevoUsuario_DebeInicializarFotoPerfilComoUno() {
+        // GIVEN
+        DatosGoogle datos = new DatosGoogle("nuevo_google", "new@test.com", "New User");
+        when(googleAuthService.verificarToken("token_valid")).thenReturn(datos);
+        when(jugadorRepository.findById("nuevo_google")).thenReturn(Optional.empty());
+        when(jwtService.generarToken("nuevo_google")).thenReturn("jwt_new");
+
+        // WHEN
+        AuthResponseDTO response = authService.registro("token_valid", "NuevoPanda");
+
+        // THEN
+        // Capturamos el jugador guardado para verificar su estado interno
+        org.mockito.ArgumentCaptor<Jugador> jugadorCaptor = org.mockito.ArgumentCaptor.forClass(Jugador.class);
+        verify(jugadorRepository).save(jugadorCaptor.capture());
+        
+        Jugador capturado = jugadorCaptor.getValue();
+        assertEquals("1", capturado.getFotoPerfil(), "La foto de perfil debería inicializarse como '1'");
+    }
+
     /**
      * Prueba: shouldReturnExistingUserWithTokenAndActiveMatch
      * Verifica que si el jugador ya existe y está activo,
