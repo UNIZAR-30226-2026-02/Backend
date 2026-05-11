@@ -72,7 +72,7 @@ public class AuthService {
         Optional<Jugador> opt = jugadorRepository.findById(datos.idGoogle());
 
         if (opt.isEmpty()) {
-            // Primera vez: el frontend redirige al formulario de elección de tag
+            // La primera vez el frontend redirige al formulario de elección de tag
             return AuthResponseDTO.nuevo();
         }
 
@@ -93,19 +93,19 @@ public class AuthService {
      */
     @Transactional
     public AuthResponseDTO registro(String idTokenGoogle, String tag) {
-        // 1. EXTRAER EL ID REAL DESDE GOOGLE
+        // EXTRAER EL ID REAL DESDE GOOGLE
         GoogleAuthService.DatosGoogle datos = googleAuthService.verificarToken(idTokenGoogle);
         String idGoogleReal = datos.idGoogle();
 
-        // 2. BUSCAR SI YA EXISTE (ACTIVO O INACTIVO)
+        // BUSCAR SI YA EXISTE (ACTIVO O INACTIVO)
         Optional<Jugador> jugadorOpt = jugadorRepository.findById(idGoogleReal);
 
-        // 3. VALIDAR: Si existe y YA ESTÁ ACTIVO, no puede registrarse otra vez
+        // VALIDAR: Si existe y YA ESTÁ ACTIVO, no puede registrarse otra vez
         if (jugadorOpt.isPresent() && jugadorOpt.get().isActivo()) {
             throw new BadRequestException("Este usuario ya está registrado y activo. Usa /login.");
         }
 
-        // 4. VALIDAR UNICIDAD DEL TAG (Solo entre usuarios activos)
+        // VALIDAR UNICIDAD DEL TAG (Solo entre usuarios activos)
         if (tag == null || tag.isBlank()) {
             throw new BadRequestException("El tag no puede estar vacío.");
         }
@@ -115,7 +115,7 @@ public class AuthService {
 
         Jugador jugador;
         if (jugadorOpt.isPresent()) {
-            // CASO A: REACTIVACIÓN (El usuario existía pero estaba desactivado)
+            // REACTIVACIÓN (El usuario existía pero estaba desactivado)
             jugador = jugadorOpt.get();
             jugador.setActivo(true);
             jugador.setTag(tag.trim());
@@ -126,16 +126,17 @@ public class AuthService {
             jugador.setNumAciertos(0);
             jugador.setNumFallos(0);
         } else {
-            // CASO B: REGISTRO TOTALMENTE NUEVO
+            // REGISTRO TOTALMENTE NUEVO
             jugador = new Jugador();
             jugador.setIdGoogle(idGoogleReal);
             jugador.setTag(tag.trim());
+            jugador.setFotoPerfil("1");
             jugador.setBalas(0);
         }
 
         jugadorRepository.save(jugador);
 
-        // 5. ASIGNAR TEMA POR DEFECTO (Si no lo tiene ya)
+        // ASIGNAR TEMA POR DEFECTO (Si no lo tiene ya)
         boolean yaTieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(jugador.getIdGoogle(), temaBasicoId); 
         if (!yaTieneTema) {
             temaRepository.findById(temaBasicoId).ifPresent(tema -> {
@@ -150,7 +151,7 @@ public class AuthService {
             });
         }
 
-        // RF: Inicializar logros con progreso 0 para el nuevo jugador
+        // Inicializar logros con progreso 0 para el nuevo jugador
         jugadorService.inicializarLogros(jugador);
 
         return construirRespuestaExistente(jugador);
@@ -182,13 +183,13 @@ public class AuthService {
     public AuthResponseDTO construirRespuestaExistente(Jugador jugador) {
         String token = jwtService.generarToken(jugador.getIdGoogle());
         
-        // RNF-1: Control de Sesión Única
+        // Control de Sesión Única
         jugador.setTokenActual(token);
         jugadorRepository.saveAndFlush(jugador);
 
         JugadorDTO jugadorDTO = JugadorMapper.toDTO(jugador, calculator);
 
-        // Buscar si tiene alguna partida EN CURSO
+        // Buscamos si tiene alguna partida EN CURSO
         Integer partidaActivaId = buscarPartidaActiva(jugador.getIdGoogle());
 
         return AuthResponseDTO.existente(token, jugadorDTO, partidaActivaId);
