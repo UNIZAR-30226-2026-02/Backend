@@ -282,9 +282,12 @@ public class PartidaService {
 
         List<JugadorPartida> todos = jugadorPartidaRepository.findByPartida_IdPartida(partida.getIdPartida());
         for (JugadorPartida jp : todos) {
-            boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
-            boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
-            jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos(), jp.getRol());
+            // Solo procesamos recompensas/penalizaciones para quienes no abandonaron
+            if (!jp.isAbandono()) {
+                boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
+                boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
+                jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos(), jp.getRol());
+            }
         }
 
         juegoService.broadcastEstado(partida.getIdPartida());
