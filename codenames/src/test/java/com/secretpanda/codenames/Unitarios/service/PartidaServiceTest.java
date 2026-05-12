@@ -73,7 +73,7 @@ class PartidaServiceTest {
         
         // 2 & 3. Ejecución y Verificación (Act & Assert)
         // Se espera que la creación falle
-        assertThrows(GameLogicException.class, () -> {
+        assertThrows(com.secretpanda.codenames.exception.SecretPandaException.class, () -> {
             partidaService.crearPartida(dto, "id_google");
         });
     }
@@ -105,7 +105,7 @@ class PartidaServiceTest {
         dto.setIdTema(1);
 
         // 2 & 3. Ejecución y Verificación (Act & Assert)
-        assertThrows(GameLogicException.class, () -> {
+        assertThrows(com.secretpanda.codenames.exception.SecretPandaException.class, () -> {
             partidaService.crearPartida(dto, "id_google");
         });
     }

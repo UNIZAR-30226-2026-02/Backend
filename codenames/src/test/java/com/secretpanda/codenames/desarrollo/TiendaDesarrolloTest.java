@@ -84,7 +84,7 @@ public class TiendaDesarrolloTest {
         inv.setPersonalizacion(p);
         inv.setEquipado(false);
 
-        JugadorService realJugadorService = new JugadorService(jugadorRepository, inventarioTemaRepository, inventarioPersoRepository, jugadorPartidaRepository, jugadorLogroRepository, calculator, logroRepository, mock(SimpMessagingTemplate.class));
+        JugadorService realJugadorService = new JugadorService(jugadorRepository, inventarioTemaRepository, inventarioPersoRepository, jugadorPartidaRepository, jugadorLogroRepository, calculator, logroRepository, mock(SimpMessagingTemplate.class), mock(com.secretpanda.codenames.service.ProfanityFilterService.class));
 
         when(inventarioPersoRepository.findById_IdJugadorAndId_IdPersonalizacion(id, 10))
             .thenReturn(Optional.of(inv));
@@ -102,7 +102,7 @@ public class TiendaDesarrolloTest {
         j.setIdGoogle(id);
         j.setBalas(0);
         
-        JugadorService realJugadorService = new JugadorService(jugadorRepository, null, null, null, jugadorLogroRepository, null, null, mock(SimpMessagingTemplate.class));
+        JugadorService realJugadorService = new JugadorService(jugadorRepository, null, null, null, jugadorLogroRepository, null, null, mock(SimpMessagingTemplate.class), mock(com.secretpanda.codenames.service.ProfanityFilterService.class));
         ReflectionTestUtils.setField(realJugadorService, "balasGanador", 20);
         ReflectionTestUtils.setField(realJugadorService, "balasDerrota", 10);
 

@@ -32,6 +32,7 @@ import com.secretpanda.codenames.repository.JugadorLogroRepository;
 import com.secretpanda.codenames.repository.LogroRepository;
 import com.secretpanda.codenames.service.AuthService;
 import com.secretpanda.codenames.service.JugadorService;
+import com.secretpanda.codenames.service.ProfanityFilterService;
 import com.secretpanda.codenames.security.GoogleAuthService;
 import com.secretpanda.codenames.security.JwtService;
 import com.secretpanda.codenames.util.EstadisticasCalculator;
@@ -56,14 +57,17 @@ public class UsuarioDesarrolloTest {
     @Mock private EstadisticasCalculator calculator;
     @Mock private SimpMessagingTemplate messagingTemplate;
     
+    @Mock private ProfanityFilterService profanityFilterService;
+    
     @InjectMocks private AuthService authService;
     private JugadorService jugadorService;
 
     @BeforeEach
     void setUp() {
-        jugadorService = new JugadorService(jugadorRepository, inventarioTemaRepository, inventarioPersoRepository, jugadorPartidaRepository, jugadorLogroRepository, calculator, logroRepository, messagingTemplate);
+        jugadorService = new JugadorService(jugadorRepository, inventarioTemaRepository, inventarioPersoRepository, jugadorPartidaRepository, jugadorLogroRepository, calculator, logroRepository, messagingTemplate, profanityFilterService);
         ReflectionTestUtils.setField(authService, "temaBasicoId", 1);
         ReflectionTestUtils.setField(authService, "jugadorService", jugadorService);
+        ReflectionTestUtils.setField(authService, "profanityFilterService", profanityFilterService);
     }
 
     @Test
@@ -73,6 +77,7 @@ public class UsuarioDesarrolloTest {
         lenient().when(jugadorRepository.findById("google_123")).thenReturn(Optional.empty());
         lenient().when(jugadorRepository.existsByTagAndActivoTrue("TagUnico")).thenReturn(false);
         lenient().when(jwtService.generarToken("google_123")).thenReturn("jwt_panda");
+        lenient().when(profanityFilterService.filter(anyString())).thenReturn(new ProfanityFilterService.FilterResult("TagUnico", false));
 
         AuthResponseDTO response = authService.registro("token_valid", "TagUnico");
 
@@ -142,6 +147,8 @@ public class UsuarioDesarrolloTest {
         dto.setTag("TagNuevo");
         dto.setFotoPerfil("icon_2");
 
+        when(profanityFilterService.filter("TagNuevo")).thenReturn(new ProfanityFilterService.FilterResult("TagNuevo", false));
+
         jugadorService.actualizarPerfil(dto, "google_123");
 
         assertEquals("TagNuevo", j.getTag());
@@ -176,6 +183,7 @@ public class UsuarioDesarrolloTest {
         j.setIdGoogle("user_2");
         j.setTag("OtroTag");
         when(jugadorRepository.findById("user_2")).thenReturn(Optional.of(j));
+        when(profanityFilterService.filter("Panda")).thenReturn(new ProfanityFilterService.FilterResult("Panda", false));
 
         assertDoesNotThrow(() -> jugadorService.actualizarPerfil(dtoPanda, "user_2"));
         assertEquals("Panda", j.getTag());
