@@ -320,6 +320,32 @@ public class JuegoService {
         return buildVotoRecibidoDTO(turno.getIdTurno(), votosActivos);
     }
 
+    @Transactional
+    public void verificarVotacionTrasAbandono(Integer idPartida, Equipo equipo) {
+        Partida partida = partidaRepository.findById(idPartida).orElse(null);
+        if (partida == null || !Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
+
+        Turno turno = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
+        if (turno == null || !turno.getJugadorPartida().getEquipo().equals(equipo) || turno.getPalabraPista() == null) return;
+
+        List<VotoCarta> votosActivos = votoCartaRepository.findByTurno_IdTurnoAndCartaReveladaIsNull(turno.getIdTurno());
+        List<JugadorPartida> agentesActivosEnEquipo = jugadorPartidaRepository
+                .findByPartida_IdPartidaAndAbandonoFalse(idPartida).stream()
+                .filter(a -> Rol.agente.equals(a.getRol()) && a.getEquipo().equals(equipo))
+                .collect(Collectors.toList());
+
+        boolean todosVotaron = agentesActivosEnEquipo.stream()
+                .allMatch(a -> votosActivos.stream()
+                        .anyMatch(v -> v.getJugadorPartida().getIdJugadorPartida()
+                                .equals(a.getIdJugadorPartida())));
+
+        if (todosVotaron && !agentesActivosEnEquipo.isEmpty()) {
+            resolverVotacion(partida, turno, equipo);
+        } else {
+            broadcastEstado(idPartida);
+        }
+    }
+
     // ─── Resolver votación ────────────────────────────────────────────────────
 
     @Transactional

@@ -53,6 +53,9 @@ public class Jugador {
     @Column(name = "token_actual", columnDefinition = "TEXT")
     private String tokenActual;
 
+    @Column(name = "disconnected_at")
+    private LocalDateTime disconnectedAt;
+
     @OneToMany(mappedBy = "solicitante", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Amistad> amistadesEnviadas = new ArrayList<>();
 
@@ -127,6 +130,9 @@ public class Jugador {
 
     public String getTokenActual() { return tokenActual; }
     public void setTokenActual(String tokenActual) { this.tokenActual = tokenActual; }
+
+    public LocalDateTime getDisconnectedAt() { return disconnectedAt; }
+    public void setDisconnectedAt(LocalDateTime disconnectedAt) { this.disconnectedAt = disconnectedAt; }
 
     public List<Amistad> getAmistadesEnviadas() { return amistadesEnviadas; }
     public void setAmistadesEnviadas(List<Amistad> amistadesEnviadas) { this.amistadesEnviadas = amistadesEnviadas; }

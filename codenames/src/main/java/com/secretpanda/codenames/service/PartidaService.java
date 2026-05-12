@@ -188,7 +188,7 @@ public class PartidaService {
                     boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
                     finalizarPartidaManual(partida, rojoGana);
                 } else {
-                    juegoService.broadcastEstado(idPartida);
+                    juegoService.verificarVotacionTrasAbandono(idPartida, jp.getEquipo());
                 }
             }
         } 
