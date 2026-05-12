@@ -95,11 +95,11 @@ public class WebSocketEventListener {
 
                 try {
                     if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
-                        lobbyService.abandonarLobby(idPartida, idGoogle);
+                        lobbyService.abandonarLobby(idPartida, idGoogle, true);
                         log.info("Jugador [{}] expulsado del lobby [{}] correctamente.", idGoogle, idPartida);
                     } 
                     else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-                        partidaService.abandonar(idPartida, idGoogle);
+                        partidaService.abandonar(idPartida, idGoogle, true);
                         log.info("Jugador [{}] abandonó definitivamente la partida en curso [{}].", idGoogle, idPartida);
                     }
                 } catch (Exception e) {

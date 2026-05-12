@@ -203,7 +203,7 @@ class PartidaServiceTest {
         when(jugadorPartidaRepository.findByPartida_IdPartida(idPartida)).thenReturn(List.of(jpLider));
 
         // 2. Ejecución (Act)
-        partidaService.abandonar(idPartida, idGoogle);
+        partidaService.abandonar(idPartida, idGoogle, false);
 
         // 3. Verificación (Assert)
         // Verificamos que se modificaron las balas restando 5 como penalización

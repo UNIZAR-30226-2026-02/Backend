@@ -171,7 +171,7 @@ public class PartidaDesarrolloTest {
         
         ReflectionTestUtils.setField(partidaService, "balasPenalizacionAbandono", 5);
 
-        partidaService.abandonar(idPartida, idGoogle);
+        partidaService.abandonar(idPartida, idGoogle, false);
 
         verify(jugadorService).modificarBalas(idGoogle, -5);
     }

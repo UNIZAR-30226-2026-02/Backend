@@ -121,7 +121,7 @@ public class PartidaController {
     public ResponseEntity<Void> abandonar(
             @PathVariable("id_partida") Integer idPartida,
             Principal principal) {
-        partidaService.abandonar(idPartida, principal.getName());
+        partidaService.abandonar(idPartida, principal.getName(), false);
         return ResponseEntity.ok().build();
     }
 

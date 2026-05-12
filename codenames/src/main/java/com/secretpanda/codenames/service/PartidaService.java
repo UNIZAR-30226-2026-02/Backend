@@ -156,7 +156,7 @@ public class PartidaService {
     // ─── Abandonar (lobby o en curso) ──────────────────────────────────────────
 
     @Transactional
-    public void abandonar(Integer idPartida, String idGoogle) {
+    public void abandonar(Integer idPartida, String idGoogle, boolean esDesconexion) {
         Partida partida = partidaRepository.findByIdForUpdate(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
@@ -172,6 +172,7 @@ public class PartidaService {
             jugadorPartidaRepository.save(jp);
 
             // RF-35: Si abandona un Jefe de Espionaje (Líder), su equipo pierde automáticamente
+            // Si es una desconexión accidental, el WebSocketEventListener ya esperó el timeout antes de llamar aquí.
             if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
                 boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
                 finalizarPartidaManual(partida, rojoGana);
@@ -194,6 +195,8 @@ public class PartidaService {
         } 
         else {
             boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
+            // Si es el creador y es un abandono manual (no desconexión), cerramos el lobby de inmediato.
+            // Si es desconexión, este método se llama tras expirar el tiempo de gracia en WebSocketEventListener.
             if (esCreador) {
                 partida.setEstado(Partida.EstadoPartida.finalizada);
                 partida.setFechaFin(LocalDateTime.now());

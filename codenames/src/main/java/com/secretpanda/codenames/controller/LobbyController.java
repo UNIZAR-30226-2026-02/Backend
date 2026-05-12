@@ -123,7 +123,7 @@ public class LobbyController {
     public void abandonarLobby(
             @DestinationVariable("id_partida") Integer idPartida,
             Principal principal) {
-        lobbyService.abandonarLobby(idPartida, principal.getName());
+        lobbyService.abandonarLobby(idPartida, principal.getName(), false);
     }
 
     // ─── Payloads (records para Jackson) ──────────────────────────────────────

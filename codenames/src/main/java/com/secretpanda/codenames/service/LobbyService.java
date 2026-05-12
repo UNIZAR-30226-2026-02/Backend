@@ -167,7 +167,7 @@ public LobbyService(PartidaRepository partidaRepository,
      *   - El frontend debe manejar estado === "finalizada" como señal de cierre.
      */
     @Transactional
-    public void abandonarLobby(Integer idPartida, String idGoogle) {
+    public void abandonarLobby(Integer idPartida, String idGoogle, boolean esDesconexion) {
         Partida partida = findPartidaEsperando(idPartida);
         JugadorPartida jp = findJugadorEnPartida(idGoogle, idPartida);
 
@@ -180,9 +180,6 @@ public LobbyService(PartidaRepository partidaRepository,
             partidaRepository.save(partida);
 
             // Eliminar el registro del creador en JUGADOR_PARTIDA
-            // Antes este delete no existía, dejando al creador como participante
-            // de una partida finalizada, lo que podía bloquear la creación de
-            // nuevas partidas (validarSinPartidaActiva en PartidaService).
             jugadorPartidaRepository.delete(jp);
 
             // Actualizar lista de partidas públicas (si era pública, desaparece)
@@ -193,8 +190,6 @@ public LobbyService(PartidaRepository partidaRepository,
         }
 
         // Broadcast del estado actualizado a todos los suscritos al lobby.
-        // Si el creador abandonó, el DTO lleva estado: "finalizada" → señal de cierre.
-        // Si fue otro jugador, el DTO lleva la lista actualizada sin él.
         broadcastLobby(partida);
     }
 
