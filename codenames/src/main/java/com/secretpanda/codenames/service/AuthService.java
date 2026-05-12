@@ -90,7 +90,7 @@ public class AuthService {
 
         Jugador jugador = opt.get();
         if (!jugador.isActivo()) {
-            throw new SecretPandaException(ErrorCode.INACTIVE_ACCOUNT);
+            return AuthResponseDTO.nuevo();        
         }
 
         return construirRespuestaExistente(jugador);
