@@ -16,6 +16,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.repository.JugadorRepository;
 
 /**
@@ -73,10 +74,30 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            } else {
+                // Si el token es válido pero NO es el actual en BD, es una sesión invalidada
+                escribirErrorSesion(response);
+                return;
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Escribe la respuesta de error 403 SESSION_INVALIDATED directamente en el stream.
+     */
+    private void escribirErrorSesion(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String json = String.format(
+            "{\"status\": 403, \"error_code\": \"SESSION_INVALIDATED\", \"message\": \"%s\"}",
+            ErrorCode.SESSION_INVALIDATED.getMessage()
+        );
+
+        response.getWriter().write(json);
     }
 
     /**

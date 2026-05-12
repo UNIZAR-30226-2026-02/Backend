@@ -14,8 +14,12 @@ import com.secretpanda.codenames.dto.partida.JugadorLobbyDTO;
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
 import com.secretpanda.codenames.dto.partida.RolPartidaDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
@@ -78,7 +82,7 @@ public class PartidaService {
         Jugador creador = findJugador(idGoogle);
 
         if (!inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, dto.getIdTema())) {
-            throw new GameLogicException("No tienes adquirido ese tema de cartas.");
+            throw new SecretPandaException(ErrorCode.MISSING_THEME_PACK);
         }
 
         String codigo;
@@ -113,7 +117,7 @@ public class PartidaService {
         validarSinPartidaActiva(idGoogle);
 
         Partida partida = partidaRepository.findByCodigoPartida(codigoPartida.toUpperCase().trim())
-                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+                .orElseThrow(() -> new SecretPandaException(ErrorCode.INVALID_ROOM_CODE));
 
         if (partida.isEsPublica()) {
             throw new GameLogicException("Esta partida es pública. Usa el endpoint de unirse a pública.");
@@ -142,8 +146,7 @@ public class PartidaService {
         if (idTema != 1) {
             boolean tieneTema = inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, idTema);
             if (!tieneTema) {
-                throw new GameLogicException("No puedes unirte a esta partida pública porque no has adquirido el paquete de cartas '" 
-                                            + partida.getTema().getNombre() + "'.");
+                throw new SecretPandaException(ErrorCode.MISSING_THEME_PACK);
             }
         }
 
@@ -228,6 +231,9 @@ public class PartidaService {
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
     private void unirseValidado(Partida partida, String idGoogle) {
+        if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+            throw new SecretPandaException(ErrorCode.GAME_ALREADY_STARTED);
+        }
         if (!Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
             throw new GameLogicException("La partida ya ha comenzado o finalizado.");
         }
@@ -235,7 +241,7 @@ public class PartidaService {
         long actuales = jugadorPartidaRepository
                 .countByPartida_IdPartidaAndAbandonoFalse(partida.getIdPartida());
         if (actuales >= partida.getMaxJugadores()) {
-            throw new GameLogicException("La sala está llena.");
+            throw new SecretPandaException(ErrorCode.LOBBY_FULL);
         }
         if (jugadorPartidaRepository.existsByJugador_IdGoogleAndPartida_IdPartida(
                 idGoogle, partida.getIdPartida())) {
@@ -261,7 +267,7 @@ public class PartidaService {
                 .existsByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
                         idGoogle, List.of(Partida.EstadoPartida.en_curso, Partida.EstadoPartida.esperando));
         if (tienePartidaActiva) {
-            throw new GameLogicException("Ya estás en una partida activa.");
+            throw new SecretPandaException(ErrorCode.PLAYER_ALREADY_IN_GAME);
         }
     }
 

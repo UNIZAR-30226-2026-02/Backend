@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.secretpanda.codenames.dto.auth.AuthResponseDTO;
 import com.secretpanda.codenames.dto.jugador.JugadorDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
 import com.secretpanda.codenames.model.InventarioTema;
 import com.secretpanda.codenames.model.InventarioTemaId;
@@ -36,6 +38,7 @@ public class AuthService {
     private final TemaRepository temaRepository;
     private final InventarioTemaRepository inventarioTemaRepository;
     private final JugadorService jugadorService;
+    private final ProfanityFilterService profanityFilterService;
 
     @Value("${game.tema-basico-id:1}")
     private Integer temaBasicoId;
@@ -47,7 +50,8 @@ public class AuthService {
                     EstadisticasCalculator calculator,
                     TemaRepository temaRepository,
                     InventarioTemaRepository inventarioTemaRepository,
-                    JugadorService jugadorService) {
+                    JugadorService jugadorService,
+                    ProfanityFilterService profanityFilterService) {
         this.googleAuthService = googleAuthService;
         this.jwtService = jwtService;
         this.jugadorRepository = jugadorRepository;
@@ -56,6 +60,7 @@ public class AuthService {
         this.temaRepository = temaRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.jugadorService = jugadorService;
+        this.profanityFilterService = profanityFilterService;
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
@@ -78,8 +83,7 @@ public class AuthService {
 
         Jugador jugador = opt.get();
         if (!jugador.isActivo()) {
-            // Cuenta desactivada como si no existiera
-            return AuthResponseDTO.nuevo();
+            throw new SecretPandaException(ErrorCode.INACTIVE_ACCOUNT);
         }
 
         return construirRespuestaExistente(jugador);
@@ -109,8 +113,14 @@ public class AuthService {
         if (tag == null || tag.isBlank()) {
             throw new BadRequestException("El tag no puede estar vacío.");
         }
-        if (jugadorRepository.existsByTagAndActivoTrue(tag.trim())) {
-            throw new BadRequestException("Ese nombre de usuario ya está en uso.");
+        
+        String tagLimpio = tag.trim();
+        if (profanityFilterService.filter(tagLimpio).wasCensored()) {
+            throw new SecretPandaException(ErrorCode.PROFANITY_DETECTED);
+        }
+        
+        if (jugadorRepository.existsByTagAndActivoTrue(tagLimpio)) {
+            throw new SecretPandaException(ErrorCode.TAG_TAKEN);
         }
 
         Jugador jugador;

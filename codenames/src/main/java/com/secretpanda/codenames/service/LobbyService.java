@@ -12,8 +12,10 @@ import com.secretpanda.codenames.dto.partida.JugadorLobbyDTO;
 import com.secretpanda.codenames.dto.partida.LobbyStatusDTO;
 import com.secretpanda.codenames.dto.partida.PartidaPublicaDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
 import com.secretpanda.codenames.model.Tema;
@@ -138,7 +140,7 @@ public LobbyService(PartidaRepository partidaRepository,
                 .filter(jp -> JugadorPartida.Equipo.azul.equals(jp.getEquipo())).count();
 
         if (rojos < 2 || azules < 2) {
-            throw new GameLogicException("Cada equipo necesita al menos 2 jugadores.");
+            throw new SecretPandaException(ErrorCode.TEAM_UNBALANCED);
         }
 
         asignarRoles(jugadores);
@@ -243,6 +245,9 @@ public LobbyService(PartidaRepository partidaRepository,
     private Partida findPartidaEsperando(Integer idPartida) {
         Partida p = partidaRepository.findById(idPartida)
                 .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+        if (Partida.EstadoPartida.en_curso.equals(p.getEstado())) {
+            throw new SecretPandaException(ErrorCode.GAME_ALREADY_STARTED);
+        }
         if (!Partida.EstadoPartida.esperando.equals(p.getEstado())) {
             throw new GameLogicException("La partida no está en estado 'esperando'.");
         }

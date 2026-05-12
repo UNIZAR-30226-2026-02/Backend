@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.secretpanda.codenames.exception.ErrorCode;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.google.api.client.json.webtoken.JsonWebToken;
 import com.google.auth.oauth2.TokenVerifier;
 import com.google.auth.oauth2.TokenVerifier.VerificationException;
@@ -43,15 +45,9 @@ public class GoogleAuthService {
             return new DatosGoogle(idGoogle, email, nombre);
 
         } catch (VerificationException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Token de Google inválido o expirado: " + e.getMessage()
-            );
+            throw new SecretPandaException(ErrorCode.GOOGLE_TOKEN_EXPIRED);
         } catch (Exception e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Error al verificar el token de Google: " + e.getMessage()
-            );
+            throw new SecretPandaException(ErrorCode.INTERNAL_SERVER_ERROR, "Error al verificar el token de Google: " + e.getMessage());
         }
     }
 }

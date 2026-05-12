@@ -11,7 +11,9 @@ import com.secretpanda.codenames.dto.tienda.PersonalizacionDTO;
 import com.secretpanda.codenames.dto.tienda.TemaDTO;
 import com.secretpanda.codenames.event.LogroEvent;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.mapper.tienda.PersonalizacionMapper;
 import com.secretpanda.codenames.mapper.tienda.TemaMapper;
 import com.secretpanda.codenames.model.InventarioPersonalizacion;
@@ -95,11 +97,11 @@ public class TiendaService {
                 .orElseThrow(() -> new NotFoundException("El tema no existe"));
 
         if (inventarioTemaRepository.existsById_IdJugadorAndId_IdTema(idGoogle, idTema)) {
-            throw new BadRequestException("Ya posees este tema de palabras.");
+            throw new SecretPandaException(ErrorCode.ALREADY_OWNED);
         }
 
         if (j.getBalas() < t.getPrecioBalas()) {
-            throw new BadRequestException("Saldo insuficiente para comprar este tema.");
+            throw new SecretPandaException(ErrorCode.INSUFFICIENT_FUNDS);
         }
 
         jugadorService.modificarBalas(idGoogle, -t.getPrecioBalas());
@@ -126,11 +128,11 @@ public class TiendaService {
                 .orElseThrow(() -> new NotFoundException("El artículo no existe"));
 
         if (inventarioPersoRepository.findById_IdJugadorAndId_IdPersonalizacion(idGoogle, idPerso).isPresent()) {
-            throw new BadRequestException("Ya posees este artículo estético.");
+            throw new SecretPandaException(ErrorCode.ALREADY_OWNED);
         }
 
         if (j.getBalas() < p.getPrecioBala()) {
-            throw new BadRequestException("Saldo insuficiente.");
+            throw new SecretPandaException(ErrorCode.INSUFFICIENT_FUNDS);
         }
 
         jugadorService.modificarBalas(idGoogle, -p.getPrecioBala());

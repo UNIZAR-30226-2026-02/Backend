@@ -4,12 +4,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Esta excepción captura situaciones donde un recurso específico solicitado 
- * por el cliente no ha sido encontrado en la base de datos.
+ * Excepción para recursos no encontrados.
  */
 @ResponseStatus(HttpStatus.NOT_FOUND)
-public class NotFoundException extends RuntimeException {
+public class NotFoundException extends SecretPandaException {
     public NotFoundException(String message) {
-        super(message);
+        super(ErrorCode.NOT_FOUND, message);
+    }
+    
+    public NotFoundException(ErrorCode errorCode) {
+        super(errorCode);
     }
 }

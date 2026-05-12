@@ -21,8 +21,12 @@ import com.secretpanda.codenames.dto.juego.PartidaFinDTO;
 import com.secretpanda.codenames.dto.juego.PistaDTO;
 import com.secretpanda.codenames.dto.juego.VotoRecibidoDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.GameLogicException;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.mapper.juego.GameStateMapper;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
@@ -182,7 +186,7 @@ public class JuegoService {
         // ... (resto de la lógica)
 
         if (!Rol.lider.equals(jp.getRol())) {
-            throw new GameLogicException("Solo el jefe de espías puede dar una pista.");
+            throw new SecretPandaException(ErrorCode.INVALID_ROLE_ACTION);
         }
 
         validarTurnoEquipo(partida, jp.getEquipo());
@@ -240,7 +244,7 @@ public class JuegoService {
         JugadorPartida jp = requireJugadorEnPartida(idGoogle, idPartida);
 
         if (!Rol.agente.equals(jp.getRol())) {
-            throw new GameLogicException("Solo los agentes pueden votar.");
+            throw new SecretPandaException(ErrorCode.INVALID_ROLE_ACTION);
         }
 
         Turno turno;
@@ -250,7 +254,7 @@ public class JuegoService {
         } else {
             turno = turnoRepository
                     .findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida)
-                    .orElseThrow(() -> new GameLogicException(
+                    .orElseThrow(() -> new SecretPandaException(ErrorCode.INVALID_PHASE_ACTION,
                             "No hay turno activo en esta partida. El jefe aún no ha dado pista."));
         }
 
@@ -266,7 +270,7 @@ public class JuegoService {
                 .orElseThrow(() -> new NotFoundException("Carta no encontrada."));
 
         if (!EstadoCarta.oculta.equals(carta.getEstado())) {
-            throw new GameLogicException("Esa carta ya ha sido revelada.");
+            throw new SecretPandaException(ErrorCode.WORD_ALREADY_REVEALED);
         }
 
         // Buscamos si el jugador ya tiene un voto activo en esta ronda (sin carta revelada asociada)
@@ -587,7 +591,7 @@ public class JuegoService {
             Equipo equipoInicial = (cartasRojo >= cartasAzul) ? Equipo.rojo : Equipo.azul;
 
             if (!equipoJugador.equals(equipoInicial)) {
-                throw new GameLogicException("No es el turno de tu equipo.");
+                throw new SecretPandaException(ErrorCode.NOT_YOUR_TURN);
             }
             return;
         }
@@ -597,7 +601,12 @@ public class JuegoService {
 
         if (equipoJugador.equals(equipoUltimoTurno)) {
             if (ultimo.getPalabraPista() != null) {
-                throw new GameLogicException("Tu equipo ya ha dado una pista. Debes esperar al turno del rival.");
+                throw new SecretPandaException(ErrorCode.NOT_YOUR_TURN, "Tu equipo ya ha dado una pista. Debes esperar al turno del rival.");
+            }
+        } else {
+            // Si el equipo es diferente, el rival solo puede actuar si ya hay pista
+            if (ultimo.getPalabraPista() == null) {
+                throw new SecretPandaException(ErrorCode.NOT_YOUR_TURN);
             }
         }
     }

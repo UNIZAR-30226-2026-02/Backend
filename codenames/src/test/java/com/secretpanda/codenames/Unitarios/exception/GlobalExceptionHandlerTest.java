@@ -25,7 +25,7 @@ import jakarta.validation.constraints.NotBlank;
 
 /**
  * Test de integración ligero para validar que el manejador global de excepciones
- * formatea correctamente las respuestas HTTP según el tipo de error.
+ * formatea correctamente las respuestas HTTP según el tipo de error y el contrato API.
  */
 @WebMvcTest(GlobalExceptionHandlerTest.TestController.class)
 @ContextConfiguration(classes = {GlobalExceptionHandler.class, GlobalExceptionHandlerTest.TestConfig.class})
@@ -40,7 +40,7 @@ public class GlobalExceptionHandlerTest {
         mockMvc.perform(get("/test/not-found"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.error_code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Recurso no encontrado"));
     }
 
@@ -49,16 +49,17 @@ public class GlobalExceptionHandlerTest {
         mockMvc.perform(get("/test/bad-request"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.error_code").value("BAD_REQUEST"))
                 .andExpect(jsonPath("$.message").value("Petición inválida"));
     }
 
     @Test
-    void shouldReturn409AndJsonFormatWhenGameLogicExceptionIsThrown() throws Exception {
+    void shouldReturn400AndJsonFormatWhenGameLogicExceptionIsThrown() throws Exception {
+        // Ahora GameLogicException(String) mapea a BAD_REQUEST (400) por defecto
         mockMvc.perform(get("/test/game-logic"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error_code").value("BAD_REQUEST"))
                 .andExpect(jsonPath("$.message").value("Regla de juego violada"));
     }
 
@@ -71,7 +72,7 @@ public class GlobalExceptionHandlerTest {
                 .content(invalidPayload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Error de validación"))
+                .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.details.nombre").value("no debe estar en blanco"));
     }
 
@@ -104,7 +105,7 @@ public class GlobalExceptionHandlerTest {
 
         @PostMapping("/test/validation")
         public void throwValidation(@Valid @RequestBody TestDTO dto) {
-            // No hace nada, fallará en la validación @Valid antes de entrar si es incorrecto
+            // No hace nada
         }
     }
 

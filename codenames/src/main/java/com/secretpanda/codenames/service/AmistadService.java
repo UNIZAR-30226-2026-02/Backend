@@ -15,7 +15,9 @@ import com.secretpanda.codenames.dto.social.NotificacionDTO;
 import com.secretpanda.codenames.dto.social.RankingDTO;
 import com.secretpanda.codenames.event.LogroEvent;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
 import com.secretpanda.codenames.mapper.social.AmistadMapper;
 import com.secretpanda.codenames.model.Amistad;
@@ -74,7 +76,7 @@ public class AmistadService {
             Amistad am = relacionExistente.get();
             
             if (am.getEstado() == Amistad.EstadoAmistad.aceptada) {
-                throw new BadRequestException("Ya sois amigos.");
+                throw new SecretPandaException(ErrorCode.ALREADY_FRIENDS);
             }
 
             // Si la solicitud existente la envió el OTRO y está pendiente, asutoacepta

@@ -4,12 +4,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Esta excepción captura acciones que violan las reglas de negocio y las 
- * mecánicas internas del juego, independientemente de que la petición sea técnicamente válida.
+ * Excepción para violaciones de reglas de juego.
  */
 @ResponseStatus(HttpStatus.CONFLICT)
-public class GameLogicException extends RuntimeException {
+public class GameLogicException extends SecretPandaException {
     public GameLogicException(String message) {
-        super(message);
+        super(ErrorCode.BAD_REQUEST, message); // Default to 400 instead of 500 for logic errors
+    }
+    
+    public GameLogicException(ErrorCode errorCode) {
+        super(errorCode);
+    }
+    
+    public GameLogicException(ErrorCode errorCode, String message) {
+        super(errorCode, message);
     }
 }
