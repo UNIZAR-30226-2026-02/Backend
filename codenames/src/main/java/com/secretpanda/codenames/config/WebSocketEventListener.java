@@ -43,6 +43,9 @@ public class WebSocketEventListener {
 
     private final Map<String, ScheduledFuture<?>> disconnectTasks = new ConcurrentHashMap<>();
 
+    @Autowired
+    private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
+
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
@@ -84,29 +87,33 @@ public class WebSocketEventListener {
         disconnectTasks.put(idGoogle, task);
     }
 
-    @org.springframework.transaction.annotation.Transactional
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {
-        log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
-        
-        disconnectTasks.remove(idGoogle);
+        transactionTemplate.execute(status -> {
+            log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
+            
+            disconnectTasks.remove(idGoogle);
 
-        jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)).ifPresent(jp -> {
-                Partida partida = jp.getPartida();
-                Integer idPartida = partida.getIdPartida();
+            jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+                idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
+            ).ifPresent(jp -> {
+                    Partida partida = jp.getPartida();
+                    Integer idPartida = partida.getIdPartida();
 
-                try {
-                    if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
-                        lobbyService.abandonarLobby(idPartida, idGoogle, true);
-                        log.info("Jugador [{}] expulsado del lobby [{}] correctamente.", idGoogle, idPartida);
-                    } 
-                    else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-                        partidaService.abandonar(idPartida, idGoogle, true);
-                        log.info("Jugador [{}] abandonó definitivamente la partida en curso [{}].", idGoogle, idPartida);
+                    try {
+                        if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
+                            lobbyService.abandonarLobby(idPartida, idGoogle, true);
+                            log.info("Jugador [{}] expulsado del lobby [{}] correctamente.", idGoogle, idPartida);
+                        } 
+                        else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+                            partidaService.abandonar(idPartida, idGoogle, true);
+                            log.info("Jugador [{}] abandonó definitivamente la partida en curso [{}].", idGoogle, idPartida);
+                        }
+                    } catch (Exception e) {
+                        log.error("Error al procesar el abandono definitivo del jugador [{}] en la partida [{}]: {}", 
+                                  idGoogle, idPartida, e.getMessage());
                     }
-                } catch (Exception e) {
-                    log.error("Error al procesar el abandono definitivo del jugador [{}] en la partida [{}]: {}", 
-                              idGoogle, idPartida, e.getMessage());
-                }
-            });
+                });
+            return null;
+        });
     }
 }
