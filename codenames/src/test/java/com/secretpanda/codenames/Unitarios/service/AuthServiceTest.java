@@ -48,6 +48,7 @@ class AuthServiceTest {
     @Mock private TemaRepository temaRepository;
     @Mock private InventarioTemaRepository inventarioTemaRepository;
     @Mock private JugadorService jugadorService;
+    @Mock private ProfanityFilterService profanityFilterService;
 
     // Inyección de los mocks en la instancia a testear
     @InjectMocks private AuthService authService;
@@ -99,12 +100,10 @@ class AuthServiceTest {
         when(googleAuthService.verificarToken("token_valido")).thenReturn(datos);
         when(jugadorRepository.findById("id_google")).thenReturn(Optional.of(jugador));
 
-        // 2. Ejecución (Act)
-        AuthResponseDTO response = authService.login("token_valido");
-
-        // 3. Verificación (Assert)
-        assertTrue(response.isEsNuevo());
-        assertNull(response.getToken());
+        // 2 & 3. Ejecución y Verificación (Act & Assert)
+        assertThrows(com.secretpanda.codenames.exception.SecretPandaException.class, () -> {
+            authService.login("token_valido");
+        });
     }
 
     /**
@@ -148,6 +147,7 @@ class AuthServiceTest {
         when(googleAuthService.verificarToken("token_valido")).thenReturn(datos);
         when(jugadorRepository.findById("id_google")).thenReturn(Optional.of(jugadorInactivo));
         when(jwtService.generarToken("id_google")).thenReturn("jwt_mock");
+        when(profanityFilterService.filter(anyString())).thenReturn(new ProfanityFilterService.FilterResult("NuevoTag", false));
         
         // Simulamos que el jugador NO tiene el tema básico
         when(inventarioTemaRepository.existsById_IdJugadorAndId_IdTema("id_google", 1)).thenReturn(false);
@@ -182,6 +182,7 @@ class AuthServiceTest {
         when(googleAuthService.verificarToken("token_valid")).thenReturn(datos);
         when(jugadorRepository.findById("nuevo_google")).thenReturn(Optional.empty());
         when(jwtService.generarToken("nuevo_google")).thenReturn("jwt_new");
+        when(profanityFilterService.filter(anyString())).thenReturn(new ProfanityFilterService.FilterResult("NuevoPanda", false));
 
         // WHEN
         AuthResponseDTO response = authService.registro("token_valid", "NuevoPanda");

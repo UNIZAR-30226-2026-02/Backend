@@ -19,7 +19,9 @@ import com.secretpanda.codenames.dto.partida.PartidaResumenDTO;
 import com.secretpanda.codenames.dto.social.NotificacionDTO;
 import com.secretpanda.codenames.dto.tienda.LogroDTO;
 import com.secretpanda.codenames.exception.BadRequestException;
+import com.secretpanda.codenames.exception.ErrorCode;
 import com.secretpanda.codenames.exception.NotFoundException;
+import com.secretpanda.codenames.exception.SecretPandaException;
 import com.secretpanda.codenames.mapper.jugador.JugadorMapper;
 import com.secretpanda.codenames.mapper.jugador.PersonalizacionInventarioMapper;
 import com.secretpanda.codenames.mapper.jugador.TemaInventarioMapper;
@@ -53,6 +55,7 @@ public class JugadorService {
     private final EstadisticasCalculator calculator;
     private final LogroRepository logroRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ProfanityFilterService profanityFilterService;
 
 
     public JugadorService(JugadorRepository jugadorRepository,
@@ -62,7 +65,8 @@ public class JugadorService {
                           JugadorLogroRepository jugadorLogroRepository,
                           EstadisticasCalculator calculator, 
                           LogroRepository logroRepository, 
-                          SimpMessagingTemplate messagingTemplate) {
+                          SimpMessagingTemplate messagingTemplate,
+                          ProfanityFilterService profanityFilterService) {
         this.jugadorRepository = jugadorRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.inventarioPersonalizacionRepository = inventarioPersonalizacionRepository;
@@ -71,6 +75,7 @@ public class JugadorService {
         this.calculator = calculator;
         this.logroRepository = logroRepository;
         this.messagingTemplate = messagingTemplate;
+        this.profanityFilterService = profanityFilterService;
     }
 
     @Transactional(readOnly = true)
@@ -89,8 +94,12 @@ public class JugadorService {
     public JugadorDTO actualizarPerfil(ActualizarPerfilDTO dto, String idGoogle) {
         Jugador jugador = findJugador(idGoogle);
         if (dto.getTag() != null && !dto.getTag().equals(jugador.getTag())) {
-            if (jugadorRepository.existsByTagAndActivoTrue(dto.getTag().trim())) {
-                throw new BadRequestException("Ese nombre de usuario ya está en uso.");
+            String tagLimpio = dto.getTag().trim();
+            if (profanityFilterService.filter(tagLimpio).wasCensored()) {
+                throw new SecretPandaException(ErrorCode.PROFANITY_DETECTED);
+            }
+            if (jugadorRepository.existsByTagAndActivoTrue(tagLimpio)) {
+                throw new SecretPandaException(ErrorCode.TAG_TAKEN);
             }
         }
         JugadorMapper.applyUpdateDTO(dto, jugador);
@@ -107,7 +116,7 @@ public class JugadorService {
     @Transactional
     public void equiparItem(Integer idPersonalizacion, boolean equipado, String idGoogle) {
         InventarioPersonalizacion item = inventarioPersonalizacionRepository.findById_IdJugadorAndId_IdPersonalizacion(idGoogle, idPersonalizacion)
-                .orElseThrow(() -> new NotFoundException("No posees este artículo."));
+                .orElseThrow(() -> new SecretPandaException(ErrorCode.ITEM_NOT_OWNED));
         if (equipado) {
             Personalizacion.TipoPersonalizacion tipo = item.getPersonalizacion().getTipo();
             inventarioPersonalizacionRepository.findById_IdJugadorAndPersonalizacion_TipoAndEquipadoTrue(idGoogle, tipo)

@@ -4,12 +4,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Esta excepción captura peticiones del cliente que son sintácticamente 
- * incorrectas o que contienen parámetros que no cumplen con los requisitos técnicos.
+ * Excepción para peticiones mal formadas.
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class BadRequestException extends RuntimeException {
+public class BadRequestException extends SecretPandaException {
     public BadRequestException(String message) {
-        super(message);
+        super(ErrorCode.BAD_REQUEST, message);
+    }
+    
+    public BadRequestException(ErrorCode errorCode) {
+        super(errorCode);
     }
 }
