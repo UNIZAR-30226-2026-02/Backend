@@ -100,10 +100,11 @@ class AuthServiceTest {
         when(googleAuthService.verificarToken("token_valido")).thenReturn(datos);
         when(jugadorRepository.findById("id_google")).thenReturn(Optional.of(jugador));
 
-        // 2 & 3. Ejecución y Verificación (Act & Assert)
-        assertThrows(com.secretpanda.codenames.exception.SecretPandaException.class, () -> {
-            authService.login("token_valido");
-        });
+        // 2. Ejecución (Act)
+        AuthResponseDTO response = authService.login("token_valido");
+
+        // 3. Verificación (Assert)
+        assertTrue(response.isEsNuevo(), "El usuario inactivo debe ser tratado como nuevo.");
     }
 
     /**

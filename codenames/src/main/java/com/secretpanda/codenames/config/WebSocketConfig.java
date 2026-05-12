@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -46,6 +47,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private TaskScheduler taskScheduler;
+
     /** Orígenes permitidos para el handshake WebSocket (igual que CORS REST) */
     @Value("${cors.allowed-origins:https://codenamesreactweb-hgebahh0bvg6aah6.spaincentral-01.azurewebsites.net,http://localhost:5173}")
     private String[] allowedOrigins ;   
@@ -73,7 +77,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Broker en memoria para distribuir mensajes a los clientes suscritos.
         // /topic → broadcast (1 a N), /queue → unicast (1 a 1)
         registry.enableSimpleBroker("/topic", "/queue")
-                .setHeartbeatValue(new long[]{10000, 10000});
+                .setHeartbeatValue(new long[]{10000, 10000})
+                .setTaskScheduler(taskScheduler);
 
         // Prefijo para mensajes privados dirigidos a un usuario concreto
         // p. ej.: /user/{sessionId}/queue/errores
