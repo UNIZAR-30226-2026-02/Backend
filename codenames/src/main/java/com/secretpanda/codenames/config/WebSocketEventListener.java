@@ -89,30 +89,31 @@ public class WebSocketEventListener {
 
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {
         transactionTemplate.execute(status -> {
-            log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
-            
-            disconnectTasks.remove(idGoogle);
-
+            // Buscamos si el jugador aún existe en una partida activa (no abandonada)
+            // Usamos un lock pesimista si fuera necesario, pero la consulta ya es específica
             jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
                 idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
             ).ifPresent(jp -> {
-                    Partida partida = jp.getPartida();
-                    Integer idPartida = partida.getIdPartida();
+                Partida partida = jp.getPartida();
+                Integer idPartida = partida.getIdPartida();
 
-                    try {
-                        if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
-                            lobbyService.abandonarLobby(idPartida, idGoogle, true);
-                            log.info("Jugador [{}] expulsado del lobby [{}] correctamente.", idGoogle, idPartida);
-                        } 
-                        else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-                            partidaService.abandonar(idPartida, idGoogle, true);
-                            log.info("Jugador [{}] abandonó definitivamente la partida en curso [{}].", idGoogle, idPartida);
-                        }
-                    } catch (Exception e) {
-                        log.error("Error al procesar el abandono definitivo del jugador [{}] en la partida [{}]: {}", 
-                                  idGoogle, idPartida, e.getMessage());
+                log.info("Procesando abandono definitivo para jugador [{}] en partida [{}].", idGoogle, idPartida);
+                
+                try {
+                    if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
+                        lobbyService.abandonarLobby(idPartida, idGoogle, true);
+                    } else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+                        partidaService.abandonar(idPartida, idGoogle, true);
                     }
-                });
+                } catch (Exception e) {
+                    // Si ocurre un error aquí, es probable que ya haya sido procesado concurrentemente.
+                    // Registramos como warning y no como error crítico para no romper la transacción.
+                    log.warn("El abandono ya fue procesado o la partida cambió de estado para [{}]: {}", idGoogle, e.getMessage());
+                }
+            });
+            
+            // Siempre eliminamos la tarea del mapa
+            disconnectTasks.remove(idGoogle);
             return null;
         });
     }
