@@ -17,6 +17,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -88,7 +89,7 @@ public class WebSocketEventListener {
         
         disconnectTasks.remove(idGoogle);
 
-        jugadorPartidaRepository.findByJugador_IdGoogleAndAbandonoFalse(idGoogle).ifPresent(jp -> {
+        jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)).ifPresent(jp -> {
                 Partida partida = jp.getPartida();
                 Integer idPartida = partida.getIdPartida();
 
