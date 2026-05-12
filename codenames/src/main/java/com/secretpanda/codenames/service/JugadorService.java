@@ -238,13 +238,6 @@ public class JugadorService {
         jugadorLogroRepository.saveAll(pendientes);
     }
 
-    @Transactional
-    public void actualizarDesconexion(String idGoogle, LocalDateTime fecha) {
-        Jugador jugador = jugadorRepository.findById(idGoogle).orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
-        jugador.setDisconnectedAt(fecha);
-        jugadorRepository.save(jugador);
-    }
-
     private Jugador findJugador(String idGoogle) { return jugadorRepository.findById(idGoogle).orElseThrow(() -> new NotFoundException("Jugador no encontrado.")); }
     
     public void notificarActualizacionPerfil(String idGoogle) {
