@@ -72,7 +72,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         // Broker en memoria para distribuir mensajes a los clientes suscritos.
         // /topic → broadcast (1 a N), /queue → unicast (1 a 1)
-        registry.enableSimpleBroker("/topic", "/queue");
+        registry.enableSimpleBroker("/topic", "/queue")
+                .setHeartbeatValue(new long[]{10000, 10000});
 
         // Prefijo para mensajes privados dirigidos a un usuario concreto
         // p. ej.: /user/{sessionId}/queue/errores
