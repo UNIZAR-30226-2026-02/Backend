@@ -32,6 +32,7 @@ import com.secretpanda.codenames.repository.JugadorLogroRepository;
 import com.secretpanda.codenames.repository.LogroRepository;
 import com.secretpanda.codenames.service.AuthService;
 import com.secretpanda.codenames.service.JugadorService;
+import com.secretpanda.codenames.service.PartidaService;
 import com.secretpanda.codenames.security.GoogleAuthService;
 import com.secretpanda.codenames.security.JwtService;
 import com.secretpanda.codenames.util.EstadisticasCalculator;
@@ -55,7 +56,8 @@ public class UsuarioDesarrolloTest {
     @Mock private LogroRepository logroRepository;
     @Mock private EstadisticasCalculator calculator;
     @Mock private SimpMessagingTemplate messagingTemplate;
-    
+    @Mock private PartidaService partidaService;
+
     @InjectMocks private AuthService authService;
     private JugadorService jugadorService;
 
@@ -65,7 +67,6 @@ public class UsuarioDesarrolloTest {
         ReflectionTestUtils.setField(authService, "temaBasicoId", 1);
         ReflectionTestUtils.setField(authService, "jugadorService", jugadorService);
     }
-
     @Test
     void testRegistroConGoogle_Rf1() {
         GoogleAuthService.DatosGoogle datos = new GoogleAuthService.DatosGoogle("google_123", "test@test.com", "User Test");

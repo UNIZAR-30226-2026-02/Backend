@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,10 @@ import com.secretpanda.codenames.model.AmistadId;
 @Repository
 public interface AmistadRepository extends JpaRepository<Amistad, AmistadId> {
     
+    @Modifying
+    @Query("DELETE FROM Amistad a WHERE a.id.idSolicitante = :idGoogle OR a.id.idReceptor = :idGoogle")
+    void deleteAllByJugador(@Param("idGoogle") String idGoogle);
+
     // OBTENER TODAS
     List<Amistad> findById_IdSolicitante(String idSolicitante);
     List<Amistad> findById_IdReceptor(String idReceptor);

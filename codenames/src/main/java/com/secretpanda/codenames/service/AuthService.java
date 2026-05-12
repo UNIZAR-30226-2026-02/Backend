@@ -17,6 +17,7 @@ import com.secretpanda.codenames.model.InventarioTemaId;
 import com.secretpanda.codenames.model.Jugador;
 import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.repository.AmistadRepository;
 import com.secretpanda.codenames.repository.InventarioTemaRepository;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.repository.JugadorRepository;
@@ -36,6 +37,8 @@ public class AuthService {
     private final TemaRepository temaRepository;
     private final InventarioTemaRepository inventarioTemaRepository;
     private final JugadorService jugadorService;
+    private final AmistadRepository amistadRepository;
+    private final PartidaService partidaService;
 
     @Value("${game.tema-basico-id:1}")
     private Integer temaBasicoId;
@@ -47,7 +50,9 @@ public class AuthService {
                     EstadisticasCalculator calculator,
                     TemaRepository temaRepository,
                     InventarioTemaRepository inventarioTemaRepository,
-                    JugadorService jugadorService) {
+                    JugadorService jugadorService,
+                    AmistadRepository amistadRepository,
+                    PartidaService partidaService) {
         this.googleAuthService = googleAuthService;
         this.jwtService = jwtService;
         this.jugadorRepository = jugadorRepository;
@@ -56,6 +61,8 @@ public class AuthService {
         this.temaRepository = temaRepository;
         this.inventarioTemaRepository = inventarioTemaRepository;
         this.jugadorService = jugadorService;
+        this.amistadRepository = amistadRepository;
+        this.partidaService = partidaService;
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
@@ -164,16 +171,26 @@ public class AuthService {
         Jugador jugador = jugadorRepository.findById(idGoogle)
                 .orElseThrow(() -> new NotFoundException("Jugador no encontrado."));
 
+        // Abandonar partida activa si existe para evitar que se quede fantasma ESTO NO HACE FALTA (comentado por si acaso)
+        /*Integer partidaId = buscarPartidaActiva(idGoogle);
+        if (partidaId != null) {
+            partidaService.abandonar(partidaId, idGoogle);
+        }*/
+
+        // Borrar todas las relaciones de amistad
+        amistadRepository.deleteAllByJugador(idGoogle);
+
+        // Desactivamos y reseteamos estadísticas visibles + liberar TAG
         jugador.setActivo(false);
-        jugador.setFotoPerfil("1");
         jugador.getInventario().clear();
         jugador.getInventarioTemas().clear();
-        jugador.setBalas(0);
-        // Resetear estadísticas visibles (leaderboard, amigos)
+        // jugador.setTag(null); No gestionamos tags a null
+        jugador.setFotoPerfil(null);
         jugador.setPartidasJugadas(0);
         jugador.setVictorias(0);
         jugador.setNumAciertos(0);
         jugador.setNumFallos(0);
+        jugador.setBalas(0);
         jugadorRepository.save(jugador);
     }
 
