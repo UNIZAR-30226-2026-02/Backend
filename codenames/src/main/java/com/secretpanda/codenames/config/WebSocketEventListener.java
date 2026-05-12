@@ -84,7 +84,8 @@ public class WebSocketEventListener {
         disconnectTasks.put(idGoogle, task);
     }
 
-    private void ejecutarAbandonoDefinitivo(String idGoogle) {
+    @org.springframework.transaction.annotation.Transactional
+    protected void ejecutarAbandonoDefinitivo(String idGoogle) {
         log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
         
         disconnectTasks.remove(idGoogle);
