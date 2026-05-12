@@ -33,6 +33,7 @@ public class WebSocketEventListener {
     private JugadorPartidaRepository jugadorPartidaRepository;
 
     @Autowired
+    @org.springframework.beans.factory.annotation.Qualifier("webSocketTaskScheduler")
     private TaskScheduler taskScheduler;
 
     @org.springframework.beans.factory.annotation.Value("${game.timeout-reconexion:60}")
