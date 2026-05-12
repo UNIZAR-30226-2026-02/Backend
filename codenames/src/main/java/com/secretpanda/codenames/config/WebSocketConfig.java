@@ -48,6 +48,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private JwtService jwtService;
 
     @Autowired
+    @org.springframework.beans.factory.annotation.Qualifier("webSocketTaskScheduler")
     private TaskScheduler taskScheduler;
 
     /** Orígenes permitidos para el handshake WebSocket (igual que CORS REST) */
