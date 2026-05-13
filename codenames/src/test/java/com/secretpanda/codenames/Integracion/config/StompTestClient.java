@@ -55,7 +55,7 @@ public class StompTestClient {
                         (org.springframework.web.socket.WebSocketHttpHeaders) null,
                         stompHeaders,
                         new StompSessionHandlerAdapter() {})
-                .get(5, TimeUnit.SECONDS);
+                .get(20, TimeUnit.SECONDS);
     }
 
     public <T> BlockingQueue<T> subscribe(StompSession session, String topic, Class<T> payloadType) {

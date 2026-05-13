@@ -221,7 +221,7 @@ DECLARE
     t_id INT;
 BEGIN 
     -- TEMA BÁSICO
-    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Basico';
+    SELECT id_tema INTO t_id FROM tema WHERE nombre = 'Básico';
     FOR i IN 1..20 LOOP
         INSERT INTO palabra_tema (id_tema, valor) 
         VALUES (t_id, 'https://imagescodenames.blob.core.windows.net/imagenes/cartas/basico/carta' || i || '.webp');
