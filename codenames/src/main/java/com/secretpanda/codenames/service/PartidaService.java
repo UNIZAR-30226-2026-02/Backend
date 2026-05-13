@@ -157,8 +157,11 @@ public class PartidaService {
 
     @Transactional
     public void abandonar(Integer idPartida, String idGoogle, boolean esDesconexion) {
-        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
-                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+        // Si es una desconexión automática, evitamos el bloqueo pesimista (FOR UPDATE) 
+        // para prevenir el agotamiento del pool de conexiones en casos de reconexión concurrente.
+        Partida partida = esDesconexion ? 
+                          partidaRepository.findById(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada.")) :
+                          partidaRepository.findByIdForUpdate(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
         JugadorPartida jp = jugadorPartidaRepository
                 .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
