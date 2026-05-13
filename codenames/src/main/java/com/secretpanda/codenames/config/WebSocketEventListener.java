@@ -1,6 +1,7 @@
 package com.secretpanda.codenames.config;
 
 import com.secretpanda.codenames.model.Partida;
+import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.service.LobbyService;
 import com.secretpanda.codenames.service.PartidaService;
