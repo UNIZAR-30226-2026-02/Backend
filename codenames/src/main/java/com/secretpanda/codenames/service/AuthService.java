@@ -174,6 +174,15 @@ public class AuthService {
         return construirRespuestaExistente(jugador);
     }
 
+    @Transactional
+    public void logout(String idGoogle) {
+        Jugador jugador = jugadorRepository.findById(idGoogle).orElse(null);
+        if (jugador != null) {
+            jugador.setTokenActual(null);
+            jugadorRepository.save(jugador);
+        }
+    }
+
     // ─── Desactivar cuenta ────────────────────────────────────────────────────
 
     @Transactional
@@ -201,6 +210,7 @@ public class AuthService {
         jugador.setNumAciertos(0);
         jugador.setNumFallos(0);
         jugador.setBalas(0);
+        jugador.setTokenActual(null); // RNF-1: Invalidar sesión en WebSockets inmediatamente
         jugadorRepository.save(jugador);
     }
 

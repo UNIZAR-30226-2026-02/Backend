@@ -21,6 +21,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 import com.secretpanda.codenames.security.JwtService;
 
+import com.secretpanda.codenames.repository.JugadorRepository;
+import org.springframework.messaging.MessageDeliveryException;
+
 /**
  * Configuración de WebSocket con protocolo STOMP.
  *
@@ -46,6 +49,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private JugadorRepository jugadorRepository;
 
     @Autowired
     @org.springframework.beans.factory.annotation.Qualifier("webSocketTaskScheduler")
@@ -99,8 +105,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                // Solo procesamos la trama CONNECT (primer mensaje de la sesión WS)
-                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                // Validamos en CONNECT (nueva sesión), SEND (acciones) y SUBSCRIBE (canales)
+                if (accessor != null && (StompCommand.CONNECT.equals(accessor.getCommand()) 
+                        || StompCommand.SEND.equals(accessor.getCommand()) 
+                        || StompCommand.SUBSCRIBE.equals(accessor.getCommand()))) {
 
                     String authHeader = accessor.getFirstNativeHeader("Authorization");
 
@@ -110,17 +118,23 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         if (jwtService.esTokenValido(token)) {
                             String idGoogle = jwtService.extraerIdGoogle(token);
 
-                            // Autenticamos la sesión WebSocket con el idGoogle del jugador
-                            UsernamePasswordAuthenticationToken auth =
-                                    new UsernamePasswordAuthenticationToken(
-                                            idGoogle,
-                                            null,
-                                            Collections.emptyList()
-                                    );
-                            accessor.setUser(auth);
+                            // RNF-1: Control de Sesión Única en tiempo real
+                            String tokenEnBD = jugadorRepository.findTokenActualById(idGoogle).orElse("");
+                            boolean sesionValida = token.equals(tokenEnBD);
+
+                            if (sesionValida) {
+                                UsernamePasswordAuthenticationToken auth =
+                                        new UsernamePasswordAuthenticationToken(
+                                                idGoogle,
+                                                null,
+                                                Collections.emptyList()
+                                        );
+                                accessor.setUser(auth);
+                            } else {
+                                // Si el token ya no es el actual, rechazamos el mensaje inmediatamente
+                                throw new MessageDeliveryException(message, "SESSION_INVALIDATED");
+                            }
                         }
-                        // Si el token no es válido simplemente no se autentica;
-                        // Spring rechazará automáticamente las suscripciones protegidas.
                     }
                 }
 

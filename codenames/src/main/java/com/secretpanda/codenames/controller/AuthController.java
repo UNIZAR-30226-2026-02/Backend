@@ -99,7 +99,17 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<Void> logout(
+            jakarta.servlet.http.HttpServletRequest request,
+            HttpServletResponse response) {
+        
+        try {
+            String idGoogle = extraerIdGoogleDeCookie(request);
+            authService.logout(idGoogle);
+        } catch (Exception e) {
+            // Si no hay sesión válida, simplemente ignoramos el error del Principal
+        }
+        
         invalidateCookie(response);
         return ResponseEntity.noContent().build();
     }

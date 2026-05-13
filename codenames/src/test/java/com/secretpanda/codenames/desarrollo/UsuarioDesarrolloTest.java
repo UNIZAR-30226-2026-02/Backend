@@ -204,10 +204,11 @@ public class UsuarioDesarrolloTest {
 
     @Test
     void testCerrarSesion_Rf3() {
+        var request = mock(jakarta.servlet.http.HttpServletRequest.class);
         var response = mock(jakarta.servlet.http.HttpServletResponse.class);
         com.secretpanda.codenames.controller.AuthController authController = new com.secretpanda.codenames.controller.AuthController(authService);
         
-        authController.logout(response);
+        authController.logout(request, response);
         
         verify(response).addHeader(eq("Set-Cookie"), contains("token_sesion=;"));
     }
