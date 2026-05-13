@@ -27,26 +27,7 @@ import java.util.concurrent.ScheduledFuture;
 public class WebSocketEventListener {
 
     @Autowired
-    private LobbyService lobbyService;
-
-    @Autowired
-    private PartidaService partidaService;
-    
-    @Autowired
-    private JugadorPartidaRepository jugadorPartidaRepository;
-
-    @Autowired
-    @Qualifier("businessTaskScheduler")
-    private TaskScheduler businessTaskScheduler;
-
-    @Autowired
-    @Qualifier("webSocketTaskScheduler")
-    private TaskScheduler webSocketTaskScheduler;
-
-    @org.springframework.beans.factory.annotation.Value("${game.timeout-reconexion:60}")
-    private int timeoutReconexion;
-
-    private final Map<String, ScheduledFuture<?>> disconnectTasks = new ConcurrentHashMap<>();
+    private com.secretpanda.codenames.service.AbandonedPlayerCleaner abandonedPlayerCleaner;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -55,14 +36,8 @@ public class WebSocketEventListener {
         if (principal == null) return;
 
         String idGoogle = principal.getName();
-
-        ScheduledFuture<?> scheduledTask = disconnectTasks.remove(idGoogle);
-        if (scheduledTask != null) {
-            scheduledTask.cancel(true);
-            log.info("Jugador [{}] reconectado a tiempo. Temporizador de abandono cancelado.", idGoogle);
-        } else {
-            log.info("Jugador [{}] conectado con éxito.", idGoogle);
-        }
+        abandonedPlayerCleaner.cancelarDesconexion(idGoogle);
+        log.info("Jugador [{}] reconectado. Temporizador de abandono cancelado.", idGoogle);
     }
 
     @EventListener
@@ -73,50 +48,7 @@ public class WebSocketEventListener {
         if (principal == null) return;
 
         String idGoogle = principal.getName();
-        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de abandono en business-cleaner...", idGoogle);
-
-        // Cancelar tarea previa si existiera para evitar solapamientos
-        ScheduledFuture<?> oldTask = disconnectTasks.remove(idGoogle);
-        if (oldTask != null) oldTask.cancel(true);
-
-        // Programar en el scheduler de negocio dedicado, totalmente aislado del tráfico de red
-        ScheduledFuture<?> task = businessTaskScheduler.schedule(
-            () -> ejecutarAbandonoDefinitivo(idGoogle), 
-            Instant.now().plusSeconds(timeoutReconexion)
-        );
-
-        disconnectTasks.put(idGoogle, task);
-    }
-
-    protected void ejecutarAbandonoDefinitivo(String idGoogle) {
-        log.info("Iniciando ejecución de abandono definitivo para jugador [{}]", idGoogle);
-        // Buscamos si el jugador aún existe en una partida activa (no abandonada)
-        var jugadorPartidaOpt = jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
-            idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
-        );
-        
-        if (jugadorPartidaOpt.isEmpty()) {
-            log.info("No se encontró partida activa para el jugador [{}]. Abandono ya procesado o inexistente.", idGoogle);
-        } else {
-            JugadorPartida jp = jugadorPartidaOpt.get();
-            Partida partida = jp.getPartida();
-            Integer idPartida = partida.getIdPartida();
-
-            log.info("Procesando abandono definitivo para jugador [{}] en partida [{}]. Estado: {}", idGoogle, idPartida, partida.getEstado());
-            
-            try {
-                if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
-                    lobbyService.abandonarLobby(idPartida, idGoogle, true);
-                } else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-                    partidaService.abandonar(idPartida, idGoogle, true);
-                }
-                log.info("Abandono definitivo procesado con éxito para jugador [{}]", idGoogle);
-            } catch (Exception e) {
-                log.error("Error al procesar el abandono definitivo para [{}]: ", idGoogle, e);
-            }
-        }
-        
-        // Siempre eliminamos la tarea del mapa
-        disconnectTasks.remove(idGoogle);
+        log.warn("Jugador [{}] perdió la conexión. Registrando desconexión en AbandonedPlayerCleaner...", idGoogle);
+        abandonedPlayerCleaner.registrarDesconexion(idGoogle);
     }
 }

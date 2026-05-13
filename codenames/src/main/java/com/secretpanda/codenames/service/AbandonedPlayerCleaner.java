@@ -17,6 +17,7 @@ import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 public class AbandonedPlayerCleaner {
 
     private static final Logger logger = LoggerFactory.getLogger(AbandonedPlayerCleaner.class);
+    private final Map<String, java.time.LocalDateTime> disconnectionTimes = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Autowired
     private JugadorPartidaRepository jugadorPartidaRepository;
@@ -24,24 +25,32 @@ public class AbandonedPlayerCleaner {
     @Autowired
     private PartidaService partidaService;
 
-    // Se ejecuta cada 5 segundos para asegurar baja latencia en la detección
+    public void registrarDesconexion(String idGoogle) {
+        disconnectionTimes.put(idGoogle, java.time.LocalDateTime.now());
+    }
+
+    public void cancelarDesconexion(String idGoogle) {
+        disconnectionTimes.remove(idGoogle);
+    }
+
     @Scheduled(fixedRate = 5000)
     @Transactional
     public void cleanupAbandonedPlayers() {
-        LocalDateTime limit = LocalDateTime.now().minusSeconds(60);
+        java.time.LocalDateTime limit = java.time.LocalDateTime.now().minusSeconds(60);
         
-        List<JugadorPartida> abandonos = jugadorPartidaRepository.findByAbandonoFalseAndUltimaDesconexionBefore(limit);
-        
-        for (JugadorPartida jp : abandonos) {
-            logger.info("Detectado abandono definitivo tras timeout para jugador [{}], partida [{}]", 
-                         jp.getJugador().getIdGoogle(), jp.getPartida().getIdPartida());
-            
-            try {
-                partidaService.abandonar(jp.getPartida().getIdPartida(), jp.getJugador().getIdGoogle(), true);
-            } catch (Exception e) {
-                logger.error("Error al procesar abandono automático para jugador [{}]: {}", 
-                              jp.getJugador().getIdGoogle(), e.getMessage());
+        disconnectionTimes.forEach((idGoogle, time) -> {
+            if (time.isBefore(limit)) {
+                logger.info("Detectado abandono definitivo tras timeout para jugador [{}]", idGoogle);
+                
+                jugadorPartidaRepository.findByJugador_IdGoogleAndAbandonoFalse(idGoogle).ifPresent(jp -> {
+                    try {
+                        partidaService.abandonar(jp.getPartida().getIdPartida(), idGoogle, true);
+                        disconnectionTimes.remove(idGoogle);
+                    } catch (Exception e) {
+                        logger.error("Error al procesar abandono automático para jugador [{}]: {}", idGoogle, e.getMessage());
+                    }
+                });
             }
-        }
+        });
     }
 }
