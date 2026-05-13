@@ -88,14 +88,20 @@ public class WebSocketEventListener {
     }
 
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {
+        log.info("Iniciando ejecución de abandono definitivo para jugador [{}]", idGoogle);
         // Buscamos si el jugador aún existe en una partida activa (no abandonada)
-        jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+        var jugadorPartidaOpt = jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
             idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
-        ).ifPresent(jp -> {
+        );
+        
+        if (jugadorPartidaOpt.isEmpty()) {
+            log.info("No se encontró partida activa para el jugador [{}]. Abandono ya procesado o inexistente.", idGoogle);
+        } else {
+            JugadorPartida jp = jugadorPartidaOpt.get();
             Partida partida = jp.getPartida();
             Integer idPartida = partida.getIdPartida();
 
-            log.info("Procesando abandono definitivo para jugador [{}] en partida [{}].", idGoogle, idPartida);
+            log.info("Procesando abandono definitivo para jugador [{}] en partida [{}]. Estado: {}", idGoogle, idPartida, partida.getEstado());
             
             try {
                 if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
@@ -103,10 +109,11 @@ public class WebSocketEventListener {
                 } else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
                     partidaService.abandonar(idPartida, idGoogle, true);
                 }
+                log.info("Abandono definitivo procesado con éxito para jugador [{}]", idGoogle);
             } catch (Exception e) {
-                log.warn("El abandono ya fue procesado o la partida cambió de estado para [{}]: {}", idGoogle, e.getMessage());
+                log.error("Error al procesar el abandono definitivo para [{}]: ", idGoogle, e);
             }
-        });
+        }
         
         // Siempre eliminamos la tarea del mapa
         disconnectTasks.remove(idGoogle);
