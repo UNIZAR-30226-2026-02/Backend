@@ -88,33 +88,27 @@ public class WebSocketEventListener {
     }
 
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {
-        transactionTemplate.execute(status -> {
-            // Buscamos si el jugador aún existe en una partida activa (no abandonada)
-            // Usamos un lock pesimista si fuera necesario, pero la consulta ya es específica
-            jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
-                idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
-            ).ifPresent(jp -> {
-                Partida partida = jp.getPartida();
-                Integer idPartida = partida.getIdPartida();
+        // Buscamos si el jugador aún existe en una partida activa (no abandonada)
+        jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+            idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
+        ).ifPresent(jp -> {
+            Partida partida = jp.getPartida();
+            Integer idPartida = partida.getIdPartida();
 
-                log.info("Procesando abandono definitivo para jugador [{}] en partida [{}].", idGoogle, idPartida);
-                
-                try {
-                    if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
-                        lobbyService.abandonarLobby(idPartida, idGoogle, true);
-                    } else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-                        partidaService.abandonar(idPartida, idGoogle, true);
-                    }
-                } catch (Exception e) {
-                    // Si ocurre un error aquí, es probable que ya haya sido procesado concurrentemente.
-                    // Registramos como warning y no como error crítico para no romper la transacción.
-                    log.warn("El abandono ya fue procesado o la partida cambió de estado para [{}]: {}", idGoogle, e.getMessage());
-                }
-            });
+            log.info("Procesando abandono definitivo para jugador [{}] en partida [{}].", idGoogle, idPartida);
             
-            // Siempre eliminamos la tarea del mapa
-            disconnectTasks.remove(idGoogle);
-            return null;
+            try {
+                if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
+                    lobbyService.abandonarLobby(idPartida, idGoogle, true);
+                } else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+                    partidaService.abandonar(idPartida, idGoogle, true);
+                }
+            } catch (Exception e) {
+                log.warn("El abandono ya fue procesado o la partida cambió de estado para [{}]: {}", idGoogle, e.getMessage());
+            }
         });
+        
+        // Siempre eliminamos la tarea del mapa
+        disconnectTasks.remove(idGoogle);
     }
 }
