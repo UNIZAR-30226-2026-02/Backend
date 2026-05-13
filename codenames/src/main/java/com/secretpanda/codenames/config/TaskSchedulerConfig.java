@@ -15,4 +15,12 @@ public class TaskSchedulerConfig {
         scheduler.setThreadNamePrefix("ws-heartbeat-");
         return scheduler;
     }
+
+    @Bean
+    public TaskScheduler businessTaskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(2);
+        scheduler.setThreadNamePrefix("business-cleaner-");
+        return scheduler;
+    }
 }

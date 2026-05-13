@@ -36,16 +36,17 @@ public class WebSocketEventListener {
     private JugadorPartidaRepository jugadorPartidaRepository;
 
     @Autowired
+    @Qualifier("businessTaskScheduler")
+    private TaskScheduler businessTaskScheduler;
+
+    @Autowired
     @Qualifier("webSocketTaskScheduler")
-    private TaskScheduler taskScheduler;
+    private TaskScheduler webSocketTaskScheduler;
 
     @org.springframework.beans.factory.annotation.Value("${game.timeout-reconexion:60}")
     private int timeoutReconexion;
 
     private final Map<String, ScheduledFuture<?>> disconnectTasks = new ConcurrentHashMap<>();
-
-    @Autowired
-    private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -57,7 +58,7 @@ public class WebSocketEventListener {
 
         ScheduledFuture<?> scheduledTask = disconnectTasks.remove(idGoogle);
         if (scheduledTask != null) {
-            scheduledTask.cancel(false);
+            scheduledTask.cancel(true);
             log.info("Jugador [{}] reconectado a tiempo. Temporizador de abandono cancelado.", idGoogle);
         } else {
             log.info("Jugador [{}] conectado con éxito.", idGoogle);
@@ -68,17 +69,23 @@ public class WebSocketEventListener {
     public void handleDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = sha.getUser();
-        
-        if (principal == null) return;
-        
-        String idGoogle = principal.getName();
-        log.warn("Jugador [{}] perdió la conexión. Marcando timestamp de desconexión...", idGoogle);
 
-        // Persistimos el timestamp en la BD para que el AbandonedPlayerCleaner lo detecte
-        jugadorPartidaRepository.findByJugador_IdGoogleAndAbandonoFalse(idGoogle).ifPresent(jp -> {
-            jp.setUltimaDesconexion(java.time.LocalDateTime.now());
-            jugadorPartidaRepository.saveAndFlush(jp);
-        });
+        if (principal == null) return;
+
+        String idGoogle = principal.getName();
+        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de abandono en business-cleaner...", idGoogle);
+
+        // Cancelar tarea previa si existiera para evitar solapamientos
+        ScheduledFuture<?> oldTask = disconnectTasks.remove(idGoogle);
+        if (oldTask != null) oldTask.cancel(true);
+
+        // Programar en el scheduler de negocio dedicado, totalmente aislado del tráfico de red
+        ScheduledFuture<?> task = businessTaskScheduler.schedule(
+            () -> ejecutarAbandonoDefinitivo(idGoogle), 
+            Instant.now().plusSeconds(timeoutReconexion)
+        );
+
+        disconnectTasks.put(idGoogle, task);
     }
 
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {
