@@ -157,19 +157,26 @@ public class PartidaService {
 
     @Transactional
     public void abandonar(Integer idPartida, String idGoogle, boolean esDesconexion) {
-        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
-                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+        // Si es una desconexión automática, evitamos el bloqueo pesimista (FOR UPDATE) 
+        // para prevenir el agotamiento del pool de conexiones en casos de reconexión concurrente.
+        Partida partida = esDesconexion ? 
+                          partidaRepository.findById(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada.")) :
+                          partidaRepository.findByIdForUpdate(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
-        JugadorPartida jp = jugadorPartidaRepository
-                .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
-                .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
+        List<JugadorPartida> jpList = jugadorPartidaRepository.findAllByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida);
+        if (jpList.isEmpty()) {
+            throw new BadRequestException("No perteneces a esta partida.");
+        }
+        
+        // Procesamos el primer registro encontrado, asegurando que si hay duplicados, al menos procesamos uno
+        JugadorPartida jp = jpList.get(0);
 
         if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
             // RF-35: Penalización de 5 balas por abandono
             jugadorService.modificarBalas(idGoogle, -5);
 
             jp.setAbandono(true);
-            jugadorPartidaRepository.save(jp);
+            jugadorPartidaRepository.saveAndFlush(jp);
 
             // RF-35: Si abandona un Jefe de Espionaje (Líder), su equipo pierde automáticamente
             // Si es una desconexión accidental, el WebSocketEventListener ya esperó el timeout antes de llamar aquí.
@@ -282,9 +289,12 @@ public class PartidaService {
 
         List<JugadorPartida> todos = jugadorPartidaRepository.findByPartida_IdPartida(partida.getIdPartida());
         for (JugadorPartida jp : todos) {
-            boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
-            boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
-            jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos(), jp.getRol());
+            // Solo procesamos recompensas/penalizaciones para quienes no abandonaron
+            if (!jp.isAbandono()) {
+                boolean esRojo = jp.getEquipo() == JugadorPartida.Equipo.rojo;
+                boolean gano = (rojoGana && esRojo) || (!rojoGana && !esRojo);
+                jugadorService.procesarFinPartida(jp.getJugador().getIdGoogle(), gano, jp.getNumAciertos(), jp.getNumFallos(), jp.getRol());
+            }
         }
 
         juegoService.broadcastEstado(partida.getIdPartida());
