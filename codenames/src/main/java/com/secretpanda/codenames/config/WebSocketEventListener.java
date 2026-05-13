@@ -69,23 +69,16 @@ public class WebSocketEventListener {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = sha.getUser();
         
-        log.info("Intento de desconexión. ID de sesión: {}, Principal: {}", 
-                 sha.getSessionId(), (principal != null ? principal.getName() : "NULL"));
-
-        if (principal == null) {
-            log.warn("Desconexión detectada pero el Principal es NULL.");
-            return;
-        }
+        if (principal == null) return;
         
         String idGoogle = principal.getName();
-        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de {}s...", idGoogle, timeoutReconexion);
+        log.warn("Jugador [{}] perdió la conexión. Marcando timestamp de desconexión...", idGoogle);
 
-        ScheduledFuture<?> task = taskScheduler.schedule(
-            () -> ejecutarAbandonoDefinitivo(idGoogle), 
-            Instant.now().plusSeconds(timeoutReconexion)
-        );
-
-        disconnectTasks.put(idGoogle, task);
+        // Persistimos el timestamp en la BD para que el AbandonedPlayerCleaner lo detecte
+        jugadorPartidaRepository.findByJugador_IdGoogleAndAbandonoFalse(idGoogle).ifPresent(jp -> {
+            jp.setUltimaDesconexion(java.time.LocalDateTime.now());
+            jugadorPartidaRepository.saveAndFlush(jp);
+        });
     }
 
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {

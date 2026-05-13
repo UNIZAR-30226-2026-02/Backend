@@ -35,6 +35,8 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
 
     Optional<JugadorPartida> findByJugador_IdGoogleAndAbandonoFalse(String idGoogle);
 
+    List<JugadorPartida> findByAbandonoFalseAndUltimaDesconexionBefore(java.time.LocalDateTime limit);
+
     // Consulta optimizada para el historial con JOIN FETCH
     @Query("SELECT jp FROM JugadorPartida jp JOIN FETCH jp.partida p JOIN FETCH p.tema t WHERE jp.jugador.idGoogle = :idGoogle ORDER BY p.fechaFin DESC")        
     List<JugadorPartida> findHistoryByJugadorId(@Param("idGoogle") String idGoogle);
