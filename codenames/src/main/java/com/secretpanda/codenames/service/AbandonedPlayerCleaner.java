@@ -44,12 +44,13 @@ public class AbandonedPlayerCleaner {
             if (time.isBefore(limit)) {
                 logger.info("Detectado abandono definitivo tras timeout para jugador [{}]", idGoogle);
                 
-                // Obtenemos todos los registros activos del jugador para procesarlos uno a uno
+                // Usamos findAll, no findBy, para evitar NonUniqueResultException
                 List<JugadorPartida> jpList = jugadorPartidaRepository.findAllByJugador_IdGoogleAndAbandonoFalse(idGoogle);
                 
                 for (JugadorPartida jp : jpList) {
                     try {
                         partidaService.abandonar(jp.getPartida().getIdPartida(), idGoogle, true);
+                        logger.info("Abandono procesado para jugador [{}] en partida [{}]", idGoogle, jp.getPartida().getIdPartida());
                     } catch (Exception e) {
                         logger.error("Error al procesar abandono automático para jugador [{}] en partida [{}]: {}", 
                                       idGoogle, jp.getPartida().getIdPartida(), e.getMessage());

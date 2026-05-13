@@ -163,9 +163,13 @@ public class PartidaService {
                           partidaRepository.findById(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada.")) :
                           partidaRepository.findByIdForUpdate(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada."));
 
-        JugadorPartida jp = jugadorPartidaRepository
-                .findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)
-                .orElseThrow(() -> new BadRequestException("No perteneces a esta partida."));
+        List<JugadorPartida> jpList = jugadorPartidaRepository.findAllByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida);
+        if (jpList.isEmpty()) {
+            throw new BadRequestException("No perteneces a esta partida.");
+        }
+        
+        // Procesamos el primer registro encontrado, asegurando que si hay duplicados, al menos procesamos uno
+        JugadorPartida jp = jpList.get(0);
 
         if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
             // RF-35: Penalización de 5 balas por abandono
