@@ -41,7 +41,11 @@ public class WebSocketEventListener {
     @org.springframework.beans.factory.annotation.Value("${game.timeout-reconexion:60}")
     private int timeoutReconexion;
 
+    // Mapa para rastrear tareas de abandono: idGoogle -> ScheduledFuture
     private final Map<String, ScheduledFuture<?>> disconnectTasks = new ConcurrentHashMap<>();
+    
+    // Mapa para contar sesiones activas: idGoogle -> cantidad de sesiones (pestañas)
+    private final Map<String, Integer> userSessions = new ConcurrentHashMap<>();
 
     @Autowired
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
@@ -53,13 +57,17 @@ public class WebSocketEventListener {
         if (principal == null) return;
 
         String idGoogle = principal.getName();
+        
+        // Incrementar contador de sesiones
+        userSessions.merge(idGoogle, 1, Integer::sum);
+        int activeSessions = userSessions.get(idGoogle);
+
+        log.info("Jugador [{}] conectado. Sesiones activas: {}", idGoogle, activeSessions);
 
         ScheduledFuture<?> scheduledTask = disconnectTasks.remove(idGoogle);
         if (scheduledTask != null) {
             scheduledTask.cancel(false);
-            log.info("Jugador [{}] reconectado a tiempo. Temporizador de abandono cancelado.", idGoogle);
-        } else {
-            log.info("Jugador [{}] conectado con éxito.", idGoogle);
+            log.info("Jugador [{}] reconectado. Temporizador de abandono cancelado.", idGoogle);
         }
     }
 
@@ -68,26 +76,48 @@ public class WebSocketEventListener {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = sha.getUser();
         
-        log.info("Intento de desconexión. ID de sesión: {}, Principal: {}", 
-                 sha.getSessionId(), (principal != null ? principal.getName() : "NULL"));
-
         if (principal == null) {
-            log.warn("Desconexión detectada pero el Principal es NULL.");
             return;
         }
         
         String idGoogle = principal.getName();
-        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de {}s...", idGoogle, timeoutReconexion);
+        
+        // Decrementar contador de sesiones
+        Integer currentSessions = userSessions.computeIfPresent(idGoogle, (k, v) -> v > 1 ? v - 1 : null);
+        int remainingSessions = (currentSessions == null) ? 0 : currentSessions;
 
-        ScheduledFuture<?> task = taskScheduler.schedule(
-            () -> ejecutarAbandonoDefinitivo(idGoogle), 
-            Instant.now().plusSeconds(timeoutReconexion)
-        );
+        log.info("Intento de desconexión. Jugador [{}], ID sesión: {}. Sesiones restantes: {}", 
+                 idGoogle, sha.getSessionId(), remainingSessions);
 
-        disconnectTasks.put(idGoogle, task);
+        // Solo iniciamos el temporizador de abandono si no quedan sesiones activas
+        if (remainingSessions == 0) {
+            log.warn("Jugador [{}] perdió todas las conexiones. Iniciando temporizador de {}s...", idGoogle, timeoutReconexion);
+
+            // IMPORTANTE: Si ya había una tarea (por un bug previo o rapidez), la cancelamos antes de poner la nueva
+            ScheduledFuture<?> oldTask = disconnectTasks.remove(idGoogle);
+            if (oldTask != null) {
+                oldTask.cancel(false);
+            }
+
+            ScheduledFuture<?> task = taskScheduler.schedule(
+                () -> ejecutarAbandonoDefinitivo(idGoogle), 
+                Instant.now().plusSeconds(timeoutReconexion)
+            );
+
+            disconnectTasks.put(idGoogle, task);
+        } else {
+            log.info("Jugador [{}] cerró una sesión pero aún tiene {} activas. No se inicia temporizador.", idGoogle, remainingSessions);
+        }
     }
 
     protected void ejecutarAbandonoDefinitivo(String idGoogle) {
+        // Doble comprobación: si el usuario se reconectó justo antes de dispararse la tarea
+        if (userSessions.containsKey(idGoogle)) {
+            log.info("Cancelando abandono definitivo de [{}]: el usuario tiene sesiones activas.", idGoogle);
+            disconnectTasks.remove(idGoogle);
+            return;
+        }
+
         transactionTemplate.execute(status -> {
             log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
             
@@ -102,14 +132,14 @@ public class WebSocketEventListener {
                     try {
                         if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
                             lobbyService.abandonarLobby(idPartida, idGoogle, true);
-                            log.info("Jugador [{}] expulsado del lobby [{}] correctamente.", idGoogle, idPartida);
+                            log.info("Jugador [{}] expulsado del lobby [{}] por inactividad.", idGoogle, idPartida);
                         } 
                         else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
                             partidaService.abandonar(idPartida, idGoogle, true);
-                            log.info("Jugador [{}] abandonó definitivamente la partida en curso [{}].", idGoogle, idPartida);
+                            log.info("Jugador [{}] abandonó definitivamente por inactividad la partida [{}].", idGoogle, idPartida);
                         }
                     } catch (Exception e) {
-                        log.error("Error al procesar el abandono definitivo del jugador [{}] en la partida [{}]: {}", 
+                        log.error("Error al procesar el abandono de [{}] en partida [{}]: {}", 
                                   idGoogle, idPartida, e.getMessage());
                     }
                 });

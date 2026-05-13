@@ -240,7 +240,14 @@ public class JuegoService {
     @Transactional
     public VotoRecibidoDTO votar(Integer idPartida, Integer idCartaTablero,
                                   Integer idTurno, String idGoogle) {
-        Partida partida = requireEnCurso(idPartida);
+        // RF-35: Bloqueo pesimista para evitar condiciones de carrera entre votos y timeout
+        Partida partida = partidaRepository.findByIdForUpdate(idPartida)
+                .orElseThrow(() -> new NotFoundException("Partida no encontrada."));
+
+        if (!Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+            throw new GameLogicException("La partida no está en curso.");
+        }
+
         JugadorPartida jp = requireJugadorEnPartida(idGoogle, idPartida);
 
         if (!Rol.agente.equals(jp.getRol())) {
@@ -463,7 +470,8 @@ public class JuegoService {
 
     @Transactional
     public void forzarFinTurno(Integer idPartida) {
-        Partida partida = partidaRepository.findById(idPartida).orElse(null);
+        // Bloqueo pesimista para evitar que un voto entrante colisione con el timeout
+        Partida partida = partidaRepository.findByIdForUpdate(idPartida).orElse(null);
         if (partida == null || !Partida.EstadoPartida.en_curso.equals(partida.getEstado())) return;
 
         Turno turnoActual = turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida).orElse(null);
@@ -477,7 +485,7 @@ public class JuegoService {
         }
 
         // Si hay pista pero el tiempo acabó, resolvemos por mayoría simple si existe
-        List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurno(turnoActual.getIdTurno());
+        List<VotoCarta> votos = votoCartaRepository.findByTurno_IdTurnoAndCartaReveladaIsNull(turnoActual.getIdTurno());
 
         if (!votos.isEmpty()) {
             Map<Integer, Long> conteo = votos.stream()
