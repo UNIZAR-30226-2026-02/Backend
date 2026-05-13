@@ -157,8 +157,6 @@ public class PartidaService {
 
     @Transactional
     public void abandonar(Integer idPartida, String idGoogle, boolean esDesconexion) {
-        // Si es una desconexión automática, evitamos el bloqueo pesimista (FOR UPDATE) 
-        // para prevenir el agotamiento del pool de conexiones en casos de reconexión concurrente.
         Partida partida = esDesconexion ? 
                           partidaRepository.findById(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada.")) :
                           partidaRepository.findByIdForUpdate(idPartida).orElseThrow(() -> new NotFoundException("Partida no encontrada."));
@@ -168,48 +166,43 @@ public class PartidaService {
             throw new BadRequestException("No perteneces a esta partida.");
         }
         
-        // Procesamos el primer registro encontrado, asegurando que si hay duplicados, al menos procesamos uno
-        JugadorPartida jp = jpList.get(0);
+        // Procesamos todos los registros activos del jugador para esta partida (limpieza de duplicados)
+        for (JugadorPartida jp : jpList) {
+            if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+                // RF-35: Penalización de 5 balas por abandono
+                jugadorService.modificarBalas(idGoogle, -5);
 
-        if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
-            // RF-35: Penalización de 5 balas por abandono
-            jugadorService.modificarBalas(idGoogle, -5);
+                jp.setAbandono(true);
+                jugadorPartidaRepository.saveAndFlush(jp);
 
-            jp.setAbandono(true);
-            jugadorPartidaRepository.saveAndFlush(jp);
-
-            // RF-35: Si abandona un Jefe de Espionaje (Líder), su equipo pierde automáticamente
-            // Si es una desconexión accidental, el WebSocketEventListener ya esperó el timeout antes de llamar aquí.
-            if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
-                boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
-                finalizarPartidaManual(partida, rojoGana);
-            } else {
-                List<JugadorPartida> activos = jugadorPartidaRepository
-                        .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
-                
-                long agentesEnMiEquipo = activos.stream()
-                        .filter(a -> a.getEquipo().equals(jp.getEquipo()) && a.getRol().equals(JugadorPartida.Rol.agente))
-                        .count();
-
-                if (agentesEnMiEquipo == 0) {
-                    // Si el equipo se queda sin agentes, no pueden votar -> Derrota automática
+                // RF-35: Si abandona un Jefe de Espionaje (Líder), su equipo pierde automáticamente
+                if (JugadorPartida.Rol.lider.equals(jp.getRol())) {
                     boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
                     finalizarPartidaManual(partida, rojoGana);
                 } else {
-                    juegoService.broadcastEstado(idPartida);
+                    List<JugadorPartida> activos = jugadorPartidaRepository
+                            .findByPartida_IdPartidaAndAbandonoFalse(idPartida);
+                    
+                    long agentesEnMiEquipo = activos.stream()
+                            .filter(a -> a.getEquipo().equals(jp.getEquipo()) && a.getRol().equals(JugadorPartida.Rol.agente))
+                            .count();
+
+                    if (agentesEnMiEquipo == 0) {
+                        boolean rojoGana = !JugadorPartida.Equipo.rojo.equals(jp.getEquipo());
+                        finalizarPartidaManual(partida, rojoGana);
+                    } else {
+                        juegoService.broadcastEstado(idPartida);
+                    }
                 }
+            } else {
+                boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
+                if (esCreador) {
+                    partida.setEstado(Partida.EstadoPartida.finalizada);
+                    partida.setFechaFin(LocalDateTime.now());
+                    partidaRepository.save(partida);
+                }
+                jugadorPartidaRepository.delete(jp);
             }
-        } 
-        else {
-            boolean esCreador = partida.getCreador().getIdGoogle().equals(idGoogle);
-            // Si es el creador y es un abandono manual (no desconexión), cerramos el lobby de inmediato.
-            // Si es desconexión, este método se llama tras expirar el tiempo de gracia en WebSocketEventListener.
-            if (esCreador) {
-                partida.setEstado(Partida.EstadoPartida.finalizada);
-                partida.setFechaFin(LocalDateTime.now());
-                partidaRepository.save(partida);
-            }
-            jugadorPartidaRepository.delete(jp);
         }
     }
 
