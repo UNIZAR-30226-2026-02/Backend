@@ -19,6 +19,8 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
 
     List<JugadorPartida> findByPartida_IdPartidaAndAbandonoFalse(Integer idPartida);
 
+    Optional<JugadorPartida> findByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
+
     List<JugadorPartida> findAllByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
 
     boolean existsByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
