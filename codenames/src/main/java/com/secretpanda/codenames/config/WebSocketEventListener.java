@@ -1,7 +1,6 @@
 package com.secretpanda.codenames.config;
 
 import com.secretpanda.codenames.model.Partida;
-import com.secretpanda.codenames.model.JugadorPartida;
 import com.secretpanda.codenames.repository.JugadorPartidaRepository;
 import com.secretpanda.codenames.service.LobbyService;
 import com.secretpanda.codenames.service.PartidaService;
@@ -27,7 +26,25 @@ import java.util.concurrent.ScheduledFuture;
 public class WebSocketEventListener {
 
     @Autowired
-    private com.secretpanda.codenames.service.AbandonedPlayerCleaner abandonedPlayerCleaner;
+    private LobbyService lobbyService;
+
+    @Autowired
+    private PartidaService partidaService;
+    
+    @Autowired
+    private JugadorPartidaRepository jugadorPartidaRepository;
+
+    @Autowired
+    @Qualifier("webSocketTaskScheduler")
+    private TaskScheduler taskScheduler;
+
+    @org.springframework.beans.factory.annotation.Value("${game.timeout-reconexion:60}")
+    private int timeoutReconexion;
+
+    private final Map<String, ScheduledFuture<?>> disconnectTasks = new ConcurrentHashMap<>();
+
+    @Autowired
+    private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -36,19 +53,67 @@ public class WebSocketEventListener {
         if (principal == null) return;
 
         String idGoogle = principal.getName();
-        abandonedPlayerCleaner.cancelarDesconexion(idGoogle);
-        log.info("Jugador [{}] reconectado. Temporizador de abandono cancelado.", idGoogle);
+
+        ScheduledFuture<?> scheduledTask = disconnectTasks.remove(idGoogle);
+        if (scheduledTask != null) {
+            scheduledTask.cancel(false);
+            log.info("Jugador [{}] reconectado a tiempo. Temporizador de abandono cancelado.", idGoogle);
+        } else {
+            log.info("Jugador [{}] conectado con éxito.", idGoogle);
+        }
     }
 
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = sha.getUser();
+        
+        log.info("Intento de desconexión. ID de sesión: {}, Principal: {}", 
+                 sha.getSessionId(), (principal != null ? principal.getName() : "NULL"));
 
-        if (principal == null) return;
-
+        if (principal == null) {
+            log.warn("Desconexión detectada pero el Principal es NULL.");
+            return;
+        }
+        
         String idGoogle = principal.getName();
-        log.warn("Jugador [{}] perdió la conexión. Registrando desconexión en AbandonedPlayerCleaner...", idGoogle);
-        abandonedPlayerCleaner.registrarDesconexion(idGoogle);
+        log.warn("Jugador [{}] perdió la conexión. Iniciando temporizador de {}s...", idGoogle, timeoutReconexion);
+
+        ScheduledFuture<?> task = taskScheduler.schedule(
+            () -> ejecutarAbandonoDefinitivo(idGoogle), 
+            Instant.now().plusSeconds(timeoutReconexion)
+        );
+
+        disconnectTasks.put(idGoogle, task);
+    }
+
+    protected void ejecutarAbandonoDefinitivo(String idGoogle) {
+        transactionTemplate.execute(status -> {
+            log.error("Tiempo expirado ({}s) para jugador [{}]. Ejecutando abandono definitivo.", timeoutReconexion, idGoogle);
+            
+            disconnectTasks.remove(idGoogle);
+
+            jugadorPartidaRepository.findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(
+                idGoogle, List.of(Partida.EstadoPartida.esperando, Partida.EstadoPartida.en_curso)
+            ).ifPresent(jp -> {
+                    Partida partida = jp.getPartida();
+                    Integer idPartida = partida.getIdPartida();
+
+                    try {
+                        if (Partida.EstadoPartida.esperando.equals(partida.getEstado())) {
+                            lobbyService.abandonarLobby(idPartida, idGoogle, true);
+                            log.info("Jugador [{}] expulsado del lobby [{}] correctamente.", idGoogle, idPartida);
+                        } 
+                        else if (Partida.EstadoPartida.en_curso.equals(partida.getEstado())) {
+                            partidaService.abandonar(idPartida, idGoogle, true);
+                            log.info("Jugador [{}] abandonó definitivamente la partida en curso [{}].", idGoogle, idPartida);
+                        }
+                    } catch (Exception e) {
+                        log.error("Error al procesar el abandono definitivo del jugador [{}] en la partida [{}]: {}", 
+                                  idGoogle, idPartida, e.getMessage());
+                    }
+                });
+            return null;
+        });
     }
 }

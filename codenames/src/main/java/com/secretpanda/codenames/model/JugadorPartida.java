@@ -57,9 +57,6 @@ public class JugadorPartida {
     @Column(name = "abandono", nullable = false)
     private boolean abandono = false;
 
-    @Column(name = "ultima_desconexion")
-    private java.time.LocalDateTime ultimaDesconexion;
-
     public JugadorPartida() {}
 
     public Integer getIdJugadorPartida() { 
@@ -124,13 +121,5 @@ public class JugadorPartida {
 
     public void setAbandono(boolean abandono) { 
         this.abandono = abandono; 
-    }
-
-    public java.time.LocalDateTime getUltimaDesconexion() {
-        return ultimaDesconexion;
-    }
-
-    public void setUltimaDesconexion(java.time.LocalDateTime ultimaDesconexion) {
-        this.ultimaDesconexion = ultimaDesconexion;
     }
 }

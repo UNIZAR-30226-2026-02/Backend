@@ -21,8 +21,6 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
 
     Optional<JugadorPartida> findByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
 
-    List<JugadorPartida> findAllByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
-
     boolean existsByJugador_IdGoogleAndPartida_IdPartida(String idGoogle, Integer idPartida);
 
     long countByPartida_IdPartidaAndAbandonoFalse(Integer idPartida);
@@ -36,9 +34,6 @@ public interface JugadorPartidaRepository extends JpaRepository<JugadorPartida, 
     Optional<JugadorPartida> findFirstByJugador_IdGoogleAndPartida_EstadoInAndAbandonoFalse(String idGoogle, List<EstadoPartida> estados);
 
     Optional<JugadorPartida> findByJugador_IdGoogleAndAbandonoFalse(String idGoogle);
-
-    List<JugadorPartida> findByAbandonoFalseAndUltimaDesconexionBefore(java.time.LocalDateTime limit);
-    List<JugadorPartida> findAllByJugador_IdGoogleAndAbandonoFalse(String idGoogle);
 
     // Consulta optimizada para el historial con JOIN FETCH
     @Query("SELECT jp FROM JugadorPartida jp JOIN FETCH jp.partida p JOIN FETCH p.tema t WHERE jp.jugador.idGoogle = :idGoogle ORDER BY p.fechaFin DESC")        
