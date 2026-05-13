@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -89,6 +91,17 @@ public class JwtFilter extends OncePerRequestFilter {
      */
     private void escribirErrorSesion(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+
+        // NUEVO: Limpiamos la cookie para evitar bucles en el frontend (RNF-1)
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
