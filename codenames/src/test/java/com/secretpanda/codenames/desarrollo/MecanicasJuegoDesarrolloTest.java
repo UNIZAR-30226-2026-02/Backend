@@ -202,6 +202,7 @@ public class MecanicasJuegoDesarrolloTest {
         jpRival.setEquipo(JugadorPartida.Equipo.azul);
         jpRival.setRol(JugadorPartida.Rol.lider);
 
+        when(partidaRepository.findByIdForUpdate(1)).thenReturn(Optional.of(p));
         when(partidaRepository.findById(1)).thenReturn(Optional.of(p));
         when(turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(1)).thenReturn(Optional.of(t));
         when(jugadorPartidaRepository.findByPartida_IdPartida(1)).thenReturn(List.of(jp, jpRival));
@@ -281,7 +282,7 @@ public class MecanicasJuegoDesarrolloTest {
             TableroCarta carta = new TableroCarta();
             carta.setEstado(TableroCarta.EstadoCarta.oculta);
 
-            when(partidaRepository.findById(idPartida)).thenReturn(Optional.of(p));
+            when(partidaRepository.findByIdForUpdate(idPartida)).thenReturn(Optional.of(p));
             when(jugadorPartidaRepository.findByJugador_IdGoogleAndPartida_IdPartida(idGoogle, idPartida)).thenReturn(Optional.of(jp));
             when(turnoRepository.findFirstByPartida_IdPartidaOrderByNumTurnoDesc(idPartida)).thenReturn(Optional.of(t));
             when(tableroCartaRepository.findById(idCarta)).thenReturn(Optional.of(carta));
