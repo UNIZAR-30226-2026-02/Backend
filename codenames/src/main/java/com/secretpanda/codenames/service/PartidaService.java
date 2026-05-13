@@ -172,7 +172,7 @@ public class PartidaService {
             jugadorService.modificarBalas(idGoogle, -5);
 
             jp.setAbandono(true);
-            jugadorPartidaRepository.save(jp);
+            jugadorPartidaRepository.saveAndFlush(jp);
 
             // RF-35: Si abandona un Jefe de Espionaje (Líder), su equipo pierde automáticamente
             // Si es una desconexión accidental, el WebSocketEventListener ya esperó el timeout antes de llamar aquí.
